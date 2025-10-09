@@ -19,32 +19,98 @@ export interface RecordingState {
   endTime: string | null;
 }
 
-export class ScreenRecorder {
+/**
+ * Combined Screen + Audio Recorder
+ * Records screen and audio into a single synchronized file
+ */
+export class CombinedRecorder {
   private mediaRecorder: MediaRecorder | null = null;
   private chunks: Blob[] = [];
-  private stream: MediaStream | null = null;
+  private screenStream: MediaStream | null = null;
+  private audioStream: MediaStream | null = null;
+  private combinedStream: MediaStream | null = null;
   private startTime: number = 0;
-  
-  async startRecording(): Promise<boolean> {
-    try {
-      // Request screen capture with audio
-      this.stream = await navigator.mediaDevices.getDisplayMedia({
-        video: {
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        },
-        audio: true
-      });
+  private hasVideo: boolean = false;
+  private hasAudio: boolean = false;
 
-      // Create MediaRecorder
-      const options = { mimeType: 'video/webm;codecs=vp9' };
-      
-      // Fallback to vp8 if vp9 not supported
-      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        options.mimeType = 'video/webm;codecs=vp8';
+  async startRecording(options: { 
+    video: boolean; 
+    audio: boolean;
+  }): Promise<{ success: boolean; hasVideo: boolean; hasAudio: boolean; error?: string }> {
+    try {
+      const tracks: MediaStreamTrack[] = [];
+
+      // Get screen stream if video requested
+      if (options.video) {
+        try {
+          this.screenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
+            },
+            audio: true // Try to capture system audio too
+          });
+
+          // Add video tracks
+          this.screenStream.getVideoTracks().forEach(track => {
+            tracks.push(track);
+            this.hasVideo = true;
+          });
+
+          // Add system audio tracks if available
+          this.screenStream.getAudioTracks().forEach(track => {
+            tracks.push(track);
+          });
+        } catch (error) {
+          console.warn('Screen capture failed:', error);
+        }
       }
 
-      this.mediaRecorder = new MediaRecorder(this.stream, options);
+      // Get microphone stream if audio requested
+      if (options.audio) {
+        try {
+          this.audioStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          });
+
+          // Add microphone tracks
+          this.audioStream.getAudioTracks().forEach(track => {
+            tracks.push(track);
+            this.hasAudio = true;
+          });
+        } catch (error) {
+          console.warn('Microphone access failed:', error);
+        }
+      }
+
+      // If no tracks were obtained, return failure
+      if (tracks.length === 0) {
+        return { 
+          success: false, 
+          hasVideo: false, 
+          hasAudio: false,
+          error: 'No video or audio tracks available'
+        };
+      }
+
+      // Create combined stream
+      this.combinedStream = new MediaStream(tracks);
+
+      // Determine best codec
+      let mimeType = 'video/webm;codecs=vp9,opus';
+      if (!this.hasVideo) {
+        // Audio only
+        mimeType = 'audio/webm;codecs=opus';
+      } else if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm;codecs=vp8,opus';
+      }
+
+      // Create MediaRecorder
+      this.mediaRecorder = new MediaRecorder(this.combinedStream, { mimeType });
       this.chunks = [];
       this.startTime = Date.now();
 
@@ -55,8 +121,124 @@ export class ScreenRecorder {
         }
       };
 
-      // Start recording
-      this.mediaRecorder.start(1000); // Collect data every second
+      // Start recording (collect data every second)
+      this.mediaRecorder.start(1000);
+
+      return { 
+        success: true, 
+        hasVideo: this.hasVideo, 
+        hasAudio: this.hasAudio 
+      };
+    } catch (error) {
+      console.error('Error starting combined recording:', error);
+      return { 
+        success: false, 
+        hasVideo: false, 
+        hasAudio: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  stopRecording(): Promise<{ 
+    blob: Blob; 
+    duration: number; 
+    size: number;
+    hasVideo: boolean;
+    hasAudio: boolean;
+  }> {
+    return new Promise((resolve) => {
+      if (!this.mediaRecorder || this.mediaRecorder.state === 'inactive') {
+        resolve({ 
+          blob: new Blob(), 
+          duration: 0, 
+          size: 0,
+          hasVideo: false,
+          hasAudio: false
+        });
+        return;
+      }
+
+      this.mediaRecorder.onstop = () => {
+        // Determine blob type based on what was recorded
+        const type = this.hasVideo ? 'video/webm' : 'audio/webm';
+        const blob = new Blob(this.chunks, { type });
+        const duration = Math.floor((Date.now() - this.startTime) / 1000);
+        
+        // Stop all tracks
+        if (this.screenStream) {
+          this.screenStream.getTracks().forEach(track => track.stop());
+        }
+        if (this.audioStream) {
+          this.audioStream.getTracks().forEach(track => track.stop());
+        }
+
+        resolve({
+          blob,
+          duration,
+          size: blob.size,
+          hasVideo: this.hasVideo,
+          hasAudio: this.hasAudio
+        });
+      };
+
+      this.mediaRecorder.stop();
+    });
+  }
+
+  isRecording(): boolean {
+    return this.mediaRecorder?.state === 'recording';
+  }
+
+  pauseRecording(): void {
+    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+      this.mediaRecorder.pause();
+    }
+  }
+
+  resumeRecording(): void {
+    if (this.mediaRecorder && this.mediaRecorder.state === 'paused') {
+      this.mediaRecorder.resume();
+    }
+  }
+}
+
+/**
+ * Legacy: Screen-only recorder (kept for backwards compatibility)
+ */
+export class ScreenRecorder {
+  private mediaRecorder: MediaRecorder | null = null;
+  private chunks: Blob[] = [];
+  private stream: MediaStream | null = null;
+  private startTime: number = 0;
+  
+  async startRecording(): Promise<boolean> {
+    try {
+      this.stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: true
+      });
+
+      const options = { mimeType: 'video/webm;codecs=vp9' };
+      
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options.mimeType = 'video/webm;codecs=vp8';
+      }
+
+      this.mediaRecorder = new MediaRecorder(this.stream, options);
+      this.chunks = [];
+      this.startTime = Date.now();
+
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          this.chunks.push(event.data);
+        }
+      };
+
+      this.mediaRecorder.start(1000);
 
       return true;
     } catch (error) {
@@ -76,7 +258,6 @@ export class ScreenRecorder {
         const blob = new Blob(this.chunks, { type: 'video/webm' });
         const duration = Math.floor((Date.now() - this.startTime) / 1000);
         
-        // Stop all tracks
         if (this.stream) {
           this.stream.getTracks().forEach(track => track.stop());
         }
@@ -109,6 +290,9 @@ export class ScreenRecorder {
   }
 }
 
+/**
+ * Legacy: Audio-only recorder (kept for backwards compatibility)
+ */
 export class AudioRecorder {
   private mediaRecorder: MediaRecorder | null = null;
   private chunks: Blob[] = [];
@@ -117,7 +301,6 @@ export class AudioRecorder {
 
   async startRecording(): Promise<boolean> {
     try {
-      // Request microphone access
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -126,7 +309,6 @@ export class AudioRecorder {
         }
       });
 
-      // Create MediaRecorder
       const options = { mimeType: 'audio/webm' };
       
       if (!MediaRecorder.isTypeSupported(options.mimeType)) {
@@ -137,14 +319,12 @@ export class AudioRecorder {
       this.chunks = [];
       this.startTime = Date.now();
 
-      // Collect data chunks
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           this.chunks.push(event.data);
         }
       };
 
-      // Start recording
       this.mediaRecorder.start(1000);
 
       return true;
@@ -165,7 +345,6 @@ export class AudioRecorder {
         const blob = new Blob(this.chunks, { type: 'audio/webm' });
         const duration = Math.floor((Date.now() - this.startTime) / 1000);
         
-        // Stop all tracks
         if (this.stream) {
           this.stream.getTracks().forEach(track => track.stop());
         }
@@ -243,6 +422,7 @@ export function formatDuration(seconds: number): string {
 export function isRecordingSupported(): {
   screen: boolean;
   audio: boolean;
+  combined: boolean;
   message?: string;
 } {
   const hasGetDisplayMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
@@ -253,6 +433,7 @@ export function isRecordingSupported(): {
     return {
       screen: false,
       audio: false,
+      combined: false,
       message: 'MediaRecorder API not supported in this browser'
     };
   }
@@ -260,6 +441,7 @@ export function isRecordingSupported(): {
   return {
     screen: hasGetDisplayMedia,
     audio: hasGetUserMedia,
+    combined: hasGetDisplayMedia && hasGetUserMedia,
     message: !hasGetDisplayMedia ? 'Screen recording not supported in this browser' : undefined
   };
 }

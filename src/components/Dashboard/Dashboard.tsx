@@ -21,6 +21,10 @@ export function Dashboard({ onCreateProject, onEditProject, onOpenProject }: Das
     }
   };
 
+  const handleStatusChange = (projectId: number, status: 'active' | 'completed' | 'archived') => {
+    actions.updateProject(projectId, { status });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -71,6 +75,7 @@ export function Dashboard({ onCreateProject, onEditProject, onOpenProject }: Das
                     onEdit={() => onEditProject(project)}
                     onDelete={() => handleDeleteProject(project.id)}
                     onOpen={() => onOpenProject(project)}
+                    onStatusChange={(status) => handleStatusChange(project.id, status)}
                   />
                 ))}
               </div>
@@ -84,4 +89,3 @@ export function Dashboard({ onCreateProject, onEditProject, onOpenProject }: Das
     </div>
   );
 }
-

@@ -8,10 +8,10 @@ interface FeedbackModalProps {
   task: Task;
   currentTaskAnswer: string;
   currentTaskRating: number;
-  currentQuestionAnswers: { questionId: number; answer: string }[];
+  currentQuestionAnswers: { questionId: number; answer: string | string[] }[];
   onAnswerChange: (value: string) => void;
   onRatingChange: (rating: number) => void;
-  onQuestionAnswerChange: (questionId: number, answer: string) => void;
+  onQuestionAnswerChange: (questionId: number, answer: string | string[]) => void;
   onSubmit: () => void;
   onSkip: () => void;
 }
@@ -30,6 +30,43 @@ export function FeedbackModal({
 }: FeedbackModalProps) {
   if (!show) return null;
 
+  const getQuestionAnswer = (questionId: number): string | string[] => {
+    return currentQuestionAnswers.find(a => a.questionId === questionId)?.answer || '';
+  };
+
+  const handleCheckboxChange = (questionId: number, option: string, checked: boolean) => {
+    const currentAnswer = getQuestionAnswer(questionId);
+    const currentArray = Array.isArray(currentAnswer) ? currentAnswer : [];
+    
+    let newAnswer: string[];
+    if (checked) {
+      newAnswer = [...currentArray, option];
+    } else {
+      newAnswer = currentArray.filter(item => item !== option);
+    }
+    
+    onQuestionAnswerChange(questionId, newAnswer);
+  };
+
+  const canSubmit = () => {
+    // Check if rating is required and provided
+    if (task.ratingEnabled && currentTaskRating === 0) {
+      return false;
+    }
+    
+    // Check if required questions are answered
+    const requiredQuestions = (task.customQuestions || []).filter(q => q.required);
+    for (const question of requiredQuestions) {
+      const answer = getQuestionAnswer(question.id);
+      if (!answer || (Array.isArray(answer) && answer.length === 0) || 
+          (typeof answer === 'string' && !answer.trim())) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -46,7 +83,7 @@ export function FeedbackModal({
           {task.ratingEnabled && (
             <div className="mb-6 pb-6 border-b border-gray-200">
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                {task.ratingLabel || 'Rate this task'}
+                {task.ratingLabel || 'Rate this task'} <span className="text-red-500">*</span>
               </label>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-gray-500">{task.ratingScale?.low}</span>
@@ -72,20 +109,73 @@ export function FeedbackModal({
 
           {task.customQuestions && task.customQuestions.length > 0 && (
             <div className="mb-6 pb-6 border-b border-gray-200 space-y-4">
-              {task.customQuestions.map((q, idx) => (
-                <div key={q.id}>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Question {idx + 1}: {q.question}
-                  </label>
-                  <textarea
-                    value={currentQuestionAnswers.find(a => a.questionId === q.id)?.answer || ''}
-                    onChange={(e) => onQuestionAnswerChange(q.id, e.target.value)}
-                    placeholder="Your answer..."
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                  />
-                </div>
-              ))}
+              {task.customQuestions.map((q, idx) => {
+                const answer = getQuestionAnswer(q.id);
+                // Default to 'text' if type is not specified (legacy questions)
+                const questionType = q.type || 'text';
+                
+                return (
+                  <div key={q.id}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Question {idx + 1}: {q.question}
+                      {q.required && <span className="text-red-500 ml-1">*</span>}
+                    </label>
+                    
+                    {questionType === 'text' && (
+                      <textarea
+                        value={typeof answer === 'string' ? answer : ''}
+                        onChange={(e) => onQuestionAnswerChange(q.id, e.target.value)}
+                        placeholder="Your answer..."
+                        rows={3}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      />
+                    )}
+                    
+                    {questionType === 'multiple-choice' && (
+                      <div className="space-y-2">
+                        {(q.options || []).map((option, optIdx) => (
+                          <label
+                            key={optIdx}
+                            className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors"
+                          >
+                            <input
+                              type="radio"
+                              name={`question-${q.id}`}
+                              value={option}
+                              checked={answer === option}
+                              onChange={(e) => onQuestionAnswerChange(q.id, e.target.value)}
+                              className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                            />
+                            <span className="text-sm text-gray-700">{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {questionType === 'checkbox' && (
+                      <div className="space-y-2">
+                        {(q.options || []).map((option, optIdx) => {
+                          const isChecked = Array.isArray(answer) && answer.includes(option);
+                          return (
+                            <label
+                              key={optIdx}
+                              className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => handleCheckboxChange(q.id, option, e.target.checked)}
+                                className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                              />
+                              <span className="text-sm text-gray-700">{option}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -108,10 +198,10 @@ export function FeedbackModal({
           <div className="flex space-x-4">
             <button
               onClick={onSubmit}
-              disabled={task.ratingEnabled && currentTaskRating === 0}
+              disabled={!canSubmit()}
               className="flex-1 bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {task.ratingEnabled && currentTaskRating === 0 ? 'Please provide a rating' : 'Submit & Continue'}
+              {!canSubmit() ? 'Please complete required fields' : 'Submit & Continue'}
             </button>
             <button
               onClick={onSkip}
@@ -125,6 +215,3 @@ export function FeedbackModal({
     </div>
   );
 }
-
-
-

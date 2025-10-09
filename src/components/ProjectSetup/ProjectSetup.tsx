@@ -88,7 +88,7 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
       name: projectName.trim(),
       description: projectDescription.trim(),
       mode: projectMode!,
-      status: editingProject ? editingProject.status : 'draft',
+      status: editingProject ? editingProject.status : 'active', // CHANGED FROM 'draft' TO 'active'
       participantIds: editingProject ? editingProject.participantIds : [],
       sessions: editingProject ? editingProject.sessions : [],
       cameraOption,

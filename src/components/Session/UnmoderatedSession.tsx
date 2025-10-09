@@ -1,10 +1,10 @@
 // components/Session/UnmoderatedSession.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, CheckCircle, Clock, Monitor, Mic, Eye, Activity, Mail, Mouse, Keyboard, Video, Download } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Monitor, Mic, Eye, Activity, Mail, Mouse, Keyboard, Video } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { Project, Participant, Task, Session, TaskFeedback, TrackingData } from '../../types';
 import { FeedbackModal } from '../Modals/FeedbackModal';
-import { ScreenRecorder, AudioRecorder, downloadRecording, isRecordingSupported } from '../../utils/recording';
+import { CombinedRecorder, downloadRecording, isRecordingSupported } from '../../utils/recording';
 
 interface UnmoderatedSessionProps {
   project: Project;
@@ -25,18 +25,20 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
   const [displayTasks, setDisplayTasks] = useState<Task[]>([]);
   const [observations, setObservations] = useState('');
   
+  // Optional recording preferences
+  const [enableVideo, setEnableVideo] = useState(project.cameraOption === 'required');
+  const [enableAudio, setEnableAudio] = useState(project.micOption === 'required');
+  
   // Feedback state
   const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(false);
   const [taskFeedback, setTaskFeedback] = useState<TaskFeedback[]>([]);
   const [currentTaskAnswer, setCurrentTaskAnswer] = useState('');
   const [currentTaskRating, setCurrentTaskRating] = useState<number>(0);
-  const [currentQuestionAnswers, setCurrentQuestionAnswers] = useState<{ questionId: number; answer: string }[]>([]);
+  const [currentQuestionAnswers, setCurrentQuestionAnswers] = useState<{ questionId: number; answer: string | string[] }[]>([]);
 
-  // Recording state
-  const screenRecorderRef = useRef<ScreenRecorder | null>(null);
-  const audioRecorderRef = useRef<AudioRecorder | null>(null);
-  const [screenRecordingBlob, setScreenRecordingBlob] = useState<Blob | null>(null);
-  const [audioRecordingBlob, setAudioRecordingBlob] = useState<Blob | null>(null);
+  // Recording state - using combined recorder
+  const combinedRecorderRef = useRef<CombinedRecorder | null>(null);
+  const [recordingBlob, setRecordingBlob] = useState<Blob | null>(null);
   const [recordingStartTime, setRecordingStartTime] = useState<string | null>(null);
   const [isRecordingScreen, setIsRecordingScreen] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
@@ -54,17 +56,32 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
   }, [project]);
 
   useEffect(() => {
-    // Simulate tracking data
-    let interval: ReturnType<typeof setInterval>;
-    if (sessionStarted && recording) {
-      interval = setInterval(() => {
-        setTrackingData(prev => ({
-          clicks: prev.clicks + Math.floor(Math.random() * 3),
-          keystrokes: prev.keystrokes + Math.floor(Math.random() * 5)
-        }));
-      }, 2000);
-    }
-    return () => clearInterval(interval);
+    // Track actual mouse clicks and keystrokes
+    if (!sessionStarted || !recording) return;
+
+    const handleClick = () => {
+      setTrackingData(prev => ({
+        ...prev,
+        clicks: prev.clicks + 1
+      }));
+    };
+
+    const handleKeyPress = () => {
+      setTrackingData(prev => ({
+        ...prev,
+        keystrokes: prev.keystrokes + 1
+      }));
+    };
+
+    // Add event listeners
+    document.addEventListener('click', handleClick);
+    document.addEventListener('keydown', handleKeyPress);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('click', handleClick);
+      document.removeEventListener('keydown', handleKeyPress);
+    };
   }, [sessionStarted, recording]);
 
   const beginSession = async () => {
@@ -73,23 +90,23 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
     setSessionStartTime(Date.now());
     setRecordingStartTime(new Date().toISOString());
 
-    // Start screen recording if supported and camera is not disabled
-    if (recordingSupport.screen && project.cameraOption !== 'disabled') {
-      screenRecorderRef.current = new ScreenRecorder();
-      const started = await screenRecorderRef.current.startRecording();
-      setIsRecordingScreen(started);
-      if (!started) {
-        console.warn('Screen recording failed to start');
-      }
-    }
+    // Use the user's selections for optional recordings
+    const shouldRecordVideo = enableVideo;
+    const shouldRecordAudio = enableAudio;
 
-    // Start audio recording if supported and mic is not disabled
-    if (recordingSupport.audio && project.micOption !== 'disabled') {
-      audioRecorderRef.current = new AudioRecorder();
-      const started = await audioRecorderRef.current.startRecording();
-      setIsRecordingAudio(started);
-      if (!started) {
-        console.warn('Audio recording failed to start');
+    // Use combined recorder when either video or audio is enabled
+    if ((shouldRecordVideo || shouldRecordAudio) && recordingSupport.combined) {
+      combinedRecorderRef.current = new CombinedRecorder();
+      const result = await combinedRecorderRef.current.startRecording({
+        video: shouldRecordVideo,
+        audio: shouldRecordAudio
+      });
+      
+      if (result.success) {
+        setIsRecordingScreen(result.hasVideo);
+        setIsRecordingAudio(result.hasAudio);
+      } else {
+        console.warn('Combined recording failed to start:', result.error);
       }
     }
   };
@@ -139,7 +156,7 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
     }
   };
 
-  const handleQuestionAnswerChange = (questionId: number, answer: string) => {
+  const handleQuestionAnswerChange = (questionId: number, answer: string | string[]) => {
     const existing = currentQuestionAnswers.filter(a => a.questionId !== questionId);
     setCurrentQuestionAnswers([...existing, { questionId, answer }]);
   };
@@ -150,31 +167,22 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
     const duration = sessionStartTime ? Math.floor((Date.now() - sessionStartTime) / 1000) : 0;
     const endTime = new Date().toISOString();
 
-    // Stop screen recording
-    let screenRecordingData = null;
-    if (screenRecorderRef.current && isRecordingScreen) {
-      const result = await screenRecorderRef.current.stopRecording();
-      setScreenRecordingBlob(result.blob);
-      screenRecordingData = {
+    // Stop combined recording
+    let combinedRecordingData = null;
+    if (combinedRecorderRef.current && combinedRecorderRef.current.isRecording()) {
+      const result = await combinedRecorderRef.current.stopRecording();
+      setRecordingBlob(result.blob);
+      
+      // Store recording data - in production, this would be uploaded to a server
+      combinedRecordingData = {
         available: true,
         duration: result.duration,
         size: result.size,
         startTime: recordingStartTime!,
-        endTime
-      };
-    }
-
-    // Stop audio recording
-    let audioRecordingData = null;
-    if (audioRecorderRef.current && isRecordingAudio) {
-      const result = await audioRecorderRef.current.stopRecording();
-      setAudioRecordingBlob(result.blob);
-      audioRecordingData = {
-        available: true,
-        duration: result.duration,
-        size: result.size,
-        startTime: recordingStartTime!,
-        endTime
+        endTime,
+        hasVideo: result.hasVideo,
+        hasAudio: result.hasAudio,
+        type: result.hasVideo ? ("video" as "video") : ("audio" as "audio")
       };
     }
     
@@ -193,8 +201,7 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
       taskFeedback,
       observations,
       recordings: {
-        screen: screenRecordingData || undefined,
-        audio: audioRecordingData || undefined
+        combined: combinedRecordingData || undefined
       }
     };
     
@@ -238,16 +245,23 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
                   <Clock className="w-5 h-5 text-purple-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>You'll complete {displayTasks.length} tasks</span>
                 </li>
-                {recordingSupport.screen && project.cameraOption !== 'disabled' && (
+                {recordingSupport.combined && (project.cameraOption !== 'disabled' || project.micOption !== 'disabled') && (
                   <li className="flex items-start">
                     <Monitor className="w-5 h-5 text-purple-600 mr-2 flex-shrink-0 mt-0.5" />
-                    <span>Your screen will be recorded (you'll be asked for permission)</span>
-                  </li>
-                )}
-                {recordingSupport.audio && project.micOption !== 'disabled' && (
-                  <li className="flex items-start">
-                    <Mic className="w-5 h-5 text-purple-600 mr-2 flex-shrink-0 mt-0.5" />
-                    <span>Your voice will be recorded - please think aloud and share your thoughts</span>
+                    <div>
+                      <span>
+                        {project.cameraOption !== 'disabled' && project.micOption !== 'disabled'
+                          ? 'Your screen and voice will be recorded together in a synchronized file'
+                          : project.cameraOption !== 'disabled'
+                          ? 'Your screen will be recorded (you\'ll be asked for permission)'
+                          : 'Your voice will be recorded - please think aloud and share your thoughts'}
+                      </span>
+                      {enableVideo && enableAudio && (
+                        <div className="text-sm text-green-600 mt-1">
+                          ✓ Audio and video stay perfectly in sync
+                        </div>
+                      )}
+                    </div>
                   </li>
                 )}
                 <li className="flex items-start">
@@ -259,7 +273,7 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
                   <span>You'll be asked for feedback after each task</span>
                 </li>
               </ul>
-              {!recordingSupport.screen && !recordingSupport.audio && (
+              {!recordingSupport.combined && (
                 <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <p className="text-sm text-yellow-800">
                     ⚠️ Recording not supported in this browser. Session data will still be collected, but no audio/video recordings.
@@ -267,6 +281,53 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
                 </div>
               )}
             </div>
+
+            {/* Recording Options */}
+            {(project.cameraOption === 'optional' || project.micOption === 'optional') && recordingSupport.combined && (
+              <div className="bg-purple-50 rounded-lg p-6 mb-8">
+                <h3 className="font-bold text-gray-900 mb-4">Recording Preferences</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Choose which recordings you'd like to enable for this session:
+                </p>
+                <div className="space-y-3">
+                  {project.cameraOption === 'optional' && (
+                    <label className="flex items-center space-x-3 cursor-pointer p-3 bg-white rounded-lg hover:bg-purple-100 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={enableVideo}
+                        onChange={(e) => setEnableVideo(e.target.checked)}
+                        className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                      />
+                      <div className="flex items-center space-x-2">
+                        <Video className="w-5 h-5 text-purple-600" />
+                        <span className="font-medium text-gray-900">Enable Screen Recording</span>
+                      </div>
+                    </label>
+                  )}
+                  {project.micOption === 'optional' && (
+                    <label className="flex items-center space-x-3 cursor-pointer p-3 bg-white rounded-lg hover:bg-purple-100 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={enableAudio}
+                        onChange={(e) => setEnableAudio(e.target.checked)}
+                        className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                      />
+                      <div className="flex items-center space-x-2">
+                        <Mic className="w-5 h-5 text-purple-600" />
+                        <span className="font-medium text-gray-900">Enable Audio Recording</span>
+                      </div>
+                    </label>
+                  )}
+                </div>
+                {enableVideo && enableAudio && (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      ✓ Video and audio will be recorded together in sync
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
             <button
               onClick={beginSession}
               className="w-full bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors text-lg"
@@ -291,17 +352,28 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
           </div>
           {recording && (
             <div className="flex items-center space-x-3">
-              {isRecordingScreen && (
-                <div className="flex items-center space-x-2 bg-red-50 px-3 py-1 rounded-full">
-                  <Video className="w-4 h-4 text-red-600" />
-                  <span className="text-xs font-medium text-red-600">Screen Recording</span>
+              {isRecordingScreen && isRecordingAudio ? (
+                <div className="flex items-center space-x-2 bg-green-50 px-3 py-1 rounded-full">
+                  <Video className="w-4 h-4 text-green-600" />
+                  <span className="text-xs text-green-600">+</span>
+                  <Mic className="w-4 h-4 text-green-600" />
+                  <span className="text-xs font-medium text-green-600">Synchronized</span>
                 </div>
-              )}
-              {isRecordingAudio && (
-                <div className="flex items-center space-x-2 bg-purple-50 px-3 py-1 rounded-full">
-                  <Mic className="w-4 h-4 text-purple-600" />
-                  <span className="text-xs font-medium text-purple-600">Audio Recording</span>
-                </div>
+              ) : (
+                <>
+                  {isRecordingScreen && (
+                    <div className="flex items-center space-x-2 bg-red-50 px-3 py-1 rounded-full">
+                      <Video className="w-4 h-4 text-red-600" />
+                      <span className="text-xs font-medium text-red-600">Screen Recording</span>
+                    </div>
+                  )}
+                  {isRecordingAudio && (
+                    <div className="flex items-center space-x-2 bg-purple-50 px-3 py-1 rounded-full">
+                      <Mic className="w-4 h-4 text-purple-600" />
+                      <span className="text-xs font-medium text-purple-600">Audio Recording</span>
+                    </div>
+                  )}
+                </>
               )}
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>

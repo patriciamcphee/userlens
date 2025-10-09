@@ -2,6 +2,9 @@
 export interface TaskQuestion {
   id: number;
   question: string;
+  type: 'text' | 'multiple-choice' | 'checkbox';
+  options?: string[]; // For multiple-choice and checkbox
+  required?: boolean;
 }
 
 export interface Task {
@@ -21,7 +24,10 @@ export interface TaskFeedback {
   taskId: number;
   answer: string;
   rating?: number;
-  questionAnswers?: { questionId: number; answer: string }[];
+  questionAnswers?: { 
+    questionId: number; 
+    answer: string | string[]; // Can be single value or array for checkbox
+  }[];
   timestamp: string;
 }
 
@@ -34,7 +40,33 @@ export interface ProjectSetup {
 }
 
 export interface Session {
-  recordings: any;
+  recordings?: {
+    combined?: {
+      available: boolean;
+      duration: number;
+      size: number;
+      startTime: string;
+      endTime: string;
+      hasVideo: boolean;
+      hasAudio: boolean;
+      type: 'video' | 'audio';
+    };
+    // Legacy support for old format
+    screen?: {
+      available: boolean;
+      duration: number;
+      size: number;
+      startTime: string;
+      endTime: string;
+    };
+    audio?: {
+      available: boolean;
+      duration: number;
+      size: number;
+      startTime: string;
+      endTime: string;
+    };
+  };
   id: number;
   participantId: number;
   completedAt: string;
@@ -55,7 +87,7 @@ export interface Project {
   name: string;
   description: string;
   mode: 'moderated' | 'unmoderated';
-  status: 'draft' | 'active' | 'completed';
+  status: 'draft' | 'active' | 'completed' | 'archived';
   participantIds: number[];
   sessions: Session[];
   cameraOption: 'optional' | 'required' | 'disabled';

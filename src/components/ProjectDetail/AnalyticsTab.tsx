@@ -17,28 +17,24 @@ export function AnalyticsTab({ project }: AnalyticsTabProps) {
 
   // Calculate recording statistics
   const recordingStats = {
-    totalScreenRecordings: project.sessions.filter(s => s.recordings?.screen?.available).length,
-    totalAudioRecordings: project.sessions.filter(s => s.recordings?.audio?.available).length,
-    totalScreenSize: project.sessions.reduce((acc, s) => acc + (s.recordings?.screen?.size || 0), 0),
-    totalAudioSize: project.sessions.reduce((acc, s) => acc + (s.recordings?.audio?.size || 0), 0),
-    avgScreenDuration: project.sessions.filter(s => s.recordings?.screen).length > 0
-      ? Math.round(project.sessions.reduce((acc, s) => acc + (s.recordings?.screen?.duration || 0), 0) / project.sessions.filter(s => s.recordings?.screen).length)
-      : 0,
-    avgAudioDuration: project.sessions.filter(s => s.recordings?.audio).length > 0
-      ? Math.round(project.sessions.reduce((acc, s) => acc + (s.recordings?.audio?.duration || 0), 0) / project.sessions.filter(s => s.recordings?.audio).length)
+    totalCombinedRecordings: project.sessions.filter(s => s.recordings?.combined?.available).length,
+    totalScreenRecordings: project.sessions.filter(s => s.recordings?.combined?.available && s.recordings.combined.hasVideo).length,
+    totalAudioRecordings: project.sessions.filter(s => s.recordings?.combined?.available && s.recordings.combined.hasAudio).length,
+    totalCombinedSize: project.sessions.reduce((acc, s) => acc + (s.recordings?.combined?.size || 0), 0),
+    avgCombinedDuration: project.sessions.filter(s => s.recordings?.combined).length > 0
+      ? Math.round(project.sessions.reduce((acc, s) => acc + (s.recordings?.combined?.duration || 0), 0) / project.sessions.filter(s => s.recordings?.combined).length)
       : 0
   };
-// (removed duplicate state and component declaration)
 
-if (analytics.totalSessions === 0) {
-  return (
-    <div className="bg-white rounded-lg shadow p-12 text-center">
-      <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">No session data yet</h3>
-      <p className="text-gray-600">Analytics will appear here once participants complete sessions</p>
-    </div>
-  );
-}
+  if (analytics.totalSessions === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow p-12 text-center">
+        <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No session data yet</h3>
+        <p className="text-gray-600">Analytics will appear here once participants complete sessions</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -179,67 +175,47 @@ if (analytics.totalSessions === 0) {
       </div>
 
       {/* Recording Analytics */}
-      {(recordingStats.totalScreenRecordings > 0 || recordingStats.totalAudioRecordings > 0) && (
+      {recordingStats.totalCombinedRecordings > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-6">Recording Analytics</h3>
-          <div className="grid grid-cols-2 gap-6">
-            {recordingStats.totalScreenRecordings > 0 && (
-              <div>
-                <div className="flex items-center space-x-3 mb-4">
-                  <FileVideo className="w-6 h-6 text-blue-600" />
-                  <span className="font-semibold text-gray-900">Screen Recordings</span>
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center space-x-3 mb-4">
+                <FileVideo className="w-6 h-6 text-blue-600" />
+                <span className="font-semibold text-gray-900">Combined Recordings</span>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Total Recordings</span>
+                  <span className="font-semibold text-gray-900">{recordingStats.totalCombinedRecordings}</span>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total Recordings</span>
-                    <span className="font-semibold text-gray-900">{recordingStats.totalScreenRecordings}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total Size</span>
-                    <span className="font-semibold text-gray-900">{formatBytes(recordingStats.totalScreenSize)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Avg Duration</span>
-                    <span className="font-semibold text-gray-900">{formatDuration(recordingStats.avgScreenDuration)}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full" 
-                      style={{ width: `${(recordingStats.totalScreenRecordings / analytics.totalSessions) * 100}%` }}
-                    ></div>
-                  </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">With Video</span>
+                  <span className="font-semibold text-gray-900">{recordingStats.totalScreenRecordings}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">With Audio</span>
+                  <span className="font-semibold text-gray-900">{recordingStats.totalAudioRecordings}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Total Size</span>
+                  <span className="font-semibold text-gray-900">{formatBytes(recordingStats.totalCombinedSize)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Avg Duration</span>
+                  <span className="font-semibold text-gray-900">{formatDuration(recordingStats.avgCombinedDuration)}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full" 
+                    style={{ width: `${(recordingStats.totalCombinedRecordings / analytics.totalSessions) * 100}%` }}
+                  ></div>
                 </div>
               </div>
-            )}
-            
-            {recordingStats.totalAudioRecordings > 0 && (
-              <div>
-                <div className="flex items-center space-x-3 mb-4">
-                  <FileAudio className="w-6 h-6 text-purple-600" />
-                  <span className="font-semibold text-gray-900">Audio Recordings</span>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total Recordings</span>
-                    <span className="font-semibold text-gray-900">{recordingStats.totalAudioRecordings}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total Size</span>
-                    <span className="font-semibold text-gray-900">{formatBytes(recordingStats.totalAudioSize)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Avg Duration</span>
-                    <span className="font-semibold text-gray-900">{formatDuration(recordingStats.avgAudioDuration)}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-purple-600 h-2 rounded-full" 
-                      style={{ width: `${(recordingStats.totalAudioRecordings / analytics.totalSessions) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>
+            <div className="bg-blue-50 rounded-lg p-4 text-sm text-gray-700">
+              <strong>Note:</strong> Recordings combine video and audio streams into a single synchronized file, ensuring audio stays perfectly in sync with video throughout the session.
+            </div>
           </div>
         </div>
       )}
@@ -283,21 +259,40 @@ if (analytics.totalSessions === 0) {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {session.hasVideo && <Video className="w-4 h-4 text-blue-600" />}
-                    {session.hasAudio && <Mic className="w-4 h-4 text-purple-600" />}
+                    {session.recordings?.combined ? (
+                      <>
+                        {session.recordings.combined.hasVideo && session.recordings.combined.hasAudio && (
+                          <span title="Combined video + audio recording" className="flex items-center space-x-1 bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
+                            <Video className="w-3 h-3" />
+                            <span>+</span>
+                            <Mic className="w-3 h-3" />
+                          </span>
+                        )}
+                        {session.recordings.combined.hasVideo && !session.recordings.combined.hasAudio && (
+                          <span title="Video recording">
+                            <Video className="w-4 h-4 text-blue-600" />
+                          </span>
+                        )}
+                        {!session.recordings.combined.hasVideo && session.recordings.combined.hasAudio && (
+                          <span title="Audio recording">
+                            <Mic className="w-4 h-4 text-purple-600" />
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {session.hasVideo && <Video className="w-4 h-4 text-blue-600" />}
+                        {session.hasAudio && <Mic className="w-4 h-4 text-purple-600" />}
+                      </>
+                    )}
                     {(hasFeedback || hasObservations) && (
                       <span title="Has feedback">
                         <Mail className="w-4 h-4 text-green-600" />
                       </span>
                     )}
-                    {session.recordings?.screen && (
-                      <span title="Screen recording available">
-                        <FileVideo className="w-4 h-4 text-blue-600" />
-                      </span>
-                    )}
-                    {session.recordings?.audio && (
-                      <span title="Audio recording available">
-                        <FileAudio className="w-4 h-4 text-purple-600" />
+                    {session.recordings?.combined && (
+                      <span title="Combined recording available">
+                        <FileVideo className="w-4 h-4 text-green-600" />
                       </span>
                     )}
                   </div>
@@ -378,47 +373,42 @@ if (analytics.totalSessions === 0) {
                 )}
 
                 {/* Recordings */}
-                {(session.recordings?.screen || session.recordings?.audio) && (
+                {session.recordings?.combined && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <div className="text-sm font-semibold text-gray-900 mb-3">Recordings:</div>
                     <div className="space-y-2">
-                      {session.recordings.screen && (
-                        <div className="bg-blue-50 rounded-lg p-3 flex items-center justify-between">
-                          <div>
-                            <div className="flex items-center space-x-2 mb-1">
+                      <div className="bg-blue-50 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            {session.recordings.combined.hasVideo && (
                               <FileVideo className="w-4 h-4 text-blue-600" />
-                              <span className="text-sm font-medium text-gray-900">Screen Recording</span>
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              Duration: {formatDuration(session.recordings.screen.duration)} • 
-                              Size: {formatBytes(session.recordings.screen.size)}
-                            </div>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            Available for download in production
-                          </div>
-                        </div>
-                      )}
-                      {session.recordings.audio && (
-                        <div className="bg-purple-50 rounded-lg p-3 flex items-center justify-between">
-                          <div>
-                            <div className="flex items-center space-x-2 mb-1">
+                            )}
+                            {session.recordings.combined.hasAudio && (
                               <FileAudio className="w-4 h-4 text-purple-600" />
-                              <span className="text-sm font-medium text-gray-900">Audio Recording</span>
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              Duration: {formatDuration(session.recordings.audio.duration)} • 
-                              Size: {formatBytes(session.recordings.audio.size)}
-                            </div>
+                            )}
+                            <span className="text-sm font-medium text-gray-900">
+                              {session.recordings.combined.hasVideo && session.recordings.combined.hasAudio
+                                ? 'Video + Audio Recording'
+                                : session.recordings.combined.hasVideo
+                                ? 'Video Recording'
+                                : 'Audio Recording'}
+                            </span>
                           </div>
-                          <div className="text-xs text-gray-500">
-                            Available for download in production
-                          </div>
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium">
+                            Synchronized
+                          </span>
                         </div>
-                      )}
+                        <div className="text-xs text-gray-600">
+                          Duration: {formatDuration(session.recordings.combined.duration)} • 
+                          Size: {formatBytes(session.recordings.combined.size)}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Available for download in production
+                        </div>
+                      </div>
                     </div>
                     <div className="mt-3 p-2 bg-gray-50 rounded text-xs text-gray-600">
-                      <strong>Note:</strong> In a production environment, recordings would be stored on a server and available for download or playback here. Due to browser storage limitations, recordings are not persisted in this demo.
+                      <strong>Note:</strong> In a production environment, recordings would be stored on a server and available for download or playback here. The combined recording keeps video and audio perfectly synchronized throughout the session.
                     </div>
                   </div>
                 )}

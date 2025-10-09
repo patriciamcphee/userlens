@@ -78,7 +78,12 @@ export function RecordingOptionsForm({
             <Activity className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
             <div className="text-sm text-gray-700">
               <div className="font-medium mb-1">Automatic Tracking Enabled</div>
-              <div>All sessions will record keyboard input, mouse clicks, cursor movements, and screen interactions for detailed analytics.</div>
+              <div className="mb-2">All sessions will record keyboard input, mouse clicks, cursor movements, and screen interactions for detailed analytics.</div>
+              {cameraOption !== 'disabled' && micOption !== 'disabled' && (
+                <div className="mt-2 pt-2 border-t border-blue-200 text-green-700 font-medium">
+                  ✓ When both camera and microphone are enabled, they will be recorded together in a single synchronized file, ensuring audio stays perfectly in sync with video.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -86,6 +91,3 @@ export function RecordingOptionsForm({
     </div>
   );
 }
-
-
-

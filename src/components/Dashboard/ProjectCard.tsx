@@ -1,6 +1,6 @@
 // components/Dashboard/ProjectCard.tsx
-import React from 'react';
-import { Edit2, Trash2, Users, User, CheckCircle, UserPlus, BarChart3 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Edit2, Trash2, Users, User, CheckCircle, UserPlus, BarChart3, MoreVertical, Archive, PlayCircle, CheckCircle2 } from 'lucide-react';
 import { Project, Participant } from '../../types';
 import { getAnalytics } from '../../utils';
 
@@ -10,10 +10,40 @@ interface ProjectCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onOpen: () => void;
+  onStatusChange: (status: 'active' | 'completed' | 'archived') => void;
 }
 
-export function ProjectCard({ project, participants, onEdit, onDelete, onOpen }: ProjectCardProps) {
+export function ProjectCard({ project, participants, onEdit, onDelete, onOpen, onStatusChange }: ProjectCardProps) {
   const analytics = getAnalytics(project);
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-700';
+      case 'completed':
+        return 'bg-blue-100 text-blue-700';
+      case 'archived':
+        return 'bg-gray-100 text-gray-700';
+      case 'draft':
+        return 'bg-yellow-100 text-yellow-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <PlayCircle className="w-3 h-3" />;
+      case 'completed':
+        return <CheckCircle2 className="w-3 h-3" />;
+      case 'archived':
+        return <Archive className="w-3 h-3" />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
@@ -22,13 +52,60 @@ export function ProjectCard({ project, participants, onEdit, onDelete, onOpen }:
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
               <h3 className="text-xl font-bold text-gray-900">{project.name}</h3>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                project.status === 'active' ? 'bg-green-100 text-green-700' :
-                project.status === 'draft' ? 'bg-gray-100 text-gray-700' :
-                'bg-blue-100 text-blue-700'
-              }`}>
-                {project.status}
-              </span>
+              
+              {/* Status Badge with Menu */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowStatusMenu(!showStatusMenu)}
+                  className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getStatusColor(project.status)} hover:opacity-80 transition-opacity`}
+                >
+                  {getStatusIcon(project.status)}
+                  <span className="capitalize">{project.status}</span>
+                  <MoreVertical className="w-3 h-3 ml-1" />
+                </button>
+                
+                {/* Status Dropdown Menu */}
+                {showStatusMenu && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setShowStatusMenu(false)}
+                    />
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-20 min-w-[140px]">
+                      <button
+                        onClick={() => {
+                          onStatusChange('active');
+                          setShowStatusMenu(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center space-x-2"
+                      >
+                        <PlayCircle className="w-4 h-4 text-green-600" />
+                        <span>Active</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          onStatusChange('completed');
+                          setShowStatusMenu(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center space-x-2"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                        <span>Completed</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          onStatusChange('archived');
+                          setShowStatusMenu(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center space-x-2"
+                      >
+                        <Archive className="w-4 h-4 text-gray-600" />
+                        <span>Archived</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
             <p className="text-gray-600">{project.description}</p>
           </div>
@@ -98,4 +175,3 @@ export function ProjectCard({ project, participants, onEdit, onDelete, onOpen }:
     </div>
   );
 }
-

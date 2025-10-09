@@ -15,17 +15,19 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
   const addQuestion = () => {
     const newQuestion: TaskQuestion = {
       id: Date.now(),
-      question: ''
+      question: '',
+      type: 'text',
+      required: false
     };
     onUpdate({
       customQuestions: [...(task.customQuestions || []), newQuestion]
     });
   };
 
-  const updateQuestion = (questionId: number, question: string) => {
+  const updateQuestion = (questionId: number, updates: Partial<TaskQuestion>) => {
     onUpdate({
       customQuestions: (task.customQuestions || []).map(q =>
-        q.id === questionId ? { ...q, question } : q
+        q.id === questionId ? { ...q, ...updates } : q
       )
     });
   };
@@ -34,6 +36,33 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
     onUpdate({
       customQuestions: (task.customQuestions || []).filter(q => q.id !== questionId)
     });
+  };
+
+  const addOption = (questionId: number) => {
+    const question = (task.customQuestions || []).find(q => q.id === questionId);
+    if (question) {
+      updateQuestion(questionId, {
+        options: [...(question.options || []), '']
+      });
+    }
+  };
+
+  const updateOption = (questionId: number, optionIndex: number, value: string) => {
+    const question = (task.customQuestions || []).find(q => q.id === questionId);
+    if (question && question.options) {
+      const newOptions = [...question.options];
+      newOptions[optionIndex] = value;
+      updateQuestion(questionId, { options: newOptions });
+    }
+  };
+
+  const removeOption = (questionId: number, optionIndex: number) => {
+    const question = (task.customQuestions || []).find(q => q.id === questionId);
+    if (question && question.options) {
+      updateQuestion(questionId, {
+        options: question.options.filter((_, i) => i !== optionIndex)
+      });
+    }
   };
 
   const updateRatingScale = (field: 'low' | 'high', value: string) => {
@@ -148,25 +177,90 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
             {(task.customQuestions || []).length === 0 ? (
               <p className="text-xs text-gray-500 italic">No custom questions yet</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {(task.customQuestions || []).map((q, idx) => (
-                  <div key={q.id} className="flex items-start space-x-2">
-                    <span className="text-xs text-gray-500 mt-2 flex-shrink-0">Q{idx + 1}:</span>
-                    <input
-                      type="text"
-                      value={q.question}
-                      onChange={(e) => updateQuestion(q.id, e.target.value)}
-                      placeholder="Enter your question..."
-                      maxLength={300}
-                      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <button
-                      onClick={() => removeQuestion(q.id)}
-                      className="text-red-500 hover:text-red-700 mt-1 transition-colors"
-                      aria-label="Remove question"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <div key={q.id} className="bg-white rounded-lg p-3 border border-gray-200">
+                    <div className="flex items-start space-x-2 mb-2">
+                      <span className="text-xs text-gray-500 mt-2 flex-shrink-0">Q{idx + 1}:</span>
+                      <div className="flex-1 space-y-2">
+                        <input
+                          type="text"
+                          value={q.question}
+                          onChange={(e) => updateQuestion(q.id, { question: e.target.value })}
+                          placeholder="Enter your question..."
+                          maxLength={300}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        
+                        <div className="flex items-center space-x-3">
+                          <select
+                            value={q.type || 'text'}
+                            onChange={(e) => updateQuestion(q.id, { 
+                              type: e.target.value as 'text' | 'multiple-choice' | 'checkbox',
+                              options: e.target.value !== 'text' ? (q.options || ['']) : undefined
+                            })}
+                            className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="text">Text Answer</option>
+                            <option value="multiple-choice">Multiple Choice (single)</option>
+                            <option value="checkbox">Multiple Choice (multiple)</option>
+                          </select>
+                          
+                          <label className="flex items-center space-x-1 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={q.required || false}
+                              onChange={(e) => updateQuestion(q.id, { required: e.target.checked })}
+                              className="w-3 h-3 text-blue-600 rounded"
+                            />
+                            <span className="text-xs text-gray-600">Required</span>
+                          </label>
+                        </div>
+
+                        {/* Options for multiple-choice and checkbox */}
+                        {((q.type || 'text') === 'multiple-choice' || (q.type || 'text') === 'checkbox') && (
+                          <div className="mt-2 pl-4 border-l-2 border-blue-300 space-y-2">
+                            <div className="text-xs font-medium text-gray-700 mb-2">Options:</div>
+                            {(q.options || []).map((option, optIdx) => (
+                              <div key={optIdx} className="flex items-center space-x-2">
+                                <span className="text-xs text-gray-500 w-6">{String.fromCharCode(65 + optIdx)}.</span>
+                                <input
+                                  type="text"
+                                  value={option}
+                                  onChange={(e) => updateOption(q.id, optIdx, e.target.value)}
+                                  placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
+                                  maxLength={200}
+                                  className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                />
+                                {(q.options?.length || 0) > 1 && (
+                                  <button
+                                    onClick={() => removeOption(q.id, optIdx)}
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                            <button
+                              onClick={() => addOption(q.id)}
+                              className="text-xs text-blue-600 hover:text-blue-700 flex items-center space-x-1"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <span>Add Option</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <button
+                        onClick={() => removeQuestion(q.id)}
+                        className="text-red-500 hover:text-red-700 mt-1 transition-colors"
+                        aria-label="Remove question"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
