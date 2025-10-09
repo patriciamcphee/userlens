@@ -1,0 +1,185 @@
+// utils/index.ts
+import { Project, Participant, Analytics, SessionLink } from '../types';
+
+export const getAnalytics = (project: Project): Analytics => {
+  const sessions = project.sessions || [];
+  const totalSessions = sessions.length;
+  const completedSessions = sessions.filter(s => s.tasksCompleted === s.totalTasks).length;
+  const avgDuration = sessions.length > 0 
+    ? Math.round(sessions.reduce((acc, s) => acc + s.duration, 0) / sessions.length)
+    : 0;
+  const avgClicks = sessions.length > 0
+    ? Math.round(sessions.reduce((acc, s) => acc + s.mouseClicks, 0) / sessions.length)
+    : 0;
+  const avgKeystrokes = sessions.length > 0
+    ? Math.round(sessions.reduce((acc, s) => acc + s.keystrokes, 0) / sessions.length)
+    : 0;
+  const videoUsage = sessions.filter(s => s.hasVideo).length;
+  const audioUsage = sessions.filter(s => s.hasAudio).length;
+  
+  return {
+    totalSessions,
+    completedSessions,
+    completionRate: totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0,
+    avgDuration,
+    avgClicks,
+    avgKeystrokes,
+    videoUsage,
+    audioUsage
+  };
+};
+
+export const exportToCSV = (project: Project, participants: Participant[]) => {
+  if (!project.sessions || project.sessions.length === 0) {
+    alert('No session data to export');
+    return;
+  }
+
+  const headers = [
+    'Session ID',
+    'Participant Name',
+    'Participant Email',
+    'Completed Date',
+    'Duration (seconds)',
+    'Tasks Completed',
+    'Total Tasks',
+    'Mouse Clicks',
+    'Keystrokes',
+    'Has Video',
+    'Has Audio',
+    'Task Title',
+    'Rating',
+    'Rating Label',
+    'Task Feedback',
+    'Question',
+    'Answer',
+    'General Observations'
+  ];
+
+  const rows: string[][] = [];
+
+  project.sessions.forEach(session => {
+    const participant = participants.find(p => p.id === session.participantId);
+    const baseData = [
+      session.id.toString(),
+      participant?.name || 'Unknown',
+      participant?.email || '',
+      new Date(session.completedAt).toLocaleString(),
+      session.duration.toString(),
+      session.tasksCompleted.toString(),
+      session.totalTasks.toString(),
+      session.mouseClicks.toString(),
+      session.keystrokes.toString(),
+      session.hasVideo ? 'Yes' : 'No',
+      session.hasAudio ? 'Yes' : 'No'
+    ];
+
+    if (session.taskFeedback && session.taskFeedback.length > 0) {
+      session.taskFeedback.forEach(feedback => {
+        const task = project.setup.tasks.find(t => t.id === feedback.taskId);
+        
+        const feedbackRow = [
+          ...baseData,
+          task?.title || 'Unknown Task',
+          feedback.rating?.toString() || '',
+          task?.ratingLabel || '',
+          feedback.answer || '',
+          '',
+          '',
+          session.observations || ''
+        ];
+        rows.push(feedbackRow);
+
+        if (feedback.questionAnswers) {
+          feedback.questionAnswers.forEach(qa => {
+            const question = task?.customQuestions?.find(q => q.id === qa.questionId);
+            const qaRow = [
+              ...baseData,
+              task?.title || 'Unknown Task',
+              '',
+              '',
+              '',
+              question?.question || '',
+              qa.answer,
+              ''
+            ];
+            rows.push(qaRow);
+          });
+        }
+      });
+    } else {
+      const row = [...baseData, '', '', '', '', '', '', session.observations || ''];
+      rows.push(row);
+    }
+  });
+
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${project.name.replace(/[^a-z0-9]/gi, '_')}_research_data.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+export const generateSessionLink = (
+  projectId: number,
+  participantId: number,
+  expiryDays: number = 7
+): { linkId: string; link: string; sessionLink: SessionLink } => {
+  const linkId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + expiryDays);
+
+  const sessionLink: SessionLink = {
+    id: linkId,
+    projectId,
+    participantId,
+    createdAt: new Date().toISOString(),
+    expiresAt: expiresAt.toISOString(),
+    used: false,
+    emailSent: false
+  };
+
+  const baseUrl = window.location.origin + window.location.pathname;
+  const link = `${baseUrl}?session=${linkId}`;
+
+  return { linkId, link, sessionLink };
+};
+
+export const formatEmailTemplate = (
+  template: string,
+  participantName: string,
+  projectName: string,
+  sessionLink: string,
+  expiryDate: string
+): string => {
+  return template
+    .replace(/{participantName}/g, participantName)
+    .replace(/{projectName}/g, projectName)
+    .replace(/{sessionLink}/g, sessionLink)
+    .replace(/{expiryDate}/g, expiryDate);
+};
+
+export const copyToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    // Fallback for browsers that don't support clipboard API
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return true;
+  }
+};
