@@ -1660,8 +1660,6 @@ const markLinkAsUsed = (linkId: string) => {
     );
   }
 
-// Continue from Part 3...
-
   // PROJECT DETAIL VIEW
   if (view === 'projectDetail' && currentProject) {
     const projectParticipants = participants.filter(p => currentProject.participantIds.includes(p.id));
@@ -2045,7 +2043,9 @@ const markLinkAsUsed = (linkId: string) => {
                                 {session.hasVideo && <Video className="w-4 h-4 text-blue-600" />}
                                 {session.hasAudio && <Mic className="w-4 h-4 text-purple-600" />}
                                 {(hasFeedback || hasObservations) && (
-                                  <Mail className="w-4 h-4 text-green-600" title="Has feedback" />
+                                  <span title="Has feedback">
+                                    <Mail className="w-4 h-4 text-green-600" />
+                                  </span>
                                 )}
                               </div>
                             </div>
