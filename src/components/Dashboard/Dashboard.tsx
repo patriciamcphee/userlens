@@ -1,6 +1,6 @@
 // components/Dashboard/Dashboard.tsx
 import React from 'react';
-import { Plus, LayoutDashboard } from 'lucide-react';
+import { Plus, LayoutDashboard, BookOpen, Mail, HelpCircle } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { ProjectCard } from './ProjectCard';
 import { ParticipantsList } from './ParticipantsList';
@@ -32,16 +32,39 @@ export function Dashboard({ onCreateProject, onEditProject, onOpenProject }: Das
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">User Testing Dashboard</h1>
-              <p className="text-gray-600 mt-1">Manage your testing projects and participants</p>
+              <div className="flex items-center space-x-3">
+                <h1 className="text-3xl font-bold text-gray-900">InsightHub</h1>
+                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">Beta</span>
+              </div>
+              <p className="text-gray-600 mt-1">User Research & Testing Platform</p>
             </div>
-            <button
-              onClick={onCreateProject}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center space-x-2"
-            >
-              <Plus className="w-5 h-5" />
-              <span>New Project</span>
-            </button>
+            <div className="flex items-center space-x-6">
+              <a
+                href="https://docs.insighthub.io/user-guide"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                <BookOpen className="w-5 h-5" />
+                <span className="text-sm font-medium">User Guide</span>
+              </a>
+              <a
+                href="https://docs.insighthub.io/help"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                <HelpCircle className="w-5 h-5" />
+                <span className="text-sm font-medium">Help Center</span>
+              </a>
+              <a
+                href="mailto:support@insighthub.io"
+                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                <Mail className="w-5 h-5" />
+                <span className="text-sm font-medium">Support</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -51,7 +74,16 @@ export function Dashboard({ onCreateProject, onEditProject, onOpenProject }: Das
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Projects Section */}
           <div className="lg:col-span-2">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Projects</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Projects</h2>
+              <button
+                onClick={onCreateProject}
+                className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                aria-label="Create new project"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
             
             {state.projects.length === 0 ? (
               <div className="bg-white rounded-lg shadow p-12 text-center">

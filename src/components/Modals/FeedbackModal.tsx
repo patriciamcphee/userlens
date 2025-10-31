@@ -1,4 +1,4 @@
-// components/Modals/FeedbackModal.tsx
+// components/Modals/FeedbackModal.tsx - UPDATED for Yes/No and new task structure
 import React from 'react';
 import { CheckCircle, Trash2 } from 'lucide-react';
 import { Task, TaskFeedback } from '../../types';
@@ -75,9 +75,49 @@ export function FeedbackModal({
         </div>
 
         <div className="p-6">
+          {/* Task Display - showing new structure */}
           <div className="bg-purple-50 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-gray-900 mb-2">{task.title}</h3>
-            <p className="text-sm text-gray-600">{task.description}</p>
+            <h3 className="font-semibold text-gray-900 mb-3">{task.title}</h3>
+            
+            {task.estimatedTime && (
+              <div className="text-sm text-gray-600 mb-2">
+                <strong>Time:</strong> {task.estimatedTime}
+              </div>
+            )}
+            
+            {task.objective && (
+              <div className="text-sm text-gray-700 mb-2">
+                <strong>Objective:</strong> {task.objective}
+              </div>
+            )}
+            
+            {task.scenario && (
+              <div className="text-sm text-gray-700 mb-2">
+                <strong>Scenario:</strong> {task.scenario}
+              </div>
+            )}
+            
+            {task.yourTask && task.yourTask.length > 0 && task.yourTask[0] !== '' && (
+              <div className="mb-2">
+                <strong className="text-sm text-gray-700">Your Task:</strong>
+                <ol className="list-decimal list-inside text-sm text-gray-700 ml-2 mt-1">
+                  {task.yourTask.map((step, idx) => (
+                    step && <li key={idx}>{step}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
+            
+            {task.successCriteria && (
+              <div className="text-sm text-gray-700">
+                <strong>Success Criteria:</strong> {task.successCriteria}
+              </div>
+            )}
+            
+            {/* Fallback to old description if exists */}
+            {task.description && !task.objective && (
+              <p className="text-sm text-gray-600">{task.description}</p>
+            )}
           </div>
 
           {task.ratingEnabled && (
@@ -129,6 +169,33 @@ export function FeedbackModal({
                         rows={3}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                       />
+                    )}
+                    
+                    {questionType === 'yes-no' && (
+                      <div className="flex items-center space-x-6">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`question-${q.id}`}
+                            value="Yes"
+                            checked={answer === 'Yes'}
+                            onChange={(e) => onQuestionAnswerChange(q.id, e.target.value)}
+                            className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                          />
+                          <span className="text-sm text-gray-700">Yes</span>
+                        </label>
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`question-${q.id}`}
+                            value="No"
+                            checked={answer === 'No'}
+                            onChange={(e) => onQuestionAnswerChange(q.id, e.target.value)}
+                            className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                          />
+                          <span className="text-sm text-gray-700">No</span>
+                        </label>
+                      </div>
                     )}
                     
                     {questionType === 'multiple-choice' && (
