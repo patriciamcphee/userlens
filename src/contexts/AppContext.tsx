@@ -1,4 +1,3 @@
-// contexts/AppContext.tsx
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { Project, Participant, SessionLink, Session } from '../types';
 import { DEFAULT_PARTICIPANTS } from '../constants';
@@ -37,9 +36,11 @@ type AppAction =
   | { type: 'ADD_SESSION'; payload: { projectId: number; session: Session } }
   | { type: 'SET_PARTICIPANTS'; payload: Participant[] }
   | { type: 'ADD_PARTICIPANT'; payload: Participant }
+  | { type: 'UPDATE_PARTICIPANT'; payload: { id: number; updates: Partial<Participant> } }
   | { type: 'DELETE_PARTICIPANT'; payload: number }
   | { type: 'ADD_PARTICIPANT_TO_PROJECT'; payload: { projectId: number; participantId: number } }
   | { type: 'REMOVE_PARTICIPANT_FROM_PROJECT'; payload: { projectId: number; participantId: number } }
+  | { type: 'SET_PARTICIPANT_USAGE_LEVEL'; payload: { projectId: number; participantId: number; usageLevel: 'active' | 'occasionally' | 'non-user' } }
   | { type: 'SET_SESSION_LINKS'; payload: SessionLink[] }
   | { type: 'ADD_SESSION_LINK'; payload: SessionLink }
   | { type: 'UPDATE_SESSION_LINK'; payload: { id: string; updates: Partial<SessionLink> } }
@@ -61,9 +62,11 @@ interface AppContextType {
     // Participant actions
     setParticipants: (participants: Participant[]) => void;
     addParticipant: (participant: Participant) => void;
+    updateParticipant: (id: number, updates: Partial<Participant>) => void;
     deleteParticipant: (id: number) => void;
     addParticipantToProject: (projectId: number, participantId: number) => void;
     removeParticipantFromProject: (projectId: number, participantId: number) => void;
+    setParticipantUsageLevel: (projectId: number, participantId: number, usageLevel: 'active' | 'occasionally' | 'non-user') => void;
     
     // Session link actions
     setSessionLinks: (links: SessionLink[]) => void;
@@ -115,7 +118,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, projects: action.payload };
     
     case 'ADD_PROJECT':
-      return { ...state, projects: [...state.projects, action.payload] };
+      return { 
+        ...state, 
+        projects: [
+          ...state.projects, 
+          { ...action.payload, participantAssignments: action.payload.participantAssignments || [] }
+        ] 
+      };
     
     case 'UPDATE_PROJECT':
       return {
@@ -136,7 +145,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         projects: state.projects.map(p =>
           p.id === action.payload.projectId
-            ? { ...p, sessions: [...(p.sessions || []), action.payload.session] }
+            ? { ...p, sessions: [...p.sessions, action.payload.session] }
             : p
         )
       };
@@ -147,13 +156,24 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'ADD_PARTICIPANT':
       return { ...state, participants: [...state.participants, action.payload] };
     
+    case 'UPDATE_PARTICIPANT':
+      return {
+        ...state,
+        participants: state.participants.map(p =>
+          p.id === action.payload.id ? { ...p, ...action.payload.updates } : p
+        )
+      };
+    
     case 'DELETE_PARTICIPANT':
       return {
         ...state,
         participants: state.participants.filter(p => p.id !== action.payload),
         projects: state.projects.map(proj => ({
           ...proj,
-          participantIds: proj.participantIds.filter(pId => pId !== action.payload)
+          participantIds: proj.participantIds.filter(id => id !== action.payload),
+          participantAssignments: (proj.participantAssignments || []).filter(
+            a => a.participantId !== action.payload
+          )
         }))
       };
     
@@ -161,8 +181,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         projects: state.projects.map(p =>
-          p.id === action.payload.projectId && !p.participantIds.includes(action.payload.participantId)
-            ? { ...p, participantIds: [...p.participantIds, action.payload.participantId] }
+          p.id === action.payload.projectId
+            ? { 
+                ...p, 
+                participantIds: [...p.participantIds, action.payload.participantId]
+              }
             : p
         )
       };
@@ -172,9 +195,50 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         projects: state.projects.map(p =>
           p.id === action.payload.projectId
-            ? { ...p, participantIds: p.participantIds.filter(id => id !== action.payload.participantId) }
+            ? { 
+                ...p, 
+                participantIds: p.participantIds.filter(id => id !== action.payload.participantId),
+                participantAssignments: (p.participantAssignments || []).filter(
+                  a => a.participantId !== action.payload.participantId
+                )
+              }
             : p
         )
+      };
+    
+    case 'SET_PARTICIPANT_USAGE_LEVEL':
+      return {
+        ...state,
+        projects: state.projects.map(p => {
+          if (p.id !== action.payload.projectId) return p;
+          
+          // Ensure participantAssignments array exists
+          const assignments = p.participantAssignments || [];
+          const existingIndex = assignments.findIndex(
+            a => a.participantId === action.payload.participantId
+          );
+          
+          let newAssignments;
+          if (existingIndex >= 0) {
+            // Update existing assignment
+            newAssignments = [...assignments];
+            newAssignments[existingIndex] = {
+              participantId: action.payload.participantId,
+              usageLevel: action.payload.usageLevel
+            };
+          } else {
+            // Add new assignment
+            newAssignments = [
+              ...assignments,
+              {
+                participantId: action.payload.participantId,
+                usageLevel: action.payload.usageLevel
+              }
+            ];
+          }
+          
+          return { ...p, participantAssignments: newAssignments };
+        })
       };
     
     case 'SET_SESSION_LINKS':
@@ -253,11 +317,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_PARTICIPANTS', payload: participants }),
     addParticipant: (participant: Participant) =>
       dispatch({ type: 'ADD_PARTICIPANT', payload: participant }),
+    updateParticipant: (id: number, updates: Partial<Participant>) =>
+      dispatch({ type: 'UPDATE_PARTICIPANT', payload: { id, updates } }),
     deleteParticipant: (id: number) => dispatch({ type: 'DELETE_PARTICIPANT', payload: id }),
     addParticipantToProject: (projectId: number, participantId: number) =>
       dispatch({ type: 'ADD_PARTICIPANT_TO_PROJECT', payload: { projectId, participantId } }),
     removeParticipantFromProject: (projectId: number, participantId: number) =>
       dispatch({ type: 'REMOVE_PARTICIPANT_FROM_PROJECT', payload: { projectId, participantId } }),
+    
+    setParticipantUsageLevel: (
+      projectId: number, 
+      participantId: number, 
+      usageLevel: 'active' | 'occasionally' | 'non-user'
+    ) => dispatch({ 
+      type: 'SET_PARTICIPANT_USAGE_LEVEL', 
+      payload: { projectId, participantId, usageLevel } 
+    }),
     
     setSessionLinks: (links: SessionLink[]) =>
       dispatch({ type: 'SET_SESSION_LINKS', payload: links }),

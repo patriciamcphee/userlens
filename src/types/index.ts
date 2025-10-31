@@ -2,7 +2,7 @@
 export interface TaskQuestion {
   id: number;
   question: string;
-  type: 'text' | 'multiple-choice' | 'checkbox';
+  type: 'text' | 'multiple-choice' | 'checkbox' | 'yes-no'; // Added 'yes-no'
   options?: string[]; // For multiple-choice and checkbox
   required?: boolean;
 }
@@ -10,7 +10,15 @@ export interface TaskQuestion {
 export interface Task {
   id: number;
   title: string;
-  description: string;
+  // Legacy field kept for backwards compatibility
+  description?: string;
+  // New structured fields
+  estimatedTime?: string;
+  objective?: string;
+  scenario?: string;
+  yourTask?: string[]; // Array of task steps as numbered list
+  successCriteria?: string;
+  difficulty: 'easy' | 'medium' | 'hard' | 'all'; 
   ratingEnabled?: boolean;
   ratingLabel?: string;
   ratingScale?: {
@@ -19,7 +27,6 @@ export interface Task {
   };
   customQuestions?: TaskQuestion[];
 }
-
 export interface TaskFeedback {
   taskId: number;
   answer: string;
@@ -82,6 +89,12 @@ export interface Session {
   observations: string;
 }
 
+// Interface for tracking participant usage level per project
+export interface ParticipantAssignment {
+  participantId: number;
+  usageLevel: 'active' | 'occasionally' | 'non-user';
+}
+
 export interface Project {
   id: number;
   name: string;
@@ -89,6 +102,7 @@ export interface Project {
   mode: 'moderated' | 'unmoderated';
   status: 'draft' | 'active' | 'completed' | 'archived';
   participantIds: number[];
+  participantAssignments: ParticipantAssignment[];
   sessions: Session[];
   cameraOption: 'optional' | 'required' | 'disabled';
   micOption: 'optional' | 'required' | 'disabled';
@@ -99,6 +113,7 @@ export interface Participant {
   id: number;
   name: string;
   email: string;
+  defaultUsageLevel?: 'active' | 'occasionally' | 'non-user'; // NEW: Default usage level
 }
 
 export interface Analytics {

@@ -1,6 +1,6 @@
-// components/ProjectSetup/TaskItem.tsx
+// components/ProjectDetail/EditTaskModal.tsx
 import React, { useState } from 'react';
-import { GripVertical, Trash2, Plus, Target, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Target, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Task, TaskQuestion } from '../../types';
 
 // Import the utility function for rating scales
@@ -17,12 +17,10 @@ function getDefaultRatingScale(label: string): { low: string; high: string } {
   return defaults[label] || { low: 'Low', high: 'High' };
 }
 
-interface TaskItemProps {
+interface EditTaskModalProps {
   task: Task;
-  index: number;
-  canDelete: boolean;
-  onUpdate: (updates: Partial<Task>) => void;
-  onRemove: () => void;
+  onSave: (updates: Partial<Task>) => void;
+  onClose: () => void;
 }
 
 const ESTIMATED_TIME_OPTIONS = [
@@ -34,16 +32,58 @@ const ESTIMATED_TIME_OPTIONS = [
   "20+ minutes"
 ];
 
-export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskItemProps) {
+export function EditTaskModal({ task, onSave, onClose }: EditTaskModalProps) {
+  const [title, setTitle] = useState(task.title);
+  const [estimatedTime, setEstimatedTime] = useState(task.estimatedTime || '');
+  const [objective, setObjective] = useState(task.objective || '');
+  const [scenario, setScenario] = useState(task.scenario || '');
+  const [yourTask, setYourTask] = useState<string[]>(task.yourTask || ['']);
+  const [successCriteria, setSuccessCriteria] = useState(task.successCriteria || '');
+  const [difficulty, setDifficulty] = useState(task.difficulty);
+  const [ratingEnabled, setRatingEnabled] = useState(task.ratingEnabled || false);
+  const [ratingLabel, setRatingLabel] = useState(task.ratingLabel || 'Task Difficulty');
+  const [ratingScale, setRatingScale] = useState(task.ratingScale || { low: 'Very Easy', high: 'Very Difficult' });
+  const [customQuestions, setCustomQuestions] = useState<TaskQuestion[]>(task.customQuestions || []);
+  const [errors, setErrors] = useState<{ title?: string }>({});
   const [showQuestions, setShowQuestions] = useState(false);
 
   // NEW: Handler to auto-populate rating scale values when label changes
   const handleRatingLabelChange = (newLabel: string) => {
+    setRatingLabel(newLabel);
     const defaultScale = getDefaultRatingScale(newLabel);
-    onUpdate({
-      ratingLabel: newLabel,
-      ratingScale: defaultScale
+    setRatingScale(defaultScale);
+  };
+
+  const handleSave = () => {
+    // Validation
+    const newErrors: { title?: string } = {};
+    
+    if (!title.trim()) {
+      newErrors.title = 'Task title is required';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    // Filter out empty task steps
+    const filteredSteps = yourTask.filter(step => step.trim() !== '');
+
+    onSave({
+      title: title.trim(),
+      estimatedTime: estimatedTime.trim(),
+      objective: objective.trim(),
+      scenario: scenario.trim(),
+      yourTask: filteredSteps.length > 0 ? filteredSteps : [''],
+      successCriteria: successCriteria.trim(),
+      difficulty,
+      ratingEnabled,
+      ratingLabel,
+      ratingScale,
+      customQuestions
     });
+    onClose();
   };
 
   const addQuestion = () => {
@@ -53,28 +93,22 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
       type: 'text',
       required: false
     };
-    onUpdate({
-      customQuestions: [...(task.customQuestions || []), newQuestion]
-    });
+    setCustomQuestions([...customQuestions, newQuestion]);
     setShowQuestions(true);
   };
 
   const updateQuestion = (questionId: number, updates: Partial<TaskQuestion>) => {
-    onUpdate({
-      customQuestions: (task.customQuestions || []).map(q =>
-        q.id === questionId ? { ...q, ...updates } : q
-      )
-    });
+    setCustomQuestions(customQuestions.map(q =>
+      q.id === questionId ? { ...q, ...updates } : q
+    ));
   };
 
   const removeQuestion = (questionId: number) => {
-    onUpdate({
-      customQuestions: (task.customQuestions || []).filter(q => q.id !== questionId)
-    });
+    setCustomQuestions(customQuestions.filter(q => q.id !== questionId));
   };
 
   const addOption = (questionId: number) => {
-    const question = (task.customQuestions || []).find(q => q.id === questionId);
+    const question = customQuestions.find(q => q.id === questionId);
     if (question) {
       updateQuestion(questionId, {
         options: [...(question.options || []), '']
@@ -83,7 +117,7 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
   };
 
   const updateOption = (questionId: number, optionIndex: number, value: string) => {
-    const question = (task.customQuestions || []).find(q => q.id === questionId);
+    const question = customQuestions.find(q => q.id === questionId);
     if (question && question.options) {
       const newOptions = [...question.options];
       newOptions[optionIndex] = value;
@@ -92,7 +126,7 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
   };
 
   const removeOption = (questionId: number, optionIndex: number) => {
-    const question = (task.customQuestions || []).find(q => q.id === questionId);
+    const question = customQuestions.find(q => q.id === questionId);
     if (question && question.options) {
       updateQuestion(questionId, {
         options: question.options.filter((_, i) => i !== optionIndex)
@@ -100,61 +134,72 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
     }
   };
 
-  const updateRatingScale = (field: 'low' | 'high', value: string) => {
-    onUpdate({
-      ratingScale: {
-        ...task.ratingScale!,
-        [field]: value
-      }
-    });
-  };
-
   const addTaskStep = () => {
-    onUpdate({
-      yourTask: [...(task.yourTask || ['']), '']
-    });
+    setYourTask([...yourTask, '']);
   };
 
   const updateTaskStep = (stepIndex: number, value: string) => {
-    const newSteps = [...(task.yourTask || [''])];
+    const newSteps = [...yourTask];
     newSteps[stepIndex] = value;
-    onUpdate({ yourTask: newSteps });
+    setYourTask(newSteps);
   };
 
   const removeTaskStep = (stepIndex: number) => {
-    if ((task.yourTask || ['']).length > 1) {
-      onUpdate({
-        yourTask: (task.yourTask || ['']).filter((_, i) => i !== stepIndex)
-      });
+    if (yourTask.length > 1) {
+      setYourTask(yourTask.filter((_, i) => i !== stepIndex));
     }
   };
 
   return (
-    <div className="border-2 border-gray-200 rounded-lg p-4">
-      <div className="flex items-start space-x-3">
-        <GripVertical className="w-5 h-5 text-gray-400 mt-2 flex-shrink-0" />
-        
-        <div className="flex-1 space-y-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Edit Task</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-6">
           {/* Task Title */}
-          <input
-            type="text"
-            value={task.title}
-            onChange={(e) => onUpdate({ title: e.target.value })}
-            placeholder="Task title..."
-            maxLength={200}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-semibold"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Task Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (errors.title) setErrors({ ...errors, title: undefined });
+              }}
+              placeholder="Task title..."
+              maxLength={200}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.title ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {errors.title && (
+              <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+            )}
+          </div>
 
           {/* Estimated Time */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Estimated Time
             </label>
             <div className="flex space-x-2">
               <select
-                value={task.estimatedTime || ''}
-                onChange={(e) => onUpdate({ estimatedTime: e.target.value })}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={ESTIMATED_TIME_OPTIONS.includes(estimatedTime) ? estimatedTime : ''}
+                onChange={(e) => setEstimatedTime(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select estimated time...</option>
                 {ESTIMATED_TIME_OPTIONS.map(option => (
@@ -163,41 +208,41 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
               </select>
               <input
                 type="text"
-                value={task.estimatedTime && !ESTIMATED_TIME_OPTIONS.includes(task.estimatedTime) ? task.estimatedTime : ''}
-                onChange={(e) => onUpdate({ estimatedTime: e.target.value })}
-                placeholder="Or enter custom time"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={!ESTIMATED_TIME_OPTIONS.includes(estimatedTime) ? estimatedTime : ''}
+                onChange={(e) => setEstimatedTime(e.target.value)}
+                placeholder="Or custom time"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Objective */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Objective (one sentence)
             </label>
             <input
               type="text"
-              value={task.objective || ''}
-              onChange={(e) => onUpdate({ objective: e.target.value })}
+              value={objective}
+              onChange={(e) => setObjective(e.target.value)}
               placeholder="What is the goal of this task?"
               maxLength={200}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           {/* Scenario */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Scenario (one sentence)
             </label>
             <input
               type="text"
-              value={task.scenario || ''}
-              onChange={(e) => onUpdate({ scenario: e.target.value })}
+              value={scenario}
+              onChange={(e) => setScenario(e.target.value)}
               placeholder="Set the context for this task..."
               maxLength={200}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
@@ -207,7 +252,7 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
               Your Task (numbered steps)
             </label>
             <div className="space-y-2">
-              {(task.yourTask || ['']).map((step, stepIndex) => (
+              {yourTask.map((step, stepIndex) => (
                 <div key={stepIndex} className="flex items-start space-x-2">
                   <span className="text-sm text-gray-600 mt-2 w-6">{stepIndex + 1}.</span>
                   <input
@@ -216,9 +261,9 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
                     onChange={(e) => updateTaskStep(stepIndex, e.target.value)}
                     placeholder={`Step ${stepIndex + 1}`}
                     maxLength={200}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-                  {(task.yourTask || ['']).length > 1 && (
+                  {yourTask.length > 1 && (
                     <button
                       onClick={() => removeTaskStep(stepIndex)}
                       className="text-red-500 hover:text-red-700 mt-2"
@@ -233,27 +278,27 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
               onClick={addTaskStep}
               className="mt-2 text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-4 h-4" />
               <span>Add Step</span>
             </button>
           </div>
 
           {/* Success Criteria */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Success Criteria
             </label>
             <textarea
-              value={task.successCriteria || ''}
-              onChange={(e) => onUpdate({ successCriteria: e.target.value })}
+              value={successCriteria}
+              onChange={(e) => setSuccessCriteria(e.target.value)}
               placeholder="How will the participant know they've completed this task successfully?"
               maxLength={300}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={3}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
-          {/* Difficulty Level Selector */}
+          {/* Difficulty Level */}
           <div className="bg-blue-50 rounded-lg p-4">
             <div className="flex items-center space-x-2 mb-3">
               <Target className="w-4 h-4 text-blue-600" />
@@ -267,9 +312,9 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
             <div className="grid grid-cols-4 gap-3">
               <button
                 type="button"
-                onClick={() => onUpdate({ difficulty: 'easy' })}
+                onClick={() => setDifficulty('easy')}
                 className={`p-3 border-2 rounded-lg text-center transition-all ${
-                  task.difficulty === 'easy'
+                  difficulty === 'easy'
                     ? 'border-green-500 bg-green-50 ring-2 ring-green-200'
                     : 'border-gray-300 hover:border-green-400 bg-white'
                 }`}
@@ -279,9 +324,9 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
               </button>
               <button
                 type="button"
-                onClick={() => onUpdate({ difficulty: 'medium' })}
+                onClick={() => setDifficulty('medium')}
                 className={`p-3 border-2 rounded-lg text-center transition-all ${
-                  task.difficulty === 'medium'
+                  difficulty === 'medium'
                     ? 'border-yellow-500 bg-yellow-50 ring-2 ring-yellow-200'
                     : 'border-gray-300 hover:border-yellow-400 bg-white'
                 }`}
@@ -291,9 +336,9 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
               </button>
               <button
                 type="button"
-                onClick={() => onUpdate({ difficulty: 'hard' })}
+                onClick={() => setDifficulty('hard')}
                 className={`p-3 border-2 rounded-lg text-center transition-all ${
-                  task.difficulty === 'hard'
+                  difficulty === 'hard'
                     ? 'border-red-500 bg-red-50 ring-2 ring-red-200'
                     : 'border-gray-300 hover:border-red-400 bg-white'
                 }`}
@@ -303,9 +348,9 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
               </button>
               <button
                 type="button"
-                onClick={() => onUpdate({ difficulty: 'all' })}
+                onClick={() => setDifficulty('all')}
                 className={`p-3 border-2 rounded-lg text-center transition-all ${
-                  task.difficulty === 'all'
+                  difficulty === 'all'
                     ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
                     : 'border-gray-300 hover:border-blue-400 bg-white'
                 }`}
@@ -321,21 +366,21 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={task.ratingEnabled || false}
-                onChange={(e) => onUpdate({ ratingEnabled: e.target.checked })}
+                checked={ratingEnabled}
+                onChange={(e) => setRatingEnabled(e.target.checked)}
                 className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
               <span className="text-sm font-medium text-gray-700">Enable Rating Scale (1-5)</span>
             </label>
 
-            {task.ratingEnabled && (
+            {ratingEnabled && (
               <div className="space-y-3 pl-6 border-l-2 border-blue-300">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">
                     What are you measuring?
                   </label>
                   <select
-                    value={task.ratingLabel}
+                    value={ratingLabel}
                     onChange={(e) => handleRatingLabelChange(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
@@ -355,8 +400,8 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
                     </label>
                     <input
                       type="text"
-                      value={task.ratingScale?.low || ''}
-                      onChange={(e) => updateRatingScale('low', e.target.value)}
+                      value={ratingScale.low}
+                      onChange={(e) => setRatingScale({ ...ratingScale, low: e.target.value })}
                       placeholder="e.g., Not Confident"
                       maxLength={50}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -368,8 +413,8 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
                     </label>
                     <input
                       type="text"
-                      value={task.ratingScale?.high || ''}
-                      onChange={(e) => updateRatingScale('high', e.target.value)}
+                      value={ratingScale.high}
+                      onChange={(e) => setRatingScale({ ...ratingScale, high: e.target.value })}
                       placeholder="e.g., Very Confident"
                       maxLength={50}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -391,9 +436,9 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
                 <span className="text-sm font-medium text-gray-700">
                   Custom Questions
                 </span>
-                {(task.customQuestions || []).length > 0 && (
+                {customQuestions.length > 0 && (
                   <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                    {(task.customQuestions || []).length}
+                    {customQuestions.length}
                   </span>
                 )}
               </div>
@@ -419,10 +464,10 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
 
             {showQuestions && (
               <div className="px-4 pb-4 space-y-4">
-                {(task.customQuestions || []).length === 0 ? (
+                {customQuestions.length === 0 ? (
                   <p className="text-xs text-gray-500 italic pt-2">No custom questions yet</p>
                 ) : (
-                  (task.customQuestions || []).map((q, idx) => (
+                  customQuestions.map((q, idx) => (
                     <div key={q.id} className="bg-white rounded-lg p-3 border border-gray-200">
                       <div className="flex items-start space-x-2 mb-2">
                         <span className="text-xs text-gray-500 mt-2 flex-shrink-0">Q{idx + 1}:</span>
@@ -465,7 +510,7 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
                           </div>
 
                           {/* Options for multiple-choice and checkbox */}
-                          {((q.type || 'text') === 'multiple-choice' || (q.type || 'text') === 'checkbox') && (
+                          {(q.type === 'multiple-choice' || q.type === 'checkbox') && (
                             <div className="mt-2 pl-4 border-l-2 border-blue-300 space-y-2">
                               <div className="text-xs font-medium text-gray-700 mb-2">Options:</div>
                               {(q.options || []).map((option, optIdx) => (
@@ -516,15 +561,21 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
           </div>
         </div>
 
-        {canDelete && (
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-end space-x-3">
           <button
-            onClick={onRemove}
-            className="text-red-500 hover:text-red-700 flex-shrink-0 mt-2 transition-colors"
-            aria-label="Remove task"
+            onClick={onClose}
+            className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
           >
-            <Trash2 className="w-5 h-5" />
+            Cancel
           </button>
-        )}
+          <button
+            onClick={handleSave}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Save Changes
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,10 +1,10 @@
 // components/Session/UnmoderatedSession.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, CheckCircle, Clock, Monitor, Mic, Eye, Activity, Mail, Mouse, Keyboard, Video } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Monitor, Mic, Activity, Mail, Mouse, Keyboard, Video, SkipForward, Eye } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { Project, Participant, Task, Session, TaskFeedback, TrackingData } from '../../types';
-import { FeedbackModal } from '../Modals/FeedbackModal';
 import { CombinedRecorder, downloadRecording, isRecordingSupported } from '../../utils/recording';
+import { getTasksForParticipant } from '../../utils/taskFiltering';
 
 interface UnmoderatedSessionProps {
   project: Project;
@@ -23,14 +23,12 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
   const [trackingData, setTrackingData] = useState<TrackingData>({ clicks: 0, keystrokes: 0 });
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
   const [displayTasks, setDisplayTasks] = useState<Task[]>([]);
-  const [observations, setObservations] = useState('');
   
   // Optional recording preferences
   const [enableVideo, setEnableVideo] = useState(project.cameraOption === 'required');
   const [enableAudio, setEnableAudio] = useState(project.micOption === 'required');
   
-  // Feedback state
-  const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(false);
+  // Feedback state - now integrated into main view
   const [taskFeedback, setTaskFeedback] = useState<TaskFeedback[]>([]);
   const [currentTaskAnswer, setCurrentTaskAnswer] = useState('');
   const [currentTaskRating, setCurrentTaskRating] = useState<number>(0);
@@ -47,13 +45,16 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
   const recordingSupport = isRecordingSupported();
 
   useEffect(() => {
-    // Set up tasks with optional randomization
-    let tasksToUse = [...project.setup.tasks];
+    // Get tasks filtered by participant's usage level
+    let tasksToUse = getTasksForParticipant(project, participant.id);
+    
+    // Apply randomization if enabled
     if (project.setup.randomizeOrder) {
       tasksToUse = tasksToUse.sort(() => Math.random() - 0.5);
     }
+    
     setDisplayTasks(tasksToUse);
-  }, [project]);
+  }, [project, participant.id]);
 
   useEffect(() => {
     // Track actual mouse clicks and keystrokes
@@ -111,13 +112,51 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
     }
   };
 
-  const handleTaskComplete = (taskId: number) => {
-    if (!completedTasks.includes(taskId)) {
-      setShowFeedbackPrompt(true);
-    }
+  const getQuestionAnswer = (questionId: number): string | string[] => {
+    return currentQuestionAnswers.find(a => a.questionId === questionId)?.answer || '';
   };
 
-  const submitTaskFeedback = () => {
+  const handleQuestionAnswerChange = (questionId: number, answer: string | string[]) => {
+    const existing = currentQuestionAnswers.filter(a => a.questionId !== questionId);
+    setCurrentQuestionAnswers([...existing, { questionId, answer }]);
+  };
+
+  const handleCheckboxChange = (questionId: number, option: string, checked: boolean) => {
+    const currentAnswer = getQuestionAnswer(questionId);
+    const currentArray = Array.isArray(currentAnswer) ? currentAnswer : [];
+    
+    let newAnswer: string[];
+    if (checked) {
+      newAnswer = [...currentArray, option];
+    } else {
+      newAnswer = currentArray.filter(item => item !== option);
+    }
+    
+    handleQuestionAnswerChange(questionId, newAnswer);
+  };
+
+  const canCompleteTask = (): boolean => {
+    const task = displayTasks[currentTask];
+    
+    // Check if rating is required and provided
+    if (task.ratingEnabled && currentTaskRating === 0) {
+      return false;
+    }
+    
+    // Check if required questions are answered
+    const requiredQuestions = (task.customQuestions || []).filter(q => q.required);
+    for (const question of requiredQuestions) {
+      const answer = getQuestionAnswer(question.id);
+      if (!answer || (Array.isArray(answer) && answer.length === 0) || 
+          (typeof answer === 'string' && !answer.trim())) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  const handleTaskComplete = () => {
     const currentTaskId = displayTasks[currentTask].id;
     const task = displayTasks[currentTask];
     
@@ -132,12 +171,12 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
     setTaskFeedback([...taskFeedback, feedback]);
     setCompletedTasks([...completedTasks, currentTaskId]);
     
-    // Reset
+    // Reset feedback form
     setCurrentTaskAnswer('');
     setCurrentTaskRating(0);
     setCurrentQuestionAnswers([]);
-    setShowFeedbackPrompt(false);
     
+    // Move to next task
     if (currentTask < displayTasks.length - 1) {
       setCurrentTask(currentTask + 1);
     }
@@ -149,16 +188,10 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
     setCurrentTaskAnswer('');
     setCurrentTaskRating(0);
     setCurrentQuestionAnswers([]);
-    setShowFeedbackPrompt(false);
     
     if (currentTask < displayTasks.length - 1) {
       setCurrentTask(currentTask + 1);
     }
-  };
-
-  const handleQuestionAnswerChange = (questionId: number, answer: string | string[]) => {
-    const existing = currentQuestionAnswers.filter(a => a.questionId !== questionId);
-    setCurrentQuestionAnswers([...existing, { questionId, answer }]);
   };
 
   const endSession = async () => {
@@ -199,7 +232,7 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
       hasAudio: isRecordingAudio,
       notes: '',
       taskFeedback,
-      observations,
+      observations: '', // Empty since observations are now in task feedback comments
       recordings: {
         combined: combinedRecordingData || undefined
       }
@@ -225,7 +258,8 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
 
         <div className="max-w-4xl mx-auto p-8">
           <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="flex items-center justify-center w-20 h-20 bg-purple-100 rounded-full mb-6 mx-auto">
+            <div className="flex items-ce
+            nter justify-center w-20 h-20 bg-purple-100 rounded-full mb-6 mx-auto">
               <Eye className="w-10 h-10 text-purple-600" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">Welcome</h2>
@@ -243,7 +277,26 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start">
                   <Clock className="w-5 h-5 text-purple-600 mr-2 flex-shrink-0 mt-0.5" />
-                  <span>You'll complete {displayTasks.length} tasks</span>
+                  <div>
+                    <span>You'll complete {displayTasks.length} task{displayTasks.length !== 1 ? 's' : ''}</span>
+                    {(() => {
+                      const assignment = project.participantAssignments?.find(
+                        a => a.participantId === participant.id
+                      );
+                      if (assignment) {
+                        const difficulty = assignment.usageLevel === 'active' ? 'hard' : 
+                                          assignment.usageLevel === 'occasionally' ? 'medium' : 'easy';
+                        return (
+                          <span className="block text-xs text-gray-500 mt-1">
+                            (Matched to your {assignment.usageLevel === 'active' ? 'Active User' : 
+                                              assignment.usageLevel === 'occasionally' ? 'Occasional User' : 
+                                              'Non-User'} level)
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
                 </li>
                 {recordingSupport.combined && (project.cameraOption !== 'disabled' || project.micOption !== 'disabled') && (
                   <li className="flex items-start">
@@ -270,7 +323,7 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
                 </li>
                 <li className="flex items-start">
                   <Mail className="w-5 h-5 text-purple-600 mr-2 flex-shrink-0 mt-0.5" />
-                  <span>You'll be asked for feedback after each task</span>
+                  <span>You'll provide feedback and observations after each task</span>
                 </li>
               </ul>
               {!recordingSupport.combined && (
@@ -340,6 +393,8 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
     );
   }
 
+  const currentTaskData = displayTasks[currentTask];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
       <div className="bg-white border-b border-gray-200 px-6 py-4">
@@ -386,7 +441,7 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
 
       <div className="max-w-4xl mx-auto p-8">
         <div className="space-y-6">
-          {/* Current Task */}
+          {/* Current Task with Integrated Feedback */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-medium text-gray-600">
@@ -411,49 +466,235 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
               ></div>
             </div>
 
+            {/* Task Description */}
             <div className="bg-purple-50 rounded-lg p-6 mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                {displayTasks[currentTask].title}
-              </h3>
-              <p className="text-lg text-gray-700">{displayTasks[currentTask].description}</p>
+  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+    {currentTaskData.title}
+  </h3>
+  
+  {currentTaskData.estimatedTime && (
+    <div className="mb-3 text-sm text-gray-700">
+      <strong>Estimated Time:</strong> {currentTaskData.estimatedTime}
+    </div>
+  )}
+  
+  {currentTaskData.objective && (
+    <div className="mb-3">
+      <strong className="text-gray-900">Objective:</strong>
+      <p className="text-gray-700 mt-1">{currentTaskData.objective}</p>
+    </div>
+  )}
+  
+  {currentTaskData.scenario && (
+    <div className="mb-3">
+      <strong className="text-gray-900">Scenario:</strong>
+      <p className="text-gray-700 mt-1">{currentTaskData.scenario}</p>
+    </div>
+  )}
+  
+  {currentTaskData.yourTask && currentTaskData.yourTask.length > 0 && currentTaskData.yourTask[0] !== '' && (
+    <div className="mb-3">
+      <strong className="text-gray-900">Your Task:</strong>
+      <ol className="list-decimal list-inside text-gray-700 mt-2 space-y-1 ml-2">
+        {currentTaskData.yourTask.map((step, idx) => (
+          step && <li key={idx}>{step}</li>
+        ))}
+      </ol>
+    </div>
+  )}
+  
+  {currentTaskData.successCriteria && (
+    <div className="bg-white rounded-lg p-3 mt-3">
+      <strong className="text-gray-900">Success Criteria:</strong>
+      <p className="text-gray-700 mt-1">{currentTaskData.successCriteria}</p>
+    </div>
+  )}
+  
+  {/* Fallback to old description */}
+  {currentTaskData.description && !currentTaskData.objective && !currentTaskData.scenario && (
+    <p className="text-lg text-gray-700">{currentTaskData.description}</p>
+  )}
+</div>
+
+            {/* Integrated Feedback Form */}
+            <div className="border-t border-gray-200 pt-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <Mail className="w-5 h-5 text-purple-600" />
+                <h4 className="text-lg font-bold text-gray-900">Task Feedback</h4>
+              </div>
+
+              {currentTaskData.ratingEnabled && (
+                <div className="mb-6 pb-6 border-b border-gray-200">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    {currentTaskData.ratingLabel || 'Rate this task'} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-500">{currentTaskData.ratingScale?.low}</span>
+                    <div className="flex space-x-2">
+                      {[1, 2, 3, 4, 5].map((rating) => (
+                        <button
+                          key={rating}
+                          onClick={() => setCurrentTaskRating(rating)}
+                          className={`w-12 h-12 rounded-lg border-2 font-semibold transition-all ${
+                            currentTaskRating === rating
+                              ? 'bg-purple-600 border-purple-600 text-white'
+                              : 'border-gray-300 text-gray-700 hover:border-purple-400'
+                          }`}
+                        >
+                          {rating}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-xs text-gray-500">{currentTaskData.ratingScale?.high}</span>
+                  </div>
+                </div>
+              )}
+
+              {currentTaskData.customQuestions && currentTaskData.customQuestions.length > 0 && (
+  <div className="mb-6 pb-6 border-b border-gray-200 space-y-4">
+    {currentTaskData.customQuestions.map((q, idx) => {
+      const answer = getQuestionAnswer(q.id);
+      const questionType = q.type || 'text';
+      
+      return (
+        <div key={q.id}>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Question {idx + 1}: {q.question}
+            {q.required && <span className="text-red-500 ml-1">*</span>}
+          </label>
+          
+          {questionType === 'text' && (
+            <textarea
+              value={typeof answer === 'string' ? answer : ''}
+              onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
+              placeholder="Your answer..."
+              rows={3}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+            />
+          )}
+          
+          {/* NEW: Yes/No Question Type */}
+          {/* Yes/No Question Type */}
+{questionType === 'yes-no' && (
+  <div className="flex items-center space-x-6">
+    <label className="flex items-center space-x-2 cursor-pointer">
+      <input
+        type="radio"
+        name={`question-${q.id}`}
+        value="Yes"
+        checked={answer === 'Yes'}
+        onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
+        className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+      />
+      <span className="text-sm text-gray-700">Yes</span>
+    </label>
+    <label className="flex items-center space-x-2 cursor-pointer">
+      <input
+        type="radio"
+        name={`question-${q.id}`}
+        value="No"
+        checked={answer === 'No'}
+        onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
+        className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+      />
+      <span className="text-sm text-gray-700">No</span>
+    </label>
+  </div>
+)}
+          
+          {questionType === 'multiple-choice' && (
+            <div className="space-y-2">
+              {(q.options || []).map((option, optIdx) => (
+                <label
+                  key={optIdx}
+                  className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="radio"
+                    name={`question-${q.id}`}
+                    value={option}
+                    checked={answer === option}
+                    onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
+                    className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">{option}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          
+          {questionType === 'checkbox' && (
+            <div className="space-y-2">
+              {(q.options || []).map((option, optIdx) => {
+                const isChecked = Array.isArray(answer) && answer.includes(option);
+                return (
+                  <label
+                    key={optIdx}
+                    className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => handleCheckboxChange(q.id, option, e.target.checked)}
+                      className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-sm text-gray-700">{option}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+)}
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Comments & Observations (Optional)
+                </label>
+                <p className="text-xs text-gray-500 mb-3">
+                  Share your thoughts, challenges, expectations, or anything unexpected about this task.
+                </p>
+                <textarea
+                  value={currentTaskAnswer}
+                  onChange={(e) => setCurrentTaskAnswer(e.target.value)}
+                  placeholder="Example: I expected to see a confirmation message after clicking submit, but nothing happened immediately. The button was easy to find but the label was unclear..."
+                  rows={5}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={handleTaskComplete}
+                  disabled={!canCompleteTask()}
+                  className="flex-1 bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                >
+                  <CheckCircle className="w-5 h-5" />
+                  <span>{!canCompleteTask() ? 'Complete required fields' : 'Mark as Complete'}</span>
+                </button>
+                <button
+                  onClick={skipTaskFeedback}
+                  className="px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                >
+                  <SkipForward className="w-4 h-4" />
+                  <span>Skip</span>
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => handleTaskComplete(displayTasks[currentTask].id)}
-                className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center space-x-2"
-              >
-                <CheckCircle className="w-5 h-5" />
-                <span>Mark Task Complete</span>
-              </button>
-
-              {completedTasks.length === displayTasks.length && (
+            {completedTasks.length === displayTasks.length && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
                 <button
                   onClick={endSession}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                  className="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
                 >
                   Finish Session
                 </button>
-              )}
-            </div>
-          </div>
-
-          {/* Observations */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Eye className="w-5 h-5 text-purple-600" />
-              <h3 className="text-lg font-bold text-gray-900">Your Observations</h3>
-            </div>
-            <p className="text-sm text-gray-600 mb-4">
-              As you complete tasks, note anything unexpected, confusing, or worth mentioning. What did you expect to see or happen?
-            </p>
-            <textarea
-              value={observations}
-              onChange={(e) => setObservations(e.target.value)}
-              placeholder="Example: I expected to see a confirmation message after clicking submit, but nothing happened immediately..."
-              rows={6}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-            />
+              </div>
+            )}
           </div>
 
           {/* All Tasks */}
@@ -461,56 +702,52 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
             <h3 className="text-lg font-bold text-gray-900 mb-4">All Tasks</h3>
             <div className="space-y-3">
               {displayTasks.map((task, index) => {
-                const feedback = taskFeedback.find(f => f.taskId === task.id);
-                return (
-                  <div
-                    key={task.id}
-                    className={`p-4 rounded-lg border-2 ${
-                      completedTasks.includes(task.id)
-                        ? 'border-green-300 bg-green-50'
-                        : index === currentTask
-                        ? 'border-purple-300 bg-purple-50'
-                        : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{task.title}</h4>
-                        <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                      </div>
-                      {completedTasks.includes(task.id) && (
-                        <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 ml-4" />
-                      )}
-                    </div>
-                    {feedback && feedback.answer && (
-                      <div className="mt-2 pt-2 border-t border-gray-200">
-                        <div className="text-xs text-gray-600 mb-1">Your feedback:</div>
-                        <div className="text-sm text-gray-700 bg-white p-2 rounded">
-                          {feedback.answer}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+  const feedback = taskFeedback.find(f => f.taskId === task.id);
+  return (
+    <div
+      key={task.id}
+      className={`p-4 rounded-lg border-2 ${
+        completedTasks.includes(task.id)
+          ? 'border-green-300 bg-green-50'
+          : index === currentTask
+          ? 'border-purple-300 bg-purple-50'
+          : 'border-gray-200 bg-white'
+      }`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex-1">
+          <h4 className="font-semibold text-gray-900">{task.title}</h4>
+          
+          {/* Show new structured fields or fall back to description */}
+          {task.objective ? (
+            <p className="text-sm text-gray-600 mt-1">{task.objective}</p>
+          ) : task.description ? (
+            <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+          ) : null}
+          
+          {task.estimatedTime && (
+            <p className="text-xs text-gray-500 mt-1">⏱️ {task.estimatedTime}</p>
+          )}
+        </div>
+        {completedTasks.includes(task.id) && (
+          <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 ml-4" />
+        )}
+      </div>
+      {feedback && feedback.answer && (
+        <div className="mt-2 pt-2 border-t border-gray-200">
+          <div className="text-xs text-gray-600 mb-1">Your feedback:</div>
+          <div className="text-sm text-gray-700 bg-white p-2 rounded">
+            {feedback.answer}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+})}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Feedback Modal */}
-      <FeedbackModal
-        show={showFeedbackPrompt}
-        task={displayTasks[currentTask]}
-        currentTaskAnswer={currentTaskAnswer}
-        currentTaskRating={currentTaskRating}
-        currentQuestionAnswers={currentQuestionAnswers}
-        onAnswerChange={setCurrentTaskAnswer}
-        onRatingChange={setCurrentTaskRating}
-        onQuestionAnswerChange={handleQuestionAnswerChange}
-        onSubmit={submitTaskFeedback}
-        onSkip={skipTaskFeedback}
-      />
     </div>
   );
 }

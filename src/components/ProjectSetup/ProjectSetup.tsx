@@ -2,12 +2,13 @@
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
-import { Project, Task } from '../../types';
+import { Project, Task, ParticipantAssignment } from '../../types';
 import { DEFAULT_MESSAGES, DEFAULT_TASK } from '../../constants';
 import { ProjectDetailsForm } from './ProjectDetailsForm';
 import { RecordingOptionsForm } from './RecordingOptionsForm';
 import { MessagesForm } from './MessagesForm';
 import { TasksForm } from './TasksForm';
+import { ParticipantsSelectionForm } from './ParticipantsSelectionForm';
 
 interface ProjectSetupProps {
   editingProject: Project | null;
@@ -15,8 +16,13 @@ interface ProjectSetupProps {
   onSave: () => void;
 }
 
+interface ParticipantSelection {
+  participantId: number;
+  usageLevel: 'active' | 'occasionally' | 'non-user';
+}
+
 export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupProps) {
-  const { actions } = useAppContext();
+  const { state, actions } = useAppContext();
   const isEditing = !!editingProject;
 
   // Form state
@@ -45,6 +51,14 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
   );
   const [tasks, setTasks] = useState<Task[]>(
     editingProject?.setup.tasks || [{ id: Date.now(), ...DEFAULT_TASK }]
+  );
+
+  // NEW: Participant selection state
+  const [selectedParticipants, setSelectedParticipants] = useState<ParticipantSelection[]>(
+    editingProject?.participantAssignments?.map(a => ({
+      participantId: a.participantId,
+      usageLevel: a.usageLevel
+    })) || []
   );
 
   // Validation errors
@@ -83,13 +97,23 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
       return;
     }
 
+    // Convert ParticipantSelection to ParticipantAssignment
+    const participantAssignments: ParticipantAssignment[] = selectedParticipants.map(sel => ({
+      participantId: sel.participantId,
+      usageLevel: sel.usageLevel
+    }));
+
+    // Extract just the participant IDs
+    const participantIds = selectedParticipants.map(sel => sel.participantId);
+
     const projectData: Project = {
       id: editingProject ? editingProject.id : Date.now(),
       name: projectName.trim(),
       description: projectDescription.trim(),
       mode: projectMode!,
-      status: editingProject ? editingProject.status : 'active', // CHANGED FROM 'draft' TO 'active'
-      participantIds: editingProject ? editingProject.participantIds : [],
+      status: editingProject ? editingProject.status : 'active',
+      participantIds: participantIds, // NEW: Include participant IDs
+      participantAssignments: participantAssignments, // NEW: Include participant assignments
       sessions: editingProject ? editingProject.sessions : [],
       cameraOption,
       micOption,
@@ -162,6 +186,13 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
             onMicChange={setMicOption}
           />
 
+          {/* NEW: Participants Selection */}
+          <ParticipantsSelectionForm
+            participants={state.participants}
+            selectedParticipants={selectedParticipants}
+            onSelectionChange={setSelectedParticipants}
+          />
+
           {/* Messages */}
           <MessagesForm
             beforeMessage={beforeMessage}
@@ -200,4 +231,3 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
     </div>
   );
 }
-

@@ -4,6 +4,7 @@ import { ArrowLeft, Play, Pause, Square, Monitor, Video, Mic, MicOff, VideoOff, 
 import { useAppContext } from '../../contexts/AppContext';
 import { Project, Participant, Task, Session, TrackingData } from '../../types';
 import { CombinedRecorder, isRecordingSupported } from '../../utils/recording';
+import { getTasksForParticipant } from '../../utils/taskFiltering';
 
 interface ModeratedSessionProps {
   project: Project;
@@ -38,13 +39,16 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
   const recordingSupport = isRecordingSupported();
 
   useEffect(() => {
-    // Set up tasks with optional randomization
-    let tasksToUse = [...project.setup.tasks];
+    // Get tasks filtered by participant's usage level
+    let tasksToUse = getTasksForParticipant(project, participant.id);
+    
+    // Apply randomization if enabled
     if (project.setup.randomizeOrder) {
       tasksToUse = tasksToUse.sort(() => Math.random() - 0.5);
     }
+    
     setDisplayTasks(tasksToUse);
-  }, [project]);
+  }, [project, participant.id]); // Note: added participant.id to dependencies
 
   useEffect(() => {
     // Track actual mouse clicks and keystrokes
