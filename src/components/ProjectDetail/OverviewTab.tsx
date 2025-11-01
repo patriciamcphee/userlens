@@ -1,10 +1,12 @@
 // components/ProjectDetail/OverviewTab.tsx
 import React, { useState } from 'react';
-import { Users, CheckCircle, Target, Star, MessageSquare, Edit2, ChevronDown, ChevronUp, Camera, Mic, Shuffle } from 'lucide-react';
+import { Users, CheckCircle, Target, Star, MessageSquare, Edit2, ChevronDown, ChevronUp, Camera, Mic, Shuffle, Mail } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
-import { Project, Participant, Task } from '../../types';
+import { Project, Participant, Task, EmailTemplate } from '../../types';
 import { EditTaskModal } from '../Modals/EditTaskModal';
+import { EmailModal } from '../Modals/EmailModal';
 import { getUsageLevelLabel } from '../../utils/taskFiltering';
+import { generateSessionLink, DEFAULT_EMAIL_TEMPLATE } from '../../utils';
 
 interface OverviewTabProps {
   project: Project;
@@ -16,6 +18,14 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showMessages, setShowMessages] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Email modal state
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
+  const [sessionLink, setSessionLink] = useState('');
+  const [linkExpiry, setLinkExpiry] = useState('');
+  const [expiryDays, setExpiryDays] = useState(7);
+  const [emailTemplate, setEmailTemplate] = useState<EmailTemplate>(DEFAULT_EMAIL_TEMPLATE);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -40,6 +50,70 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
         ...project.setup,
         tasks: updatedTasks
       }
+    });
+  };
+
+  const handleSendLink = (participant: Participant) => {
+    // Generate session link with project and participant data embedded
+    const { link, sessionLink: newSessionLink } = generateSessionLink(
+      project.id,
+      participant.id,
+      expiryDays,
+      project,
+      participant
+    );
+    
+    // Add to state
+    actions.addSessionLink(newSessionLink);
+    
+    // Set up email modal
+    setSelectedParticipant(participant);
+    setSessionLink(link);
+    setLinkExpiry(newSessionLink.expiresAt);
+    setEmailTemplate(DEFAULT_EMAIL_TEMPLATE);
+    setShowEmailModal(true);
+  };
+
+  const handleExpiryDaysChange = (days: number) => {
+    setExpiryDays(days);
+    
+    // Regenerate the link with new expiry if modal is open
+    if (selectedParticipant) {
+      const { link, sessionLink: newSessionLink } = generateSessionLink(
+        project.id,
+        selectedParticipant.id,
+        days,
+        project,
+        selectedParticipant
+      );
+      
+      // Update the session link in state
+      actions.addSessionLink(newSessionLink);
+      
+      // Update modal state
+      setSessionLink(link);
+      setLinkExpiry(newSessionLink.expiresAt);
+    }
+  };
+
+  const handleCopyEmail = () => {
+    if (!selectedParticipant) return;
+    
+    const formattedSubject = emailTemplate.subject
+      .replace(/{participantName}/g, selectedParticipant.name)
+      .replace(/{projectName}/g, project.name);
+    
+    const formattedBody = emailTemplate.body
+      .replace(/{participantName}/g, selectedParticipant.name)
+      .replace(/{projectName}/g, project.name)
+      .replace(/{sessionLink}/g, sessionLink)
+      .replace(/{expiryDate}/g, new Date(linkExpiry).toLocaleDateString());
+    
+    const emailContent = `Subject: ${formattedSubject}\n\n${formattedBody}`;
+    
+    navigator.clipboard.writeText(emailContent).then(() => {
+      alert('Email copied to clipboard!');
+      setShowEmailModal(false);
     });
   };
 
@@ -131,7 +205,7 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
                         {task.scenario && (
                           <div className="flex items-start">
                             <span className="text-gray-600 font-medium w-32 flex-shrink-0">Scenario:</span>
-                            <span className="text-gray-700">{task.scenario}</span>
+                            <span className="text-gray-700 whitespace-pre-wrap">{task.scenario}</span>
                           </div>
                         )}
                         
@@ -186,7 +260,7 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
                     <div className="flex items-center space-x-1 text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-200">
                       <Target className="w-3 h-3" />
                       <span>
-                        {task.difficulty === 'easy' ? 'Non-Users' : task.difficulty === 'medium' ? 'Occasional Users' : 'Active Users'}
+                        {task.difficulty === 'easy' ? 'Non-Users' : task.difficulty === 'medium' ? 'Occasional Users' : task.difficulty === 'all' ? 'All Users' : 'Active Users'}
                       </span>
                     </div>
                   </div>
@@ -216,21 +290,21 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
               <div className="px-6 pb-6 space-y-4 border-t border-gray-100">
                 <div className="pt-4">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Before Session</label>
-                  <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 leading-relaxed">
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {project.setup.beforeMessage}
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">During Session (Scenario)</label>
-                  <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 leading-relaxed">
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {project.setup.duringScenario}
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">After Session</label>
-                  <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 leading-relaxed">
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {project.setup.afterMessage}
                   </div>
                 </div>
@@ -336,12 +410,21 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
                         </span>
                       </div>
 
-                      <button
-                        onClick={() => onStartSession(participant.id)}
-                        className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                      >
-                        Start Session
-                      </button>
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => onStartSession(participant.id)}
+                          className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                        >
+                          Start Session
+                        </button>
+                        <button
+                          onClick={() => handleSendLink(participant)}
+                          className="w-full bg-white border-2 border-blue-600 text-blue-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
+                        >
+                          <Mail className="w-4 h-4" />
+                          <span>Send Link</span>
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -357,6 +440,23 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
           task={editingTask}
           onSave={(updates) => handleSaveTask(editingTask.id, updates)}
           onClose={() => setEditingTask(null)}
+        />
+      )}
+
+      {/* Email Modal */}
+      {showEmailModal && selectedParticipant && (
+        <EmailModal
+          show={showEmailModal}
+          participant={selectedParticipant}
+          project={project}
+          link={sessionLink}
+          expiryDate={linkExpiry}
+          expiryDays={expiryDays}
+          template={emailTemplate}
+          onTemplateChange={setEmailTemplate}
+          onExpiryDaysChange={handleExpiryDaysChange}
+          onCopyEmail={handleCopyEmail}
+          onClose={() => setShowEmailModal(false)}
         />
       )}
     </div>

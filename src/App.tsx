@@ -1,201 +1,270 @@
 // App.tsx
 import React, { useState, useEffect } from 'react';
-import { AppProvider, useAppContext } from './contexts/AppContext';
+import { useAppContext } from './contexts/AppContext';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { ProjectSetup } from './components/ProjectSetup/ProjectSetup';
 import { ProjectDetail } from './components/ProjectDetail/ProjectDetail';
 import { ModeratedSession } from './components/Session/ModeratedSession';
 import { UnmoderatedSession } from './components/Session/UnmoderatedSession';
 import { SessionComplete } from './components/Session/SessionComplete';
-import { Project, Participant, View } from './types';
+import { Project, Participant } from './types';
 
-function AppContent() {
+type View = 'dashboard' | 'createProject' | 'editProject' | 'projectDetail' | 'runSession' | 'sessionComplete';
+
+function App() {
   const { state, actions } = useAppContext();
   
-  const [view, setView] = useState<View>('dashboard');
-  const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
+  // View management
+  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [currentParticipant, setCurrentParticipant] = useState<Participant | null>(null);
-  const [sessionComplete, setSessionComplete] = useState(false);
 
-  // Get current project from state (always up-to-date)
-  const currentProject = currentProjectId 
-    ? state.projects.find(p => p.id === currentProjectId) || null
-    : null;
-
-  // Handle URL parameters for public session links
+  // Session link handling - runs on mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('session');
+    const sessionParam = urlParams.get('session');
     
-    if (token) {
-      // Find the session link
-      const link = state.sessionLinks.find(l => l.id === token);
-      
-      if (link && !link.used && new Date(link.expiresAt) > new Date()) {
-        // Find the project and participant
-        const project = state.projects.find(p => p.id === link.projectId);
-        const participant = state.participants.find(p => p.id === link.participantId);
+    if (sessionParam) {
+      try {
+        // Decode the session data from URL
+        const sessionData = JSON.parse(atob(sessionParam));
+        const { projectId, participantId, expiresAt, linkId, projectSetup, participant: participantData } = sessionData;
         
-        if (project && participant) {
-          // Mark link as used
-          actions.updateSessionLink(token, { used: true });
-          
-          // Start the session
-          setCurrentProjectId(project.id);
-          setCurrentParticipant(participant);
-          setView('runSession');
-        } else {
-          alert('Invalid session link - project or participant not found');
+        // Check if expired
+        if (new Date(expiresAt) < new Date()) {
+          alert('This session link has expired. Please contact the administrator for a new link.');
+          window.history.replaceState({}, '', window.location.pathname);
+          return;
         }
-      } else if (link && link.used) {
-        alert('This session link has already been used');
-      } else if (link && new Date(link.expiresAt) <= new Date()) {
-        alert('This session link has expired');
-      } else {
-        alert('Invalid session link');
+
+        // Check if link was already used (optional - stored locally on participant's device)
+        const usedLinksKey = 'usedSessionLinks';
+        const usedLinks = JSON.parse(localStorage.getItem(usedLinksKey) || '[]');
+        
+        if (usedLinks.includes(linkId)) {
+          alert('This session link has already been used on this device.');
+          window.history.replaceState({}, '', window.location.pathname);
+          return;
+        }
+
+        // Create a temporary project and participant from the link data
+        if (!projectSetup || !participantData) {
+          alert('This session link format is not supported. Please request a new link.');
+          window.history.replaceState({}, '', window.location.pathname);
+          return;
+        }
+
+        // Create temporary project object
+        const tempProject: Project = {
+          id: projectId,
+          name: projectSetup.name,
+          description: projectSetup.description,
+          mode: projectSetup.mode,
+          status: 'active',
+          participantIds: [participantId],
+          participantAssignments: participantData.usageLevel ? [{
+            participantId: participantId,
+            usageLevel: participantData.usageLevel
+          }] : [],
+          sessions: [],
+          cameraOption: projectSetup.cameraOption,
+          micOption: projectSetup.micOption,
+          setup: {
+            beforeMessage: projectSetup.beforeMessage,
+            duringScenario: projectSetup.duringScenario,
+            afterMessage: projectSetup.afterMessage,
+            randomizeOrder: projectSetup.randomizeOrder,
+            tasks: projectSetup.tasks
+          }
+        };
+
+        // Create temporary participant object
+        const tempParticipant: Participant = {
+          id: participantId,
+          name: participantData.name,
+          email: participantData.email,
+          defaultUsageLevel: participantData.usageLevel
+        };
+
+        // Mark link as used on this device
+        usedLinks.push(linkId);
+        localStorage.setItem(usedLinksKey, JSON.stringify(usedLinks));
+
+        // Set current project and participant
+        setSelectedProject(tempProject);
+        setSelectedParticipant(tempParticipant);
+
+        // Navigate to session view
+        setCurrentView('runSession');
+
+        // Clean up URL parameter
+        window.history.replaceState({}, '', window.location.pathname);
+        
+      } catch (error) {
+        console.error('Error parsing session link:', error);
+        alert('Invalid session link format. Please contact the administrator.');
+        window.history.replaceState({}, '', window.location.pathname);
       }
     }
-  }, [state.sessionLinks, state.projects, state.participants]);
+  }, []); // Run only once on mount
 
   // Navigation handlers
   const handleCreateProject = () => {
     setEditingProject(null);
-    setView('createProject');
+    setCurrentView('createProject');
   };
 
   const handleEditProject = (project: Project) => {
     setEditingProject(project);
-    setView('createProject');
+    setCurrentView('editProject');
   };
 
   const handleOpenProject = (project: Project) => {
-    setCurrentProjectId(project.id);
-    actions.setCurrentProject(project);
-    setView('projectDetail');
+    setSelectedProject(project);
+    setCurrentView('projectDetail');
   };
 
-  const handleSaveProject = () => {
-    setEditingProject(null);
-    setView('dashboard');
-  };
-
-  const handleCancelProjectSetup = () => {
-    setEditingProject(null);
-    setView('dashboard');
+  const handleStartSession = (projectId: number, participantId: number) => {
+    const project = state.projects.find(p => p.id === projectId);
+    const participant = state.participants.find(p => p.id === participantId);
+    
+    if (project && participant) {
+      setSelectedProject(project);
+      setSelectedParticipant(participant);
+      setCurrentView('runSession');
+    }
   };
 
   const handleBackToDashboard = () => {
-    setCurrentProjectId(null);
-    setCurrentParticipant(null);
-    setSessionComplete(false);
-    actions.setCurrentProject(null);
-    actions.setCurrentParticipant(null);
-    setView('dashboard');
+    setCurrentView('dashboard');
+    setSelectedProject(null);
+    setSelectedParticipant(null);
+    setEditingProject(null);
   };
 
   const handleBackToProject = () => {
-    setCurrentParticipant(null);
-    setSessionComplete(false);
-    actions.setCurrentParticipant(null);
-    setView('projectDetail');
+    setCurrentView('projectDetail');
+    setSelectedParticipant(null);
   };
 
-  const handleStartSession = (participantId: number) => {
-    const participant = state.participants.find(p => p.id === participantId);
-    if (participant && currentProjectId) {
-      setCurrentParticipant(participant);
-      actions.setCurrentParticipant(participant);
-      setSessionComplete(false);
-      setView('runSession');
-    }
+  const handleProjectSaved = () => {
+    setCurrentView('dashboard');
+    setEditingProject(null);
   };
 
   const handleSessionComplete = () => {
-    setSessionComplete(true);
+    setCurrentView('sessionComplete');
   };
 
-  // Render appropriate view
-  if (view === 'dashboard') {
-    return (
-      <Dashboard
-        onCreateProject={handleCreateProject}
-        onEditProject={handleEditProject}
-        onOpenProject={handleOpenProject}
-      />
-    );
-  }
+  // Render current view
+  const renderView = () => {
+    switch (currentView) {
+      case 'dashboard':
+        return (
+          <Dashboard
+            onCreateProject={handleCreateProject}
+            onEditProject={handleEditProject}
+            onOpenProject={handleOpenProject}
+          />
+        );
 
-  if (view === 'createProject') {
-    return (
-      <ProjectSetup
-        editingProject={editingProject}
-        onCancel={handleCancelProjectSetup}
-        onSave={handleSaveProject}
-      />
-    );
-  }
+      case 'createProject':
+        return (
+          <ProjectSetup
+            editingProject={null}
+            onCancel={handleBackToDashboard}
+            onSave={handleProjectSaved}
+          />
+        );
 
-  if (view === 'projectDetail' && currentProject) {
-    return (
-      <ProjectDetail
-        project={currentProject}
-        onBack={handleBackToDashboard}
-        onEdit={() => handleEditProject(currentProject)}
-        onStartSession={handleStartSession}
-      />
-    );
-  }
+      case 'editProject':
+        return (
+          <ProjectSetup
+            editingProject={editingProject}
+            onCancel={handleBackToProject}
+            onSave={handleProjectSaved}
+          />
+        );
 
-  if (view === 'runSession' && currentProject && currentParticipant) {
-    if (sessionComplete) {
-      return (
-        <SessionComplete
-          afterMessage={currentProject.setup.afterMessage}
-          completedTasks={currentProject.setup.tasks.length}
-          totalTasks={currentProject.setup.tasks.length}
-          onBackToProject={handleBackToProject}
-          onBackToDashboard={handleBackToDashboard}
-        />
-      );
+      case 'projectDetail':
+        if (!selectedProject) {
+          setCurrentView('dashboard');
+          return null;
+        }
+        return (
+          <ProjectDetail
+            project={selectedProject}
+            onBack={handleBackToDashboard}
+            onEdit={() => handleEditProject(selectedProject)}
+            onStartSession={(participantId) => handleStartSession(selectedProject.id, participantId)}
+          />
+        );
+
+      case 'runSession':
+        if (!selectedProject || !selectedParticipant) {
+          setCurrentView('dashboard');
+          return null;
+        }
+        
+        // Render moderated or unmoderated session based on project mode
+        if (selectedProject.mode === 'moderated') {
+          return (
+            <ModeratedSession
+              project={selectedProject}
+              participant={selectedParticipant}
+              onBack={handleBackToProject}
+              onComplete={handleSessionComplete}
+            />
+          );
+        } else {
+          return (
+            <UnmoderatedSession
+              project={selectedProject}
+              participant={selectedParticipant}
+              onBack={handleBackToProject}
+              onComplete={handleSessionComplete}
+            />
+          );
+        }
+
+      case 'sessionComplete':
+        if (!selectedProject) {
+          setCurrentView('dashboard');
+          return null;
+        }
+        
+        // Calculate completed tasks from the most recent session
+        const latestSession = selectedProject.sessions[selectedProject.sessions.length - 1];
+        const completedTasks = latestSession?.tasksCompleted || 0;
+        const totalTasks = latestSession?.totalTasks || selectedProject.setup.tasks.length;
+        
+        return (
+          <SessionComplete
+            afterMessage={selectedProject.setup.afterMessage}
+            completedTasks={completedTasks}
+            totalTasks={totalTasks}
+            onBackToProject={handleBackToProject}
+            onBackToDashboard={handleBackToDashboard}
+          />
+        );
+
+      default:
+        return (
+          <Dashboard
+            onCreateProject={handleCreateProject}
+            onEditProject={handleEditProject}
+            onOpenProject={handleOpenProject}
+          />
+        );
     }
+  };
 
-    if (currentProject.mode === 'moderated') {
-      return (
-        <ModeratedSession
-          project={currentProject}
-          participant={currentParticipant}
-          onBack={handleBackToProject}
-          onComplete={handleSessionComplete}
-        />
-      );
-    } else {
-      return (
-        <UnmoderatedSession
-          project={currentProject}
-          participant={currentParticipant}
-          onBack={handleBackToProject}
-          onComplete={handleSessionComplete}
-        />
-      );
-    }
-  }
-
-  // Fallback to dashboard
   return (
-    <Dashboard
-      onCreateProject={handleCreateProject}
-      onEditProject={handleEditProject}
-      onOpenProject={handleOpenProject}
-    />
+    <div className="App">
+      {renderView()}
+    </div>
   );
 }
 
-// Main App component with Provider
-export default function App() {
-  return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
-  );
-}
+export default App;

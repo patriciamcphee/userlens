@@ -1,6 +1,5 @@
 // utils/taskFiltering.ts
-import { Task, Project, ParticipantAssignment } from '../types';
-import { USAGE_TO_DIFFICULTY_MAP } from '../constants';
+import { Task, Project } from '../types';
 
 /**
  * Get the tasks that a participant should see based on their usage level
@@ -9,6 +8,7 @@ import { USAGE_TO_DIFFICULTY_MAP } from '../constants';
  * 1. Use project-specific assignment if exists
  * 2. Otherwise, return all tasks (participant sees everything)
  */
+// utils/taskFiltering.ts
 export function getTasksForParticipant(
   project: Project,
   participantId: number
@@ -23,13 +23,31 @@ export function getTasksForParticipant(
     return project.setup.tasks;
   }
 
-  // Get the difficulty level that matches the usage level
-  const targetDifficulty = USAGE_TO_DIFFICULTY_MAP[assignment.usageLevel];
+  // Progressive filtering: users can do tasks at or below their level
+  return project.setup.tasks.filter(task => {
+    // Tasks marked as 'all' are shown to everyone
+    if (task.difficulty === 'all') {
+      return true;
+    }
 
-  // Filter tasks by difficulty
-  return project.setup.tasks.filter(task => 
-  task.difficulty === targetDifficulty || task.difficulty === 'all'
-);
+    // Progressive access based on usage level
+    switch (assignment.usageLevel) {
+      case 'non-user':
+        // Non-users only see easy tasks
+        return task.difficulty === 'easy';
+      
+      case 'occasionally':
+        // Occasional users see easy + medium tasks
+        return task.difficulty === 'easy' || task.difficulty === 'medium';
+      
+      case 'active':
+        // Active users see all tasks (easy + medium + hard)
+        return true;
+      
+      default:
+        return true;
+    }
+  });
 }
 
 /**

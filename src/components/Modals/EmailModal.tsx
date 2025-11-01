@@ -1,6 +1,6 @@
 // components/Modals/EmailModal.tsx
 import React from 'react';
-import { Mail } from 'lucide-react';
+import { Mail, Calendar } from 'lucide-react';
 import { EmailTemplate, Participant, Project } from '../../types';
 
 interface EmailModalProps {
@@ -9,11 +9,21 @@ interface EmailModalProps {
   project: Project | null;
   link: string;
   expiryDate: string;
+  expiryDays: number;
   template: EmailTemplate;
   onTemplateChange: (template: EmailTemplate) => void;
+  onExpiryDaysChange: (days: number) => void;
   onCopyEmail: () => void;
   onClose: () => void;
 }
+
+const EXPIRY_OPTIONS = [
+  { value: 1, label: '1 day' },
+  { value: 3, label: '3 days' },
+  { value: 7, label: '7 days' },
+  { value: 14, label: '14 days' },
+  { value: 30, label: '30 days' }
+];
 
 export function EmailModal({
   show,
@@ -21,8 +31,10 @@ export function EmailModal({
   project,
   link,
   expiryDate,
+  expiryDays,
   template,
   onTemplateChange,
+  onExpiryDaysChange,
   onCopyEmail,
   onClose
 }: EmailModalProps) {
@@ -51,6 +63,30 @@ export function EmailModal({
         </div>
 
         <div className="p-6">
+          {/* Link Expiration Selector */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4" />
+                <span>Link Expiration</span>
+              </div>
+            </label>
+            <select
+              value={expiryDays}
+              onChange={(e) => onExpiryDaysChange(parseInt(e.target.value))}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {EXPIRY_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Link will expire on {new Date(expiryDate).toLocaleDateString()} at {new Date(expiryDate).toLocaleTimeString()}
+            </p>
+          </div>
+
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
             <input

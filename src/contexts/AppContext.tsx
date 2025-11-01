@@ -1,34 +1,21 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode, useState } from 'react';
 import { Project, Participant, SessionLink, Session } from '../types';
 import { DEFAULT_PARTICIPANTS } from '../constants';
+import { api } from '../services/api';
 
-/**
- * CONTEXT/PROVIDER PATTERN EXPLANATION:
- * 
- * Instead of using localStorage (which doesn't work in Claude.ai artifacts),
- * we use React Context to share state across all components.
- * 
- * Think of it like a "global state store" that any component can access
- * without having to pass props down through many levels (prop drilling).
- * 
- * How it works:
- * 1. AppContext holds all the app's data (projects, participants, etc.)
- * 2. AppProvider wraps the entire app and provides access to this data
- * 3. Any component can use useAppContext() to read/update the data
- * 4. When data changes, only components using that data re-render
- */
-
-// Define the shape of our app's state
 interface AppState {
   projects: Project[];
   participants: Participant[];
   sessionLinks: SessionLink[];
   currentProject: Project | null;
   currentParticipant: Participant | null;
+  isLoading: boolean;
+  error: string | null;
 }
 
-// Define all possible actions that can update state
 type AppAction =
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_PROJECTS'; payload: Project[] }
   | { type: 'ADD_PROJECT'; payload: Project }
   | { type: 'UPDATE_PROJECT'; payload: { id: number; updates: Partial<Project> } }
@@ -38,9 +25,6 @@ type AppAction =
   | { type: 'ADD_PARTICIPANT'; payload: Participant }
   | { type: 'UPDATE_PARTICIPANT'; payload: { id: number; updates: Partial<Participant> } }
   | { type: 'DELETE_PARTICIPANT'; payload: number }
-  | { type: 'ADD_PARTICIPANT_TO_PROJECT'; payload: { projectId: number; participantId: number } }
-  | { type: 'REMOVE_PARTICIPANT_FROM_PROJECT'; payload: { projectId: number; participantId: number } }
-  | { type: 'SET_PARTICIPANT_USAGE_LEVEL'; payload: { projectId: number; participantId: number; usageLevel: 'active' | 'occasionally' | 'non-user' } }
   | { type: 'SET_SESSION_LINKS'; payload: SessionLink[] }
   | { type: 'ADD_SESSION_LINK'; payload: SessionLink }
   | { type: 'UPDATE_SESSION_LINK'; payload: { id: string; updates: Partial<SessionLink> } }
@@ -48,82 +32,54 @@ type AppAction =
   | { type: 'SET_CURRENT_PROJECT'; payload: Project | null }
   | { type: 'SET_CURRENT_PARTICIPANT'; payload: Participant | null };
 
-// Define what methods are available to components
 interface AppContextType {
   state: AppState;
   actions: {
-    // Project actions
-    setProjects: (projects: Project[]) => void;
-    addProject: (project: Project) => void;
-    updateProject: (id: number, updates: Partial<Project>) => void;
-    deleteProject: (id: number) => void;
-    addSession: (projectId: number, session: Session) => void;
-    
-    // Participant actions
-    setParticipants: (participants: Participant[]) => void;
-    addParticipant: (participant: Participant) => void;
-    updateParticipant: (id: number, updates: Partial<Participant>) => void;
-    deleteParticipant: (id: number) => void;
-    addParticipantToProject: (projectId: number, participantId: number) => void;
-    removeParticipantFromProject: (projectId: number, participantId: number) => void;
-    setParticipantUsageLevel: (projectId: number, participantId: number, usageLevel: 'active' | 'occasionally' | 'non-user') => void;
-    
-    // Session link actions
+    loadProjects: () => Promise<void>;
+    loadParticipants: () => Promise<void>;
+    addProject: (project: Project) => Promise<void>;
+    updateProject: (id: number, updates: Partial<Project>) => Promise<void>;
+    deleteProject: (id: number) => Promise<void>;
+    addSession: (projectId: number, session: Session) => Promise<void>;
+    addParticipant: (participant: Participant) => Promise<void>;
+    updateParticipant: (id: number, updates: Partial<Participant>) => Promise<void>;
+    deleteParticipant: (id: number) => Promise<void>;
     setSessionLinks: (links: SessionLink[]) => void;
     addSessionLink: (link: SessionLink) => void;
     updateSessionLink: (id: string, updates: Partial<SessionLink>) => void;
     deleteSessionLink: (id: string) => void;
-    
-    // Current selections
     setCurrentProject: (project: Project | null) => void;
     setCurrentParticipant: (participant: Participant | null) => void;
   };
 }
 
-// Create the context with undefined initial value
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Load initial state from localStorage with fallback
-const loadInitialState = (): AppState => {
-  try {
-    const savedProjects = localStorage.getItem('userTesting_projects');
-    const savedParticipants = localStorage.getItem('userTesting_participants');
-    const savedLinks = localStorage.getItem('userTesting_sessionLinks');
-    
-    return {
-      projects: savedProjects ? JSON.parse(savedProjects) : [],
-      participants: savedParticipants ? JSON.parse(savedParticipants) : DEFAULT_PARTICIPANTS,
-      sessionLinks: savedLinks ? JSON.parse(savedLinks) : [],
-      currentProject: null,
-      currentParticipant: null
-    };
-  } catch (error) {
-    console.warn('Could not load from localStorage, using defaults:', error);
-    return {
-      projects: [],
-      participants: DEFAULT_PARTICIPANTS,
-      sessionLinks: [],
-      currentProject: null,
-      currentParticipant: null
-    };
-  }
+const initialState: AppState = {
+  projects: [],
+  participants: [],
+  sessionLinks: [],
+  currentProject: null,
+  currentParticipant: null,
+  isLoading: false,
+  error: null
 };
 
-const initialState: AppState = loadInitialState();
-
-// Reducer function handles all state updates
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
+    
+    case 'SET_ERROR':
+      return { ...state, error: action.payload };
+    
     case 'SET_PROJECTS':
       return { ...state, projects: action.payload };
     
     case 'ADD_PROJECT':
       return { 
         ...state, 
-        projects: [
-          ...state.projects, 
-          { ...action.payload, participantAssignments: action.payload.participantAssignments || [] }
-        ] 
+        projects: [...state.projects, action.payload] 
       };
     
     case 'UPDATE_PROJECT':
@@ -177,70 +133,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
         }))
       };
     
-    case 'ADD_PARTICIPANT_TO_PROJECT':
-      return {
-        ...state,
-        projects: state.projects.map(p =>
-          p.id === action.payload.projectId
-            ? { 
-                ...p, 
-                participantIds: [...p.participantIds, action.payload.participantId]
-              }
-            : p
-        )
-      };
-    
-    case 'REMOVE_PARTICIPANT_FROM_PROJECT':
-      return {
-        ...state,
-        projects: state.projects.map(p =>
-          p.id === action.payload.projectId
-            ? { 
-                ...p, 
-                participantIds: p.participantIds.filter(id => id !== action.payload.participantId),
-                participantAssignments: (p.participantAssignments || []).filter(
-                  a => a.participantId !== action.payload.participantId
-                )
-              }
-            : p
-        )
-      };
-    
-    case 'SET_PARTICIPANT_USAGE_LEVEL':
-      return {
-        ...state,
-        projects: state.projects.map(p => {
-          if (p.id !== action.payload.projectId) return p;
-          
-          // Ensure participantAssignments array exists
-          const assignments = p.participantAssignments || [];
-          const existingIndex = assignments.findIndex(
-            a => a.participantId === action.payload.participantId
-          );
-          
-          let newAssignments;
-          if (existingIndex >= 0) {
-            // Update existing assignment
-            newAssignments = [...assignments];
-            newAssignments[existingIndex] = {
-              participantId: action.payload.participantId,
-              usageLevel: action.payload.usageLevel
-            };
-          } else {
-            // Add new assignment
-            newAssignments = [
-              ...assignments,
-              {
-                participantId: action.payload.participantId,
-                usageLevel: action.payload.usageLevel
-              }
-            ];
-          }
-          
-          return { ...p, participantAssignments: newAssignments };
-        })
-      };
-    
     case 'SET_SESSION_LINKS':
       return { ...state, sessionLinks: action.payload };
     
@@ -272,27 +164,37 @@ function appReducer(state: AppState, action: AppAction): AppState {
   }
 }
 
-// Provider component that wraps the app
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
-  // Persist projects to localStorage
+  // Load initial data on mount
   useEffect(() => {
-    try {
-      localStorage.setItem('userTesting_projects', JSON.stringify(state.projects));
-    } catch (error) {
-      console.warn('Could not save projects to localStorage:', error);
-    }
-  }, [state.projects]);
+    const loadInitialData = async () => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      try {
+        const [projects, participants] = await Promise.all([
+          api.getProjects().catch(() => []),
+          api.getParticipants().catch(() => DEFAULT_PARTICIPANTS)
+        ]);
+        
+        dispatch({ type: 'SET_PROJECTS', payload: projects });
+        dispatch({ type: 'SET_PARTICIPANTS', payload: participants });
+        
+        // Load session links from localStorage (kept local for now)
+        const savedLinks = localStorage.getItem('userTesting_sessionLinks');
+        if (savedLinks) {
+          dispatch({ type: 'SET_SESSION_LINKS', payload: JSON.parse(savedLinks) });
+        }
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to load data' });
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    };
 
-  // Persist participants to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('userTesting_participants', JSON.stringify(state.participants));
-    } catch (error) {
-      console.warn('Could not save participants to localStorage:', error);
-    }
-  }, [state.participants]);
+    loadInitialData();
+  }, []);
 
   // Persist session links to localStorage
   useEffect(() => {
@@ -303,48 +205,118 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [state.sessionLinks]);
 
-  // Create action methods that components can call
   const actions = {
-    setProjects: (projects: Project[]) => dispatch({ type: 'SET_PROJECTS', payload: projects }),
-    addProject: (project: Project) => dispatch({ type: 'ADD_PROJECT', payload: project }),
-    updateProject: (id: number, updates: Partial<Project>) =>
-      dispatch({ type: 'UPDATE_PROJECT', payload: { id, updates } }),
-    deleteProject: (id: number) => dispatch({ type: 'DELETE_PROJECT', payload: id }),
-    addSession: (projectId: number, session: Session) =>
-      dispatch({ type: 'ADD_SESSION', payload: { projectId, session } }),
-    
-    setParticipants: (participants: Participant[]) =>
-      dispatch({ type: 'SET_PARTICIPANTS', payload: participants }),
-    addParticipant: (participant: Participant) =>
-      dispatch({ type: 'ADD_PARTICIPANT', payload: participant }),
-    updateParticipant: (id: number, updates: Partial<Participant>) =>
-      dispatch({ type: 'UPDATE_PARTICIPANT', payload: { id, updates } }),
-    deleteParticipant: (id: number) => dispatch({ type: 'DELETE_PARTICIPANT', payload: id }),
-    addParticipantToProject: (projectId: number, participantId: number) =>
-      dispatch({ type: 'ADD_PARTICIPANT_TO_PROJECT', payload: { projectId, participantId } }),
-    removeParticipantFromProject: (projectId: number, participantId: number) =>
-      dispatch({ type: 'REMOVE_PARTICIPANT_FROM_PROJECT', payload: { projectId, participantId } }),
-    
-    setParticipantUsageLevel: (
-      projectId: number, 
-      participantId: number, 
-      usageLevel: 'active' | 'occasionally' | 'non-user'
-    ) => dispatch({ 
-      type: 'SET_PARTICIPANT_USAGE_LEVEL', 
-      payload: { projectId, participantId, usageLevel } 
-    }),
-    
+    loadProjects: async () => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      try {
+        const projects = await api.getProjects();
+        dispatch({ type: 'SET_PROJECTS', payload: projects });
+      } catch (error) {
+        console.error('Error loading projects:', error);
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to load projects' });
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    },
+
+    loadParticipants: async () => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      try {
+        const participants = await api.getParticipants();
+        dispatch({ type: 'SET_PARTICIPANTS', payload: participants });
+      } catch (error) {
+        console.error('Error loading participants:', error);
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to load participants' });
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    },
+
+    addProject: async (project: Project) => {
+      try {
+        const created = await api.createProject(project);
+        dispatch({ type: 'ADD_PROJECT', payload: created });
+      } catch (error) {
+        console.error('Error creating project:', error);
+        throw error;
+      }
+    },
+
+    updateProject: async (id: number, updates: Partial<Project>) => {
+      try {
+        const updated = await api.updateProject(String(id), updates);
+        dispatch({ type: 'UPDATE_PROJECT', payload: { id, updates: updated } });
+      } catch (error) {
+        console.error('Error updating project:', error);
+        throw error;
+      }
+    },
+
+    deleteProject: async (id: number) => {
+      try {
+        await api.deleteProject(String(id));
+        dispatch({ type: 'DELETE_PROJECT', payload: id });
+      } catch (error) {
+        console.error('Error deleting project:', error);
+        throw error;
+      }
+    },
+
+    addSession: async (projectId: number, session: Session) => {
+      try {
+        const updated = await api.addSession(String(projectId), session);
+        dispatch({ type: 'UPDATE_PROJECT', payload: { id: projectId, updates: updated } });
+      } catch (error) {
+        console.error('Error adding session:', error);
+        throw error;
+      }
+    },
+
+    addParticipant: async (participant: Participant) => {
+      try {
+        const created = await api.createParticipant(participant);
+        dispatch({ type: 'ADD_PARTICIPANT', payload: created });
+      } catch (error) {
+        console.error('Error creating participant:', error);
+        throw error;
+      }
+    },
+
+    updateParticipant: async (id: number, updates: Partial<Participant>) => {
+      try {
+        const updated = await api.updateParticipant(String(id), updates);
+        dispatch({ type: 'UPDATE_PARTICIPANT', payload: { id, updates: updated } });
+      } catch (error) {
+        console.error('Error updating participant:', error);
+        throw error;
+      }
+    },
+
+    deleteParticipant: async (id: number) => {
+      try {
+        await api.deleteParticipant(String(id));
+        dispatch({ type: 'DELETE_PARTICIPANT', payload: id });
+      } catch (error) {
+        console.error('Error deleting participant:', error);
+        throw error;
+      }
+    },
+
     setSessionLinks: (links: SessionLink[]) =>
       dispatch({ type: 'SET_SESSION_LINKS', payload: links }),
+    
     addSessionLink: (link: SessionLink) =>
       dispatch({ type: 'ADD_SESSION_LINK', payload: link }),
+    
     updateSessionLink: (id: string, updates: Partial<SessionLink>) =>
       dispatch({ type: 'UPDATE_SESSION_LINK', payload: { id, updates } }),
+    
     deleteSessionLink: (id: string) =>
       dispatch({ type: 'DELETE_SESSION_LINK', payload: id }),
     
     setCurrentProject: (project: Project | null) =>
       dispatch({ type: 'SET_CURRENT_PROJECT', payload: project }),
+    
     setCurrentParticipant: (participant: Participant | null) =>
       dispatch({ type: 'SET_CURRENT_PARTICIPANT', payload: participant })
   };
@@ -356,7 +328,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Custom hook to use the context
 export function useAppContext() {
   const context = useContext(AppContext);
   if (context === undefined) {
@@ -364,31 +335,3 @@ export function useAppContext() {
   }
   return context;
 }
-
-/**
- * USAGE EXAMPLE:
- * 
- * // In your main App.tsx:
- * function App() {
- *   return (
- *     <AppProvider>
- *       <YourComponents />
- *     </AppProvider>
- *   );
- * }
- * 
- * // In any component:
- * function ProjectList() {
- *   const { state, actions } = useAppContext();
- *   
- *   // Read data
- *   const projects = state.projects;
- *   
- *   // Update data
- *   const handleDelete = (id) => {
- *     actions.deleteProject(id);
- *   };
- *   
- *   return <div>...</div>;
- * }
- */

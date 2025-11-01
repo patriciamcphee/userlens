@@ -12,6 +12,23 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+.env.local
+.env.production
+.env.*.local
+.env.example
+api/local.settings.json
+
+# Azure Functions
+api/node_modules
+api/.vscode
+api/dist
+api/.funcignore
+
+# Deployment artifacts
+*.zip
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

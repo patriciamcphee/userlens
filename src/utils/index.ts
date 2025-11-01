@@ -1,5 +1,34 @@
 // utils/index.ts
-import { Project, Participant, Analytics, SessionLink } from '../types';
+import { Project, Participant, Analytics, SessionLink, EmailTemplate, Task } from '../types';
+import { DEFAULT_EMAIL_TEMPLATE } from '../constants';
+
+export { DEFAULT_EMAIL_TEMPLATE };
+
+// Interface for session link data
+interface SessionLinkData {
+  projectId: number;
+  participantId: number;
+  expiresAt: string;
+  linkId: string;
+  // Include minimal essential data
+  projectSetup: {
+    name: string;
+    description: string;
+    mode: 'moderated' | 'unmoderated';
+    beforeMessage: string;
+    duringScenario: string;
+    afterMessage: string;
+    tasks: Task[];
+    randomizeOrder: boolean;
+    cameraOption: 'optional' | 'required' | 'disabled';
+    micOption: 'optional' | 'required' | 'disabled';
+  };
+  participant: {
+    name: string;
+    email: string;
+    usageLevel?: 'active' | 'occasionally' | 'non-user';
+  };
+}
 
 export const getAnalytics = (project: Project): Analytics => {
   const sessions = project.sessions || [];
@@ -93,6 +122,7 @@ export const exportToCSV = (project: Project, participants: Participant[]) => {
         if (feedback.questionAnswers) {
           feedback.questionAnswers.forEach(qa => {
             const question = task?.customQuestions?.find(q => q.id === qa.questionId);
+            const answerStr = Array.isArray(qa.answer) ? qa.answer.join(', ') : qa.answer;
             const qaRow = [
               ...baseData,
               task?.title || 'Unknown Task',
@@ -100,7 +130,7 @@ export const exportToCSV = (project: Project, participants: Participant[]) => {
               '',
               '',
               question?.question || '',
-              qa.answer,
+              answerStr,
               ''
             ];
             rows.push(qaRow);
@@ -132,12 +162,47 @@ export const exportToCSV = (project: Project, participants: Participant[]) => {
 export const generateSessionLink = (
   projectId: number,
   participantId: number,
-  expiryDays: number = 7
+  expiryDays: number = 7,
+  project?: Project,
+  participant?: Participant
 ): { linkId: string; link: string; sessionLink: SessionLink } => {
-  const linkId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + expiryDays);
+  
+  const linkId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+  // Get participant usage level for this project
+  const assignment = project?.participantAssignments?.find(
+    a => a.participantId === participantId
+  );
+
+  const sessionData: SessionLinkData = {
+    projectId,
+    participantId,
+    expiresAt: expiresAt.toISOString(),
+    linkId,
+    projectSetup: project ? {
+      name: project.name,
+      description: project.description,
+      mode: project.mode,
+      beforeMessage: project.setup.beforeMessage,
+      duringScenario: project.setup.duringScenario,
+      afterMessage: project.setup.afterMessage,
+      tasks: project.setup.tasks,
+      randomizeOrder: project.setup.randomizeOrder,
+      cameraOption: project.cameraOption,
+      micOption: project.micOption
+    } : {} as any,
+    participant: participant ? {
+      name: participant.name,
+      email: participant.email,
+      usageLevel: assignment?.usageLevel || participant.defaultUsageLevel
+    } : {} as any
+  };
+  
+  // Base64 encode the session data
+  const encodedData = btoa(JSON.stringify(sessionData));
+  
   const sessionLink: SessionLink = {
     id: linkId,
     projectId,
@@ -149,7 +214,7 @@ export const generateSessionLink = (
   };
 
   const baseUrl = window.location.origin + window.location.pathname;
-  const link = `${baseUrl}?session=${linkId}`;
+  const link = `${baseUrl}?session=${encodedData}`;
 
   return { linkId, link, sessionLink };
 };
@@ -176,10 +241,17 @@ export const copyToClipboard = async (text: string): Promise<boolean> => {
     // Fallback for browsers that don't support clipboard API
     const textArea = document.createElement('textarea');
     textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
     document.body.appendChild(textArea);
     textArea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textArea);
-    return true;
+    try {
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return true;
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return false;
+    }
   }
 };

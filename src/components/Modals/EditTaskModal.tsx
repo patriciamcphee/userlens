@@ -234,16 +234,19 @@ export function EditTaskModal({ task, onSave, onClose }: EditTaskModalProps) {
           {/* Scenario */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Scenario (one sentence)
+              Scenario (paragraph)
             </label>
-            <input
-              type="text"
+            <textarea
               value={scenario}
               onChange={(e) => setScenario(e.target.value)}
               placeholder="Set the context for this task..."
-              maxLength={200}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              maxLength={500}
+              rows={3}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              {scenario.length}/500 characters
+            </p>
           </div>
 
           {/* Your Task (Numbered List) */}
