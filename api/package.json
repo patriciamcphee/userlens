@@ -2,6 +2,11 @@
   "name": "insighthub-api",
   "version": "1.0.0",
   "description": "Azure Functions API for InsightHub",
+  "license": "MIT",
+  "main": "index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "func start",
     "test": "echo \"No tests yet\""
@@ -10,6 +15,6 @@
     "@azure/cosmos": "^4.0.0"
   },
   "devDependencies": {
-    "@azure/functions": "^4.8.0"
+    "@azure/functions": "^4.0.0"
   }
 }

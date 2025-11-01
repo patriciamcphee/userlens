@@ -24,7 +24,10 @@
     }
   },
   "platform": {
-    "apiRuntime": "node:18"
+    "apiRuntime": "node:20"
+  },
+  "globalHeaders": {
+    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.azurestaticapps.net https://*.documents.azure.com"
   },
   "trailingSlash": "auto"
 }

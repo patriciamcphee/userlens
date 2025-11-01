@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Vercel
+.vercel
+
+# Azure
+.azure
+
 # Environment variables
 .env
 .env.local

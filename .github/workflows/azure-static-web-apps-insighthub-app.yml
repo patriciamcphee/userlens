@@ -14,15 +14,16 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
-    env:
-      COSMOS_DB_ENDPOINT: ${{ secrets.COSMOS_DB_ENDPOINT }}
-      COSMOS_DB_KEY: ${{ secrets.COSMOS_DB_KEY }}
-      COSMOS_DB_DATABASE: ${{ secrets.COSMOS_DB_DATABASE }}
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: true
           lfs: false
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
       
       - name: Build And Deploy
         id: builddeploy
@@ -33,11 +34,20 @@ jobs:
           action: "upload"
           
           ###### Repository/Build Configurations ######
-          app_location: "/" # App source code path
-          api_location: "api" # Api source code path - IMPORTANT!
-          output_location: "dist" # Built app content directory - for Vite
+          app_location: "/"
+          api_location: "api"
+          output_location: "dist"
+          
+          ###### API Configuration ######
+          api_build_command: "npm install"
+          
           ###### App Configuration ######
-          app_build_command: "npm run build" # Build command for your app
+          app_build_command: "npm run build"
+          
+        env:
+          COSMOS_DB_ENDPOINT: ${{ secrets.COSMOS_DB_ENDPOINT }}
+          COSMOS_DB_KEY: ${{ secrets.COSMOS_DB_KEY }}
+          COSMOS_DB_DATABASE: ${{ secrets.COSMOS_DB_DATABASE }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
