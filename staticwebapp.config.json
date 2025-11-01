@@ -9,10 +9,22 @@
       "allowedRoles": ["anonymous"]
     }
   ],
-  "mimeTypes": {
-    ".json": "application/json"
+  "responseOverrides": {
+    "400": {
+      "rewrite": "/index.html"
+    },
+    "401": {
+      "rewrite": "/index.html"
+    },
+    "403": {
+      "rewrite": "/index.html"
+    },
+    "404": {
+      "rewrite": "/index.html"
+    }
   },
-  "globalHeaders": {
-    "content-security-policy": "default-src 'self' https://brave-field-04679ed0f.3.azurestaticapps.net; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://brave-field-04679ed0f.3.azurestaticapps.net https://*.documents.azure.com"
-  }
+  "platform": {
+    "apiRuntime": "node:18"
+  },
+  "trailingSlash": "auto"
 }
