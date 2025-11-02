@@ -242,7 +242,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
 
-    updateProject: async (id: number, updates: Partial<Project>) => {
+    updateProject: async (id: string | number, updates: Partial<Project>) => {
       try {
         const updated = await api.updateProject(String(id), updates);
         dispatch({ type: 'UPDATE_PROJECT', payload: { id, updates: updated } });
@@ -252,7 +252,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
 
-    deleteProject: async (id: number) => {
+    deleteProject: async (id: string | number) => {
       try {
         await api.deleteProject(String(id));
         dispatch({ type: 'DELETE_PROJECT', payload: id });
@@ -262,7 +262,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
 
-    addSession: async (projectId: number, session: Session) => {
+    addSession: async (projectId: string | number, session: Session) => {
       try {
         const updated = await api.addSession(String(projectId), session);
         dispatch({ type: 'UPDATE_PROJECT', payload: { id: projectId, updates: updated } });
@@ -282,7 +282,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
 
-    updateParticipant: async (id: number, updates: Partial<Participant>) => {
+    updateParticipant: async (id: string | number, updates: Partial<Participant>) => {
       try {
         const updated = await api.updateParticipant(String(id), updates);
         dispatch({ type: 'UPDATE_PARTICIPANT', payload: { id, updates: updated } });
@@ -292,7 +292,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
 
-    deleteParticipant: async (id: number) => {
+    deleteParticipant: async (id: string | number) => {
       try {
         await api.deleteParticipant(String(id));
         dispatch({ type: 'DELETE_PARTICIPANT', payload: id });
