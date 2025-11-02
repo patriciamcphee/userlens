@@ -33,16 +33,9 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BRAVE_FIELD_04679ED0F }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          
-          ###### Repository/Build Configurations ######
-          app_location: "/" # App source code path
-          api_location: "api" # Api source code path
-          output_location: "dist" # CHANGED FROM "build" TO "dist" for Vite
-          
-        env:
-          COSMOS_DB_ENDPOINT: ${{ secrets.COSMOS_DB_ENDPOINT }}
-          COSMOS_DB_KEY: ${{ secrets.COSMOS_DB_KEY }}
-          COSMOS_DB_DATABASE: ${{ secrets.COSMOS_DB_DATABASE }}
+          app_location: "/"
+          api_location: "api"
+          output_location: "dist"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
