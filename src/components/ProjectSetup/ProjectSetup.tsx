@@ -16,10 +16,7 @@ interface ProjectSetupProps {
   onSave: () => void;
 }
 
-interface ParticipantSelection {
-  participantId: number;
-  usageLevel: 'active' | 'occasionally' | 'non-user';
-}
+
 
 export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupProps) {
   const { state, actions } = useAppContext();
@@ -52,13 +49,8 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
   const [tasks, setTasks] = useState<Task[]>(
     editingProject?.setup.tasks || [{ id: Date.now(), ...DEFAULT_TASK }]
   );
-
-  // NEW: Participant selection state
-  const [selectedParticipants, setSelectedParticipants] = useState<ParticipantSelection[]>(
-    editingProject?.participantAssignments?.map(a => ({
-      participantId: Number(a.participantId),
-      usageLevel: a.usageLevel
-    })) || []
+  const [selectedParticipants, setSelectedParticipants] = useState<Array<{ participantId: string; usageLevel: 'active' | 'occasionally' | 'non-user' }>>(
+    editingProject?.participantAssignments?.map(pa => ({ participantId: String(pa.participantId), usageLevel: pa.usageLevel })) || []
   );
 
   // Validation errors
@@ -194,7 +186,12 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
           <ParticipantsSelectionForm
             participants={state.participants}
             selectedParticipants={selectedParticipants}
-            onSelectionChange={setSelectedParticipants}
+            onSelectionChange={(selections) => setSelectedParticipants(
+              selections.map(sel => ({
+                participantId: String(sel.participantId),
+                usageLevel: sel.usageLevel
+              }))
+            )}
           />
 
           {/* Messages */}

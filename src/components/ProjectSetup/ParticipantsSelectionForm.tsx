@@ -1,10 +1,10 @@
 // components/ProjectSetup/ParticipantsSelectionForm.tsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Users, UserPlus, User, UserX, Info } from 'lucide-react';
 import { Participant } from '../../types';
 
 interface ParticipantSelection {
-  participantId: number;
+  participantId: string | number;  // ✅ FIXED: Now accepts both
   usageLevel: 'active' | 'occasionally' | 'non-user';
 }
 
@@ -20,23 +20,25 @@ export function ParticipantsSelectionForm({
   onSelectionChange
 }: ParticipantsSelectionFormProps) {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedParticipantId, setSelectedParticipantId] = useState<number | null>(null);
+  const [selectedParticipantId, setSelectedParticipantId] = useState<string | number | null>(null);
   const [selectedUsageLevel, setSelectedUsageLevel] = useState<'active' | 'occasionally' | 'non-user'>('occasionally');
 
   // Get participants that haven't been added yet
+  // ✅ FIXED: Use String() comparison for both string and number IDs
   const availableParticipants = participants.filter(
-    p => !selectedParticipants.some(sp => sp.participantId === p.id)
+    p => !selectedParticipants.some(sp => String(sp.participantId) === String(p.id))
   );
 
   const handleAddParticipant = () => {
     if (selectedParticipantId) {
-      const participant = participants.find(p => p.id === selectedParticipantId);
+      // ✅ FIXED: Use String() comparison
+      const participant = participants.find(p => String(p.id) === String(selectedParticipantId));
       const usageLevel = selectedUsageLevel || participant?.defaultUsageLevel || 'occasionally';
       
       onSelectionChange([
         ...selectedParticipants,
         {
-          participantId: selectedParticipantId,
+          participantId: selectedParticipantId,  // Keep original type
           usageLevel
         }
       ]);
@@ -47,14 +49,18 @@ export function ParticipantsSelectionForm({
     }
   };
 
-  const handleRemoveParticipant = (participantId: number) => {
-    onSelectionChange(selectedParticipants.filter(sp => sp.participantId !== participantId));
+  const handleRemoveParticipant = (participantId: string | number) => {
+    // ✅ FIXED: Use String() comparison
+    onSelectionChange(
+      selectedParticipants.filter(sp => String(sp.participantId) !== String(participantId))
+    );
   };
 
-  const handleUpdateUsageLevel = (participantId: number, usageLevel: 'active' | 'occasionally' | 'non-user') => {
+  const handleUpdateUsageLevel = (participantId: string | number, usageLevel: 'active' | 'occasionally' | 'non-user') => {
+    // ✅ FIXED: Use String() comparison
     onSelectionChange(
       selectedParticipants.map(sp =>
-        sp.participantId === participantId ? { ...sp, usageLevel } : sp
+        String(sp.participantId) === String(participantId) ? { ...sp, usageLevel } : sp
       )
     );
   };
@@ -64,14 +70,6 @@ export function ParticipantsSelectionForm({
       case 'active': return 'Active User';
       case 'occasionally': return 'Occasional User';
       case 'non-user': return 'Non-User';
-    }
-  };
-
-  const getUsageLevelColor = (level: 'active' | 'occasionally' | 'non-user') => {
-    switch (level) {
-      case 'active': return 'bg-red-100 text-red-700 border-red-300';
-      case 'occasionally': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-      case 'non-user': return 'bg-green-100 text-green-700 border-green-300';
     }
   };
 
@@ -119,11 +117,12 @@ export function ParticipantsSelectionForm({
       ) : (
         <div className="space-y-3">
           {selectedParticipants.map(sp => {
-            const participant = participants.find(p => p.id === sp.participantId);
+            // ✅ FIXED: Use String() comparison
+            const participant = participants.find(p => String(p.id) === String(sp.participantId));
             if (!participant) return null;
 
             return (
-              <div key={sp.participantId} className="border border-gray-200 rounded-lg p-4">
+              <div key={String(sp.participantId)} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="font-semibold text-gray-900">{participant.name}</div>
@@ -229,20 +228,27 @@ export function ParticipantsSelectionForm({
                     Select Participant
                   </label>
                   <select
-                    value={selectedParticipantId || ''}
+                    value={selectedParticipantId !== null ? String(selectedParticipantId) : ''}
                     onChange={(e) => {
-                      const id = parseInt(e.target.value);
-                      setSelectedParticipantId(id);
-                      const participant = participants.find(p => p.id === id);
-                      if (participant?.defaultUsageLevel) {
-                        setSelectedUsageLevel(participant.defaultUsageLevel);
+                      const value = e.target.value;
+                      if (value) {
+                        // Try to preserve the original type (number or string)
+                        const participant = participants.find(p => String(p.id) === value);
+                        if (participant) {
+                          setSelectedParticipantId(participant.id);
+                          if (participant.defaultUsageLevel) {
+                            setSelectedUsageLevel(participant.defaultUsageLevel);
+                          }
+                        }
+                      } else {
+                        setSelectedParticipantId(null);
                       }
                     }}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Choose a participant...</option>
                     {availableParticipants.map(p => (
-                      <option key={p.id} value={p.id}>
+                      <option key={String(p.id)} value={String(p.id)}>
                         {p.name} ({p.email})
                         {p.defaultUsageLevel && ` - Default: ${getUsageLevelLabel(p.defaultUsageLevel)}`}
                       </option>
