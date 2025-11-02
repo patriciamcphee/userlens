@@ -8,7 +8,7 @@ export interface TaskQuestion {
 }
 
 export interface Task {
-  id: number;
+  id: string | number;  // Changed from just number
   title: string;
   // Legacy field kept for backwards compatibility
   description?: string;
@@ -74,8 +74,8 @@ export interface Session {
       endTime: string;
     };
   };
-  id: number;
-  participantId: number;
+  id: string | number;  // Changed
+  participantId: string | number;  // Changed
   completedAt: string;
   duration: number;
   tasksCompleted: number;
@@ -91,17 +91,17 @@ export interface Session {
 
 // Interface for tracking participant usage level per project
 export interface ParticipantAssignment {
-  participantId: number;
+  participantId: string | number;  // Changed
   usageLevel: 'active' | 'occasionally' | 'non-user';
 }
 
 export interface Project {
-  id: number;
+  id: string | number;  // Changed from just number
   name: string;
   description: string;
   mode: 'moderated' | 'unmoderated';
   status: 'draft' | 'active' | 'completed' | 'archived';
-  participantIds: number[];
+  participantIds: (string | number)[];  // Changed
   participantAssignments: ParticipantAssignment[];
   sessions: Session[];
   cameraOption: 'optional' | 'required' | 'disabled';
@@ -110,10 +110,10 @@ export interface Project {
 }
 
 export interface Participant {
-  id: number;
+  id: string | number;  // Changed from just number
   name: string;
   email: string;
-  defaultUsageLevel?: 'active' | 'occasionally' | 'non-user'; // NEW: Default usage level
+  defaultUsageLevel?: 'active' | 'occasionally' | 'non-user';
 }
 
 export interface Analytics {

@@ -18,13 +18,13 @@ type AppAction =
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_PROJECTS'; payload: Project[] }
   | { type: 'ADD_PROJECT'; payload: Project }
-  | { type: 'UPDATE_PROJECT'; payload: { id: number; updates: Partial<Project> } }
-  | { type: 'DELETE_PROJECT'; payload: number }
-  | { type: 'ADD_SESSION'; payload: { projectId: number; session: Session } }
+  | { type: 'UPDATE_PROJECT'; payload: { id: string | number; updates: Partial<Project> } }  // Changed
+  | { type: 'DELETE_PROJECT'; payload: string | number }  // Changed
+  | { type: 'ADD_SESSION'; payload: { projectId: string | number; session: Session } }  // Changed
   | { type: 'SET_PARTICIPANTS'; payload: Participant[] }
   | { type: 'ADD_PARTICIPANT'; payload: Participant }
-  | { type: 'UPDATE_PARTICIPANT'; payload: { id: number; updates: Partial<Participant> } }
-  | { type: 'DELETE_PARTICIPANT'; payload: number }
+  | { type: 'UPDATE_PARTICIPANT'; payload: { id: string | number; updates: Partial<Participant> } }  // Changed
+  | { type: 'DELETE_PARTICIPANT'; payload: string | number }  // Changed
   | { type: 'SET_SESSION_LINKS'; payload: SessionLink[] }
   | { type: 'ADD_SESSION_LINK'; payload: SessionLink }
   | { type: 'UPDATE_SESSION_LINK'; payload: { id: string; updates: Partial<SessionLink> } }
@@ -38,12 +38,12 @@ interface AppContextType {
     loadProjects: () => Promise<void>;
     loadParticipants: () => Promise<void>;
     addProject: (project: Project) => Promise<void>;
-    updateProject: (id: number, updates: Partial<Project>) => Promise<void>;
-    deleteProject: (id: number) => Promise<void>;
-    addSession: (projectId: number, session: Session) => Promise<void>;
+    updateProject: (id: string | number, updates: Partial<Project>) => Promise<void>;  // Changed
+    deleteProject: (id: string | number) => Promise<void>;  // Changed
+    addSession: (projectId: string | number, session: Session) => Promise<void>;  // Changed
     addParticipant: (participant: Participant) => Promise<void>;
-    updateParticipant: (id: number, updates: Partial<Participant>) => Promise<void>;
-    deleteParticipant: (id: number) => Promise<void>;
+    updateParticipant: (id: string | number, updates: Partial<Participant>) => Promise<void>;  // Changed
+    deleteParticipant: (id: string | number) => Promise<void>;  // Changed
     setSessionLinks: (links: SessionLink[]) => void;
     addSessionLink: (link: SessionLink) => void;
     updateSessionLink: (id: string, updates: Partial<SessionLink>) => void;
@@ -86,14 +86,14 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         projects: state.projects.map(p =>
-          p.id === action.payload.id ? { ...p, ...action.payload.updates } : p
+          String(p.id) === String(action.payload.id) ? { ...p, ...action.payload.updates } : p
         )
       };
     
     case 'DELETE_PROJECT':
       return {
         ...state,
-        projects: state.projects.filter(p => p.id !== action.payload)
+        projects: state.projects.filter(p => String(p.id) !== String(action.payload))
       };
     
     case 'ADD_SESSION':
@@ -116,19 +116,19 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         participants: state.participants.map(p =>
-          p.id === action.payload.id ? { ...p, ...action.payload.updates } : p
+          String(p.id) === String(action.payload.id) ? { ...p, ...action.payload.updates } : p
         )
       };
     
     case 'DELETE_PARTICIPANT':
       return {
         ...state,
-        participants: state.participants.filter(p => p.id !== action.payload),
+        participants: state.participants.filter(p => String(p.id) !== String(action.payload)),
         projects: state.projects.map(proj => ({
           ...proj,
-          participantIds: proj.participantIds.filter(id => id !== action.payload),
+          participantIds: proj.participantIds.filter(id => String(id) !== String(action.payload)),
           participantAssignments: (proj.participantAssignments || []).filter(
-            a => a.participantId !== action.payload
+            a => String(a.participantId) !== String(action.payload)
           )
         }))
       };
