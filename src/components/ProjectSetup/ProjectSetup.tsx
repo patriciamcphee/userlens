@@ -56,7 +56,7 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
   // NEW: Participant selection state
   const [selectedParticipants, setSelectedParticipants] = useState<ParticipantSelection[]>(
     editingProject?.participantAssignments?.map(a => ({
-      participantId: a.participantId,
+      participantId: Number(a.participantId),
       usageLevel: a.usageLevel
     })) || []
   );
@@ -106,8 +106,7 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
     // Extract just the participant IDs
     const participantIds = selectedParticipants.map(sel => sel.participantId);
 
-    const projectData: Project = {
-      id: editingProject ? editingProject.id : Date.now(),
+    const projectData: Omit<Project, 'id'> = {
       name: projectName.trim(),
       description: projectDescription.trim(),
       mode: projectMode!,
@@ -127,9 +126,9 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
     };
 
     if (editingProject) {
-      actions.updateProject(editingProject.id, projectData);
+      actions.updateProject(editingProject.id, projectData as Partial<Project>);
     } else {
-      actions.addProject(projectData);
+      actions.addProject(projectData as Project);
     }
 
     onSave();

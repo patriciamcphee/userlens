@@ -57,13 +57,12 @@ export function ParticipantsList() {
       });
     } else {
       // Add new participant
-      const newParticipant: Participant = {
-        id: Date.now(),
+      const newParticipant: Omit<Participant, 'id'> = {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         defaultUsageLevel
       };
-      actions.addParticipant(newParticipant);
+      actions.addParticipant(newParticipant as Participant);
     }
     
     // Reset form
@@ -321,7 +320,7 @@ export function ParticipantsList() {
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteParticipant(participant.id, participant.name)}
+                      onClick={() => handleDeleteParticipant(Number(participant.id), participant.name)}
                       className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
                       aria-label={`Delete ${participant.name}`}
                       title="Delete participant"
