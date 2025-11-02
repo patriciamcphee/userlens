@@ -1,5 +1,5 @@
 // components/ProjectDetail/EditTaskModal.tsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Target, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Task, TaskQuestion } from '../../types';
 
@@ -37,7 +37,7 @@ export function EditTaskModal({ task, onSave, onClose }: EditTaskModalProps) {
   const [estimatedTime, setEstimatedTime] = useState(task.estimatedTime || '');
   const [objective, setObjective] = useState(task.objective || '');
   const [scenario, setScenario] = useState(task.scenario || '');
-  const [yourTask, setYourTask] = useState<string[]>(task.yourTask || ['']);
+  const [yourTask, setYourTask] = useState<string[]>(task.yourTask || ['', '', '']);
   const [successCriteria, setSuccessCriteria] = useState(task.successCriteria || '');
   const [difficulty, setDifficulty] = useState(task.difficulty);
   const [ratingEnabled, setRatingEnabled] = useState(task.ratingEnabled || false);
@@ -75,7 +75,7 @@ export function EditTaskModal({ task, onSave, onClose }: EditTaskModalProps) {
       estimatedTime: estimatedTime.trim(),
       objective: objective.trim(),
       scenario: scenario.trim(),
-      yourTask: filteredSteps.length > 0 ? filteredSteps : [''],
+      yourTask: filteredSteps.length > 0 ? filteredSteps : ['', '', ''],
       successCriteria: successCriteria.trim(),
       difficulty,
       ratingEnabled,

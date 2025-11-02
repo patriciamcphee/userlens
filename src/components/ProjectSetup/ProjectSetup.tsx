@@ -1,5 +1,5 @@
 // components/ProjectSetup/ProjectSetup.tsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { Project, Task, ParticipantAssignment } from '../../types';
@@ -128,7 +128,12 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
     if (editingProject) {
       actions.updateProject(editingProject.id, projectData as Partial<Project>);
     } else {
-      actions.addProject(projectData as Project);
+      // Generate a unique ID for the new project
+      const newProject: Project = {
+        ...projectData,
+        id: `project_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      };
+      actions.addProject(newProject);
     }
 
     onSave();

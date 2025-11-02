@@ -1,5 +1,5 @@
 // components/Dashboard/ParticipantsList.tsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, UserPlus, Mail, Trash2, User, Users, UserX, Edit2 } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { Participant } from '../../types';
@@ -57,7 +57,7 @@ export function ParticipantsList() {
       });
     } else {
       // Add new participant
-      const newParticipant: Omit<Participant, 'id'> = {
+      const newParticipant = {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         defaultUsageLevel

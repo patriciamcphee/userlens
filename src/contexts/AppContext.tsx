@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode, useState } from 'react';
+import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { Project, Participant, SessionLink, Session } from '../types';
 import { DEFAULT_PARTICIPANTS } from '../constants';
 import { api } from '../services/api';

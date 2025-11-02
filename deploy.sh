@@ -1,8 +1,8 @@
 #!/bin/bash
 yarn build
-swa deploy \
-  --app-location . \
-  --output-location dist \
+swa deploy dist \
   --api-location api \
-  --deployment-token $AZURE_SWA_TOKEN \
+  --api-language node \
+  --api-version 20 \
+  --deployment-token 2384d263c6186b4b8db4e2bc2c7e9782dac0f7a9df06bfbc6e47eaaa1bcab01b03-8da667da-c93c-49e7-a75b-43bccefff3d000f161404679ed0f \
   --env production

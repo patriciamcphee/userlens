@@ -1,4 +1,3 @@
-import { Task } from "../types";
 
 // constants/index.ts
 export const STORAGE_KEYS = {
@@ -48,21 +47,17 @@ Your feedback is invaluable and will directly contribute to improving the user e
 If you have any additional thoughts or questions, please don't hesitate to reach out.`
 };
 
-export const DEFAULT_TASK: Omit<Task, 'id'> = {
+export const DEFAULT_TASK = {
   title: '',
-  description: '',
   estimatedTime: '',
   objective: '',
   scenario: '',
-  yourTask: [''],
+  yourTask: ['', '', ''],  
   successCriteria: '',
-  difficulty: 'medium', // Default to medium
+  difficulty: 'medium' as const,
   ratingEnabled: false,
   ratingLabel: 'Task Difficulty',
-  ratingScale: {
-    low: 'Very Easy',
-    high: 'Very Difficult'
-  },
+  ratingScale: { low: 'Very Easy', high: 'Very Difficult' },
   customQuestions: []
 };
 
