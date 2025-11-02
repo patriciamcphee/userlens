@@ -1,9 +1,10 @@
 const { getContainer } = require("../cosmosClient");
 
+
 module.exports = async function (context, req) {
   try {
     const participantId = req.params.id;
-    const container = await getContainer("Participants");
+    const container = await getContainer("participants");
     
     await container.item(participantId, participantId).delete();
     

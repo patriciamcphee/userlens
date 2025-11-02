@@ -10,7 +10,7 @@ module.exports = async function (context, req) {
       return;
     }
 
-    const container = await getContainer("Participants");
+    const container = await getContainer("participants");
     const participant = {
       ...req.body,
       createdAt: new Date().toISOString(),

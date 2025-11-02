@@ -27,7 +27,7 @@ module.exports = async function (context, req) {
     }
 
     context.log('Getting Projects container...');
-    const container = await getContainer("Projects");
+    const container = await getContainer("projects");
     
     // Convert numeric ID to string for Cosmos DB
     const project = {

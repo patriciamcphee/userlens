@@ -11,7 +11,7 @@ module.exports = async function (context, req) {
 
     // Create Projects container if not exists
     const { container: projectsContainer } = await database.containers.createIfNotExists({
-      id: "Projects",
+      id: "projects",
       partitionKey: { paths: ["/id"] }
     });
 
@@ -19,7 +19,7 @@ module.exports = async function (context, req) {
 
     // Create Participants container if not exists
     const { container: participantsContainer } = await database.containers.createIfNotExists({
-      id: "Participants",
+      id: "participants",
       partitionKey: { paths: ["/id"] }
     });
 
@@ -30,7 +30,7 @@ module.exports = async function (context, req) {
       body: {
         message: "Database and containers initialized successfully",
         database: databaseId,
-        containers: ["Projects", "Participants"]
+        containers: ["projects", "participants"]
       }
     };
   } catch (error) {

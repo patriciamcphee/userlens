@@ -12,7 +12,7 @@ module.exports = async function (context, req) {
       return;
     }
 
-    const container = await getContainer("Participants");
+    const container = await getContainer("participants");
     
     const { resource: existingParticipant } = await container.item(participantId, participantId).read();
     

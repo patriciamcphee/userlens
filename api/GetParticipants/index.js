@@ -2,7 +2,7 @@ const { getContainer } = require("../cosmosClient");
 
 module.exports = async function (context, req) {
   try {
-    const container = await getContainer("Participants");
+    const container = await getContainer("participants");
     
     const { resources: participants } = await container.items
       .query({

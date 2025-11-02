@@ -12,7 +12,7 @@ module.exports = async function (context, req) {
       return;
     }
 
-    const container = await getContainer("Projects");
+    const container = await getContainer("projects");
     
     // Fetch existing project
     const { resource: project } = await container.item(projectId, projectId).read();
