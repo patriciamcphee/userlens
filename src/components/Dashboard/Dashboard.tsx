@@ -5,6 +5,11 @@ import { useAppContext } from '../../contexts/AppContext';
 import { ProjectCard } from './ProjectCard';
 import { ParticipantsList } from './ParticipantsList';
 import { Project, Participant } from '../../types';
+import { LogoHorizontal } from '../Logo/InsightHubLogo';
+
+<nav className="bg-white px-6 py-4">
+  <LogoHorizontal size="md" />
+</nav>
 
 interface DashboardProps {
   onCreateProject: () => void;
@@ -33,10 +38,9 @@ export function Dashboard({ onCreateProject, onEditProject, onOpenProject }: Das
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center space-x-3">
-                <h1 className="text-3xl font-bold text-gray-900">InsightHub</h1>
-                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">Beta</span>
+                  <LogoHorizontal size="lg" />
+                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">Beta</span>
               </div>
-              <p className="text-gray-600 mt-1">User Research & Testing Platform</p>
             </div>
             <div className="flex items-center space-x-6">
               <a

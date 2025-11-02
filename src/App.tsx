@@ -12,7 +12,7 @@ import { Project, Participant } from './types';
 type View = 'dashboard' | 'createProject' | 'editProject' | 'projectDetail' | 'runSession' | 'sessionComplete';
 
 function App() {
-  const { state, actions } = useAppContext();
+  const { state } = useAppContext();
   
   // View management
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -125,7 +125,7 @@ function App() {
     setCurrentView('projectDetail');
   };
 
-  const handleStartSession = (projectId: number, participantId: number) => {
+  const handleStartSession = (projectId: string | number, participantId: number) => {
     const project = state.projects.find(p => p.id === projectId);
     const participant = state.participants.find(p => p.id === participantId);
     
