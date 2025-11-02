@@ -1,4 +1,4 @@
-import { InvocationContext, HttpRequest, HttpResponseInit } from "@azure/functions";
+import { HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import { CosmosClient } from "@azure/cosmos";
 
 const client = new CosmosClient({
@@ -7,11 +7,12 @@ const client = new CosmosClient({
 });
 
 const database = client.database(process.env.COSMOS_DB_DATABASE!);
-const container = database.container(process.env.COSMOS_DB_CONTAINER_PROJECTS!);
+// FIXED: Use participants container, not projects
+const container = database.container(process.env.COSMOS_DB_CONTAINER_PARTICIPANTS!);
 
-const httpTrigger = async function (
-  context: InvocationContext,
-  req: HttpRequest
+export default async function (
+  req: HttpRequest,
+  context: InvocationContext
 ): Promise<HttpResponseInit> {
   const id = req.params.id;
   const method = req.method;
@@ -20,14 +21,12 @@ const httpTrigger = async function (
     switch (method) {
       case "GET":
         if (id) {
-          // Get single project
           const { resource } = await container.item(id, id).read();
           return {
             status: 200,
             jsonBody: resource
           };
         } else {
-          // Get all projects
           const { resources } = await container.items
             .query("SELECT * FROM c")
             .fetchAll();
@@ -36,37 +35,34 @@ const httpTrigger = async function (
             jsonBody: resources
           };
         }
-        break;
 
       case "POST":
-        // Create project
-        const newProject = req.body as any;
-        if (!newProject) {
+        const newParticipant = await req.json() as any;
+        if (!newParticipant) {
           return {
             status: 400,
             jsonBody: { error: "Request body required" }
           };
         }
-        newProject.id = newProject.id || Date.now().toString();
-        newProject.id = newProject.id || Date.now().toString();
-        newProject.createdAt = new Date().toISOString();
-        newProject.updatedAt = new Date().toISOString();
+        newParticipant.id = newParticipant.id || Date.now().toString();
+        newParticipant.createdAt = new Date().toISOString();
+        newParticipant.updatedAt = new Date().toISOString();
         
-        const { resource: created } = await container.items.create(newProject);
+        const { resource: created } = await container.items.create(newParticipant);
         return {
           status: 201,
           jsonBody: created
         };
+
       case "PUT":
-        // Update project
         if (!id) {
           return {
             status: 400,
-            jsonBody: { error: "Project ID required" }
+            jsonBody: { error: "Participant ID required" }
           };
         }
         
-        const updates = req.body as any;
+        const updates = await req.json() as any;
         updates.updatedAt = new Date().toISOString();
         
         const { resource: existing } = await container.item(id, id).read();
@@ -82,21 +78,19 @@ const httpTrigger = async function (
         };
 
       case "DELETE":
-        // Delete project
         if (!id) {
           return {
             status: 400,
-            jsonBody: { error: "Project ID required" }
+            jsonBody: { error: "Participant ID required" }
           };
         }
         
         await container.item(id, id).delete();
-      await container.item(id, id).delete();
-      return {
-        status: 204
-      };
+        return {
+          status: 204
+        };
 
-    default:
+      default:
         return {
           status: 405,
           jsonBody: { error: "Method not allowed" }

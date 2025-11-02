@@ -11,8 +11,7 @@
     {
       "type": "http",
       "direction": "out",
-      "name": "res"
+      "name": "$return"
     }
-  ],
-  "scriptFile": "../dist/projects/index.js"
+  ]
 }
