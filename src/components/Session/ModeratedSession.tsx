@@ -1,9 +1,10 @@
-// components/Session/ModeratedSession.tsx
+// components/Session/ModeratedSession.tsx - WITH AZURE UPLOAD
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Play, Pause, Square, Monitor, Video, Mic, MicOff, VideoOff, Mouse, Keyboard, CheckCircle, Circle, Activity } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { Project, Participant, Task, Session, TrackingData } from '../../types';
-import { CombinedRecorder, isRecordingSupported } from '../../utils/recording';
+import { isRecordingSupported } from '../../utils/recording';
+import { useRecording } from '../../hooks/useRecording';
 import { getTasksForParticipant } from '../../utils/taskFiltering';
 
 interface ModeratedSessionProps {
@@ -15,11 +16,12 @@ interface ModeratedSessionProps {
 
 export function ModeratedSession({ project, participant, onBack, onComplete }: ModeratedSessionProps) {
   const { actions } = useAppContext();
+  const recording = useRecording();
   
   const [sessionStarted, setSessionStarted] = useState(false);
-  const [recording, setRecording] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [currentTask, setCurrentTask] = useState(0);
-  const [completedTasks, setCompletedTasks] = useState<number[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<(string | number)[]>([]);
   const [micOn, setMicOn] = useState(project.micOption === 'required');
   const [videoOn, setVideoOn] = useState(project.cameraOption === 'required');
   const [notes, setNotes] = useState('');
@@ -28,31 +30,23 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
   const [displayTasks, setDisplayTasks] = useState<Task[]>([]);
 
-  // Recording state - using combined recorder
-  const combinedRecorderRef = useRef<CombinedRecorder | null>(null);
-  const [recordingStartTime, setRecordingStartTime] = useState<string | null>(null);
-  const [isRecordingScreen, setIsRecordingScreen] = useState(false);
-  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
-
+  const sessionIdRef = useRef(`session-${Date.now()}`);
   const canToggleVideo = project.cameraOption === 'optional';
   const canToggleMic = project.micOption === 'optional';
   const recordingSupport = isRecordingSupported();
 
   useEffect(() => {
-    // Get tasks filtered by participant's usage level
-    let tasksToUse = getTasksForParticipant(project, participant.id);
+    let tasksToUse = getTasksForParticipant(project, typeof participant.id === 'number' ? participant.id : parseInt(participant.id as string, 10));
     
-    // Apply randomization if enabled
     if (project.setup.randomizeOrder) {
       tasksToUse = tasksToUse.sort(() => Math.random() - 0.5);
     }
     
     setDisplayTasks(tasksToUse);
-  }, [project, participant.id]); // Note: added participant.id to dependencies
+  }, [project, participant.id]);
 
   useEffect(() => {
-    // Track actual mouse clicks and keystrokes
-    if (!sessionStarted || !recording) return;
+    if (!sessionStarted || !isRecording) return;
 
     const handleClick = () => {
       setTrackingData(prev => ({
@@ -68,44 +62,42 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
       }));
     };
 
-    // Add event listeners
     document.addEventListener('click', handleClick);
     document.addEventListener('keydown', handleKeyPress);
 
-    // Cleanup
     return () => {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [sessionStarted, recording]);
+  }, [sessionStarted, isRecording]);
 
   const beginSession = async () => {
     setSessionStarted(true);
-    setRecording(true);
+    setIsRecording(true);
     setSessionStartTime(Date.now());
-    setRecordingStartTime(new Date().toISOString());
 
-    // Use combined recorder when both video and audio are enabled or when either is enabled
+    // Start recording with Azure upload integration
     if ((videoOn || micOn) && recordingSupport.combined) {
-      combinedRecorderRef.current = new CombinedRecorder();
-      const result = await combinedRecorderRef.current.startRecording({
+      const success = await recording.startRecording({
         video: videoOn,
-        audio: micOn
+        audio: micOn,
+        projectId: project.id,
+        participantId: participant.id,
+        sessionId: sessionIdRef.current
       });
       
-      if (result.success) {
-        setIsRecordingScreen(result.hasVideo);
-        setIsRecordingAudio(result.hasAudio);
-      } else {
-        console.warn('Combined recording failed to start:', result.error);
+      if (!success && (project.cameraOption === 'required' || project.micOption === 'required')) {
+        alert('Failed to start required recording. Please check your camera/microphone permissions.');
+        setSessionStarted(false);
+        setIsRecording(false);
+        return;
       }
     }
   };
 
-  const handleTaskComplete = (taskId: number) => {
+  const handleTaskComplete = (taskId: string | number) => {
     if (!completedTasks.includes(taskId)) {
       setCompletedTasks([...completedTasks, taskId]);
-      // Move to next task if available
       if (currentTask < displayTasks.length - 1) {
         setCurrentTask(currentTask + 1);
       }
@@ -113,27 +105,34 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
   };
 
   const endSession = async () => {
-    setRecording(false);
+    setIsRecording(false);
     
     const duration = sessionStartTime ? Math.floor((Date.now() - sessionStartTime) / 1000) : 0;
     const endTime = new Date().toISOString();
 
-    // Stop combined recording
-    let combinedRecordingData = null;
-    if (combinedRecorderRef.current && combinedRecorderRef.current.isRecording()) {
-      const result = await combinedRecorderRef.current.stopRecording();
-      
-      // Store recording data - in production, this would be uploaded to a server
-      combinedRecordingData = {
-        available: true,
-        duration: result.duration,
-        size: result.size,
-        startTime: recordingStartTime!,
-        endTime,
-        hasVideo: result.hasVideo,
-        hasAudio: result.hasAudio,
-        type: result.hasVideo ? "video" as const : "audio" as const
-      };
+    // Stop recording and upload to Azure
+    let recordingData = null;
+    if (recording.state.isRecording) {
+      const result = await recording.stopRecording({
+        video: videoOn,
+        audio: micOn,
+        projectId: project.id,
+        participantId: participant.id,
+        sessionId: sessionIdRef.current
+      });
+
+      if (result.success && result.url) {
+        recordingData = {
+          available: true,
+          duration: result.duration,
+          size: result.size,
+          startTime: new Date(Date.now() - result.duration * 1000).toISOString(),
+          endTime,
+          hasVideo: result.hasVideo,
+          hasAudio: result.hasAudio,
+          type: result.hasVideo ? 'video' as const : 'audio' as const
+        };
+      }
     }
     
     const sessionRecord: Session = {
@@ -145,13 +144,13 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
       totalTasks: displayTasks.length,
       mouseClicks: trackingData.clicks,
       keystrokes: trackingData.keystrokes,
-      hasVideo: isRecordingScreen,
-      hasAudio: isRecordingAudio,
+      hasVideo: recording.state.hasVideo,
+      hasAudio: recording.state.hasAudio,
       notes,
       taskFeedback: [],
       observations,
       recordings: {
-        combined: combinedRecordingData || undefined
+        combined: recordingData || undefined
       }
     };
     
@@ -200,14 +199,13 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
                   <div className="mb-2">This session will record screen activity, keyboard input, and mouse movements.</div>
                   {videoOn && micOn && (
                     <div className="mt-2 pt-2 border-t border-gray-300 text-green-700 font-medium">
-                      ✓ Video and audio will be recorded together in a synchronized file
+                      ✓ Video and audio will be recorded together in a synchronized file and uploaded to secure storage
                     </div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Recording Options */}
             {(project.cameraOption === 'optional' || project.micOption === 'optional') && recordingSupport.combined && (
               <div className="bg-blue-50 rounded-lg p-6 mb-6">
                 <h3 className="font-bold text-gray-900 mb-4">Recording Preferences</h3>
@@ -268,9 +266,9 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
               <ArrowLeft className="w-5 h-5" />
             </button>
             <h1 className="text-xl font-bold text-gray-900">Moderated Testing Session</h1>
-            {recording && (
+            {recording.state.isRecording && (
               <div className="flex items-center space-x-3">
-                {isRecordingScreen && isRecordingAudio ? (
+                {recording.state.hasVideo && recording.state.hasAudio ? (
                   <div className="flex items-center space-x-2 bg-green-50 px-3 py-1 rounded-full">
                     <Video className="w-4 h-4 text-green-600" />
                     <span className="text-xs text-green-600">+</span>
@@ -279,13 +277,13 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
                   </div>
                 ) : (
                   <>
-                    {isRecordingScreen && (
+                    {recording.state.hasVideo && (
                       <div className="flex items-center space-x-2 bg-red-50 px-3 py-1 rounded-full">
                         <Video className="w-4 h-4 text-red-600" />
                         <span className="text-xs font-medium text-red-600">Video</span>
                       </div>
                     )}
-                    {isRecordingAudio && (
+                    {recording.state.hasAudio && (
                       <div className="flex items-center space-x-2 bg-purple-50 px-3 py-1 rounded-full">
                         <Mic className="w-4 h-4 text-purple-600" />
                         <span className="text-xs font-medium text-purple-600">Audio</span>
@@ -295,24 +293,40 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
                 )}
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-red-600">Recording</span>
+                  <span className="text-sm font-medium text-red-600">
+                    Recording {Math.floor(recording.state.duration / 60)}:{(recording.state.duration % 60).toString().padStart(2, '0')}
+                  </span>
                 </div>
+              </div>
+            )}
+            {recording.state.isUploading && (
+              <div className="flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-full">
+                <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                <span className="text-xs font-medium text-blue-600">Uploading... {recording.state.uploadProgress}%</span>
               </div>
             )}
           </div>
           <div className="flex items-center space-x-3">
             <button
-              onClick={() => setRecording(!recording)}
+              onClick={() => {
+                if (recording.state.isPaused) {
+                  recording.resumeRecording();
+                } else {
+                  recording.pauseRecording();
+                }
+              }}
               className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              disabled={!recording.state.isRecording}
             >
-              {recording ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              {recording.state.isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
             </button>
             <button
               onClick={endSession}
-              className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center space-x-2"
+              disabled={recording.state.isUploading}
+              className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Square className="w-4 h-4" />
-              <span>End Session</span>
+              <span>{recording.state.isUploading ? 'Saving...' : 'End Session'}</span>
             </button>
           </div>
         </div>
@@ -321,7 +335,6 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
       <div className="max-w-7xl mx-auto p-6">
         <div className="grid grid-cols-3 gap-6">
           <div className="col-span-2 space-y-6">
-            {/* Screen View */}
             <div className="bg-gray-900 rounded-lg overflow-hidden aspect-video relative">
               <div className="absolute inset-0 flex items-center justify-center">
                 <Monitor className="w-16 h-16 text-gray-600" />
@@ -341,7 +354,6 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
               </div>
             </div>
 
-            {/* Webcam View */}
             {project.cameraOption !== 'disabled' && (
               <div className="bg-gray-800 rounded-lg overflow-hidden aspect-video relative w-64">
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -353,7 +365,6 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
               </div>
             )}
 
-            {/* Controls */}
             <div className="bg-white rounded-lg p-4 flex items-center justify-center space-x-4">
               <button
                 onClick={() => canToggleMic && setMicOn(!micOn)}
@@ -376,9 +387,7 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
-            {/* Tasks */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Tasks</h3>
               <div className="space-y-3">
@@ -414,7 +423,6 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
               </div>
             </div>
 
-            {/* Observer Notes */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Observer Notes</h3>
               <textarea
@@ -425,7 +433,6 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
               />
             </div>
 
-            {/* Observations */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Participant Observations</h3>
               <p className="text-sm text-gray-600 mb-3">

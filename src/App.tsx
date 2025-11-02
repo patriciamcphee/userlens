@@ -1,4 +1,4 @@
-// App.tsx
+// App.tsx - FIXED VERSION
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from './contexts/AppContext';
 import { Dashboard } from './components/Dashboard/Dashboard';
@@ -7,11 +7,44 @@ import { ProjectDetail } from './components/ProjectDetail/ProjectDetail';
 import { ModeratedSession } from './components/Session/ModeratedSession';
 import { UnmoderatedSession } from './components/Session/UnmoderatedSession';
 import { SessionComplete } from './components/Session/SessionComplete';
-import { Project, Participant } from './types';
+import { Project, Participant, View } from './types';
 
-type View = 'dashboard' | 'createProject' | 'editProject' | 'projectDetail' | 'runSession' | 'sessionComplete';
+import { azureUploadService } from './services/azureUploadService';
 
 function App() {
+  useEffect(() => {
+    // Initialize Azure upload service on app start with proper validation
+    const accountName = import.meta.env.VITE_AZURE_STORAGE_ACCOUNT_NAME;
+    const sasToken = import.meta.env.VITE_AZURE_STORAGE_SAS_TOKEN;
+    const containerName = import.meta.env.VITE_AZURE_STORAGE_CONTAINER_NAME || 'recordings';
+
+    if (!accountName || !sasToken) {
+      console.warn('⚠️ Azure Storage credentials not configured. Recording uploads will fail.');
+      console.warn('Please set VITE_AZURE_STORAGE_ACCOUNT_NAME and VITE_AZURE_STORAGE_SAS_TOKEN in your .env file');
+      return;
+    }
+
+    try {
+      azureUploadService.initialize({
+        accountName,
+        sasToken,
+        containerName
+      });
+      console.log('✅ Azure Upload Service initialized successfully');
+      
+      // Test the connection
+      azureUploadService.testConnection().then(result => {
+        if (result) {
+          console.log('✅ Azure connection test passed');
+        } else {
+          console.error('❌ Azure connection test failed');
+        }
+      });
+    } catch (error) {
+      console.error('❌ Failed to initialize Azure Upload Service:', error);
+    }
+  }, []);
+
   const { state } = useAppContext();
   
   // View management

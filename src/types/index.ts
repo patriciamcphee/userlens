@@ -1,22 +1,20 @@
-// types/index.ts
+// types/index.ts - UPDATED VERSION
 export interface TaskQuestion {
   id: number;
   question: string;
-  type: 'text' | 'multiple-choice' | 'checkbox' | 'yes-no'; // Added 'yes-no'
-  options?: string[]; // For multiple-choice and checkbox
+  type: 'text' | 'multiple-choice' | 'checkbox' | 'yes-no';
+  options?: string[];
   required?: boolean;
 }
 
 export interface Task {
-  id: string | number;  // Changed from just number
+  id: string | number;
   title: string;
-  // Legacy field kept for backwards compatibility
   description?: string;
-  // New structured fields
   estimatedTime?: string;
   objective?: string;
   scenario?: string;
-  yourTask?: string[]; // Array of task steps as numbered list
+  yourTask?: string[];
   successCriteria?: string;
   difficulty: 'easy' | 'medium' | 'hard' | 'all'; 
   ratingEnabled?: boolean;
@@ -27,13 +25,14 @@ export interface Task {
   };
   customQuestions?: TaskQuestion[];
 }
+
 export interface TaskFeedback {
   taskId: number;
   answer: string;
   rating?: number;
   questionAnswers?: { 
     questionId: number; 
-    answer: string | string[]; // Can be single value or array for checkbox
+    answer: string | string[];
   }[];
   timestamp: string;
 }
@@ -74,8 +73,8 @@ export interface Session {
       endTime: string;
     };
   };
-  id: string | number;  // Changed
-  participantId: string | number;  // Changed
+  id: string | number;
+  participantId: string | number;
   completedAt: string;
   duration: number;
   tasksCompleted: number;
@@ -89,19 +88,18 @@ export interface Session {
   observations: string;
 }
 
-// Interface for tracking participant usage level per project
 export interface ParticipantAssignment {
-  participantId: string | number;  // Changed
+  participantId: string | number;
   usageLevel: 'active' | 'occasionally' | 'non-user';
 }
 
 export interface Project {
-  id: string | number;  // Changed from just number
+  id: string | number;
   name: string;
   description: string;
   mode: 'moderated' | 'unmoderated';
   status: 'draft' | 'active' | 'completed' | 'archived';
-  participantIds: (string | number)[];  // Changed
+  participantIds: (string | number)[];
   participantAssignments: ParticipantAssignment[];
   sessions: Session[];
   cameraOption: 'optional' | 'required' | 'disabled';
@@ -110,7 +108,7 @@ export interface Project {
 }
 
 export interface Participant {
-  id: string | number;  // Changed from just number
+  id: string | number;
   name: string;
   email: string;
   defaultUsageLevel?: 'active' | 'occasionally' | 'non-user';
@@ -147,5 +145,6 @@ export interface EmailTemplate {
   body: string;
 }
 
-export type View = 'dashboard' | 'createProject' | 'projectDetail' | 'runSession';
+// FIXED: Added 'editProject' and 'sessionComplete' to View type
+export type View = 'dashboard' | 'createProject' | 'editProject' | 'projectDetail' | 'runSession' | 'sessionComplete';
 export type ActiveTab = 'overview' | 'analytics';

@@ -109,9 +109,9 @@ export function Dashboard({ onCreateProject, onEditProject, onOpenProject }: Das
                     project={project}
                     participants={state.participants}
                     onEdit={() => onEditProject(project)}
-                    onDelete={() => handleDeleteProject(project.id)}
+                    onDelete={() => handleDeleteProject(Number(project.id))}
                     onOpen={() => onOpenProject(project)}
-                    onStatusChange={(status) => handleStatusChange(project.id, status)}
+                    onStatusChange={(status) => handleStatusChange(Number(project.id), status)}
                   />
                 ))}
               </div>
