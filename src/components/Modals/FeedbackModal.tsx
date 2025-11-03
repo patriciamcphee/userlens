@@ -1,4 +1,5 @@
-// components/Modals/FeedbackModal.tsx - UPDATED for Yes/No and new task structure
+// Fixed FeedbackModal component with better question type handling
+
 import React from 'react';
 import { CheckCircle, Trash2 } from 'lucide-react';
 import { Task, TaskFeedback } from '../../types';
@@ -151,24 +152,42 @@ export function FeedbackModal({
             <div className="mb-6 pb-6 border-b border-gray-200 space-y-4">
               {task.customQuestions.map((q, idx) => {
                 const answer = getQuestionAnswer(q.id);
-                // Default to 'text' if type is not specified (legacy questions)
-                const questionType = q.type || 'text';
+                // FIXED: More explicit type checking with proper fallback
+                let questionType = q.type;
+                
+                // Handle undefined or invalid types
+                if (!questionType || !['text', 'yes-no', 'multiple-choice', 'checkbox'].includes(questionType)) {
+                  questionType = 'text'; // Force to text if invalid
+                  console.warn(`Question ${q.id} has invalid type "${q.type}", defaulting to "text"`);
+                }
+                
+                console.log(`Rendering Question ${idx + 1}:`, {
+                  id: q.id,
+                  question: q.question,
+                  originalType: q.type,
+                  resolvedType: questionType,
+                  answer: answer
+                });
                 
                 return (
                   <div key={q.id}>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Question {idx + 1}: {q.question}
                       {q.required && <span className="text-red-500 ml-1">*</span>}
+                      {/* Debug info - remove this in production */}
+                      <span className="text-xs text-gray-400 ml-2">[{questionType}]</span>
                     </label>
                     
                     {questionType === 'text' && (
-                      <textarea
-                        value={typeof answer === 'string' ? answer : ''}
-                        onChange={(e) => onQuestionAnswerChange(q.id, e.target.value)}
-                        placeholder="Your answer..."
-                        rows={3}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                      />
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-1">
+                        <textarea
+                          value={typeof answer === 'string' ? answer : ''}
+                          onChange={(e) => onQuestionAnswerChange(q.id, e.target.value)}
+                          placeholder="Your answer..."
+                          rows={3}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                        />
+                      </div>
                     )}
                     
                     {questionType === 'yes-no' && (
@@ -238,6 +257,13 @@ export function FeedbackModal({
                             </label>
                           );
                         })}
+                      </div>
+                    )}
+                    
+                    {/* Debug fallback - remove this in production */}
+                    {!['text', 'yes-no', 'multiple-choice', 'checkbox'].includes(questionType) && (
+                      <div className="bg-red-100 border border-red-300 rounded-lg p-3 text-red-700 text-sm">
+                        Error: Unknown question type "{questionType}" for question "{q.question}"
                       </div>
                     )}
                   </div>
