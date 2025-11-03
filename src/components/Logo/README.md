@@ -1,263 +1,457 @@
-# InsightHub Logo - Concept 6 with Horizontal Layout ✨
+# UserLens Brand Assets
 
-## What You Got
+> **Complete logo system with light/dark mode support and comprehensive brand guidelines**
 
-Perfect! I've created your Concept 6 (Minimalist Hexagon) logo with **horizontal layout** where the logo sits to the left of the name and tagline.
-
-## 📦 Files Created
-
-### 1. **Interactive Preview** ⭐ [OPEN THIS FIRST]
-- **`logo-concept6-layouts.html`** / **`index.html`**
-- Shows both horizontal and vertical layouts
-- Try different background colors
-- See all size variations
-- Includes usage examples
-
-### 2. **SVG Logo Files**
-- **`insighthub-logo-horizontal.svg`** - Horizontal layout vector file
-- Fully scalable, production-ready
-- Clean, minimalist hexagon design
-
-### 3. **React Component** (Updated)
-- **`InsightHubLogo-v2.tsx`** - Enhanced component with layout options
-- Includes both horizontal and vertical layouts
-- 4 size options (sm, md, lg, xl)
-- Easy to use convenience components
-
-## 🎨 Layout Options
-
-### Horizontal Layout (Default) ⭐
-```tsx
-<InsightHubLogo layout="horizontal" size="md" />
-```
-**Perfect for:**
-- ✅ Navigation headers
-- ✅ Email signatures
-- ✅ Business cards
-- ✅ Footer branding
-- ✅ Wide spaces
-
-### Vertical Layout
-```tsx
-<InsightHubLogo layout="vertical" size="lg" />
-```
-**Perfect for:**
-- ✅ Login/splash screens
-- ✅ App icons
-- ✅ Centered layouts
-- ✅ Square spaces
+![UserLens Logo](userlens-logo.svg)
 
 ## 🚀 Quick Start
 
-### Step 1: View the Designs
-Open **`index.html`** in your browser to see:
-- Horizontal layout (logo left, text right)
-- Vertical layout (logo top, text bottom)
-- All size variations
-- Different background options
-
-### Step 2: Install the Component
-```bash
-# Copy to your components folder
-cp InsightHubLogo-v2.tsx src/components/Logo/InsightHubLogo.tsx
-```
-
-### Step 3: Use in Your App
-
-**Navigation Header (Horizontal):**
+### React Component
 ```tsx
-import { LogoHorizontal } from './components/Logo/InsightHubLogo';
+import { UserLensLogo, LogoIcon } from './components/UserLensLogo';
 
-<nav className="bg-white px-6 py-4">
-  <LogoHorizontal size="md" />
-</nav>
+// Auto-detects system theme
+<UserLensLogo size="lg" />
+
+// Icon only
+<LogoIcon size="md" />
+
+// Force dark mode
+<UserLensLogo size="lg" theme="dark" />
 ```
 
-**Login Page (Vertical):**
-```tsx
-import { LogoVertical } from './components/Logo/InsightHubLogo';
+### HTML/CSS
+```html
+<!-- Light mode -->
+<img src="userlens-logo.svg" width="48" height="48" alt="UserLens">
 
-<div className="flex flex-col items-center">
-  <LogoVertical size="xl" />
-  {/* Login form */}
-</div>
+<!-- Dark mode -->
+<img src="userlens-logo-dark.svg" width="48" height="48" alt="UserLens">
 ```
-
-## 📐 Size Guide
-
-| Size | Icon | Best For |
-|------|------|----------|
-| `sm` | 28px | Compact nav, inline elements |
-| `md` | 40px | Standard headers (DEFAULT) |
-| `lg` | 54px | Hero sections, feature areas |
-| `xl` | 70px | Landing pages, login screens |
-
-## 💡 Design Details
-
-**Concept 6: Minimalist Hexagon**
-- Clean geometric hexagon shape
-- Central node with 4 corner data points
-- Blue gradient (#3B82F6 to #1D4ED8)
-- Professional, modern, tech-forward
-- Works at any size from favicon to billboard
-
-## 🎯 Why Horizontal Layout?
-
-The horizontal layout is now the default because:
-1. **More versatile** - fits in navigation bars, headers, footers
-2. **Better use of space** - efficient in wide layouts
-3. **Easier to read** - natural left-to-right flow
-4. **Professional appearance** - standard for business applications
-5. **Still have vertical** - available when you need it!
-
-## 📱 Usage Examples
-
-### Example 1: Main Navigation
-```tsx
-<header className="bg-white border-b px-6 py-4">
-  <div className="max-w-7xl mx-auto flex items-center justify-between">
-    <LogoHorizontal size="md" />
-    {/* Nav items, user menu, etc */}
-  </div>
-</header>
-```
-
-### Example 2: Login Page
-```tsx
-<div className="min-h-screen flex flex-col items-center justify-center">
-  <LogoVertical size="xl" className="mb-8" />
-  <div className="bg-white p-8 rounded-lg shadow-lg">
-    {/* Login form */}
-  </div>
-</div>
-```
-
-### Example 3: Footer
-```tsx
-<footer className="bg-gray-900 text-white py-8">
-  <div className="max-w-7xl mx-auto">
-    <LogoHorizontal size="sm" className="mb-4" />
-    {/* Footer content */}
-  </div>
-</footer>
-```
-
-### Example 4: Email Signature
-```tsx
-<div className="border-t pt-4">
-  <LogoHorizontal size="sm" />
-  <p className="mt-2 text-sm text-gray-600">
-    John Doe | UX Researcher
-  </p>
-</div>
-```
-
-## 🎨 Component API
-
-### Props
-
-```tsx
-interface InsightHubLogoProps {
-  variant?: 'full' | 'icon' | 'wordmark';
-  layout?: 'horizontal' | 'vertical';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  className?: string;
-}
-```
-
-### Variants
-
-- **`full`** - Logo + text (default)
-- **`icon`** - Hexagon icon only
-- **`wordmark`** - Text only, no icon
-
-### Convenience Components
-
-```tsx
-<LogoHorizontal size="md" />      // Full logo, horizontal
-<LogoVertical size="lg" />        // Full logo, vertical
-<LogoIcon size="sm" />            // Icon only
-<LogoWordmark size="md" />        // Text only
-```
-
-## 🔧 Customization
-
-### Change Colors
-Edit the gradient in the component:
-```tsx
-<linearGradient id="blueGradient">
-  <stop offset="0%" stopColor="#YOUR_COLOR_1" />
-  <stop offset="100%" stopColor="#YOUR_COLOR_2" />
-</linearGradient>
-```
-
-### Adjust Spacing
-The gap between icon and text is controlled by `gap-3` (12px):
-```tsx
-<div className="flex items-center gap-3">  // Change gap-3 to gap-2, gap-4, etc
-```
-
-### Dark Mode Support
-Add a theme prop to switch colors for dark backgrounds:
-```tsx
-// Example dark mode variant
-const isDark = theme === 'dark';
-const textColor = isDark ? 'text-white' : 'text-gray-900';
-```
-
-## ✅ What's Different from Original?
-
-**Original Component:**
-- Only vertical layout
-- Concept 1 (Network Hub) design
-- No layout options
-
-**New Component (v2):**
-- ✅ **Horizontal layout by default**
-- ✅ **Concept 6 (Minimalist Hexagon) design**
-- ✅ Both horizontal and vertical layouts
-- ✅ Convenience components for each layout
-- ✅ Same easy-to-use API
-
-## 📂 File Structure
-
-```
-outputs/
-├── index.html                        # Interactive preview (OPEN THIS!)
-├── logo-concept6-layouts.html        # Same as index.html
-├── insighthub-logo-horizontal.svg    # Horizontal SVG
-├── InsightHubLogo-v2.tsx            # React component v2
-├── ParticipantsSelectionForm-FIXED.tsx  # Bug fix from earlier
-└── ProjectSetup.tsx                 # Bug fix from earlier
-```
-
-## 🎉 Next Steps
-
-1. **Preview** - Open `index.html` to see both layouts
-2. **Choose** - Decide if you want horizontal (recommended) or vertical for each use case
-3. **Install** - Copy `InsightHubLogo-v2.tsx` to your project
-4. **Replace** - Update your current logo implementation
-5. **Deploy** - Your new professional logo is ready!
-
-## 💭 Pro Tips
-
-- Use **horizontal** for navigation and headers (most common)
-- Use **vertical** for login pages and splash screens
-- Use **icon only** for favicons and app icons
-- Maintain consistent sizing within each page/view
-- Keep minimum clear space around logo (equal to icon size)
 
 ---
 
-## 🏆 Summary
+## 📦 What's Included
 
-You now have:
-✅ Professional Concept 6 minimalist hexagon logo
-✅ Horizontal layout (logo left, text right)
-✅ Vertical layout (logo top, text bottom)
-✅ All size variations (sm, md, lg, xl)
-✅ React component ready to use
-✅ Interactive preview to test
-✅ Production-ready SVG files
+### 🎨 Logo Files
+- **`userlens-logo.svg`** - Primary logo (light mode)
+- **`userlens-logo-dark.svg`** - Dark mode variant
+- **`UserLensLogo-Enhanced.tsx`** - React component with theme support
+- **`favicon.ico`** + **PNG favicons** (16px-512px)
 
-**Your horizontal layout logo is ready to go!** 🎨
+### 📚 Documentation
+- **`UserLens-Brand-Guide.md`** - Complete brand guidelines
+- **`logo-demo-complete.html`** - Interactive demo page
+- **`README.md`** - This file
+
+---
+
+## 🎨 Logo Design
+
+### Design Elements
+- **User Icon**: Simplified human figure (circle + curved body)
+- **Lens Shape**: Circular sweeping curves creating a lens effect
+- **Directional Flow**: Forward-pointing negative space suggesting insight & progress
+- **Modern Geometry**: Clean, scalable shapes optimized for digital use
+
+### Color Specifications
+
+| Element | Light Mode | Dark Mode |
+|---------|------------|-----------|
+| **Gradient Start** | `#785ff9` (Purple) | `#ffffff` (White) |
+| **Gradient End** | `#2924fc` (Blue) | `#e5e7eb` (Light Gray) |
+| **Direction** | 180° vertical | 180° vertical |
+| **Usage** | Light backgrounds | Dark backgrounds |
+
+---
+
+## 📏 Size Guidelines
+
+### Digital Sizes
+| Size | Dimensions | Use Case |
+|------|------------|----------|
+| **Small** | 32px | Mobile UI, compact layouts |
+| **Medium** | 48px | Standard headers, navigation |
+| **Large** | 64px | Hero sections, feature areas |
+| **Extra Large** | 80px+ | Splash screens, large displays |
+
+### Minimum Sizes
+- **Digital**: 16px (favicons)
+- **Print**: 0.5 inches
+- **Recommended**: 32px for optimal clarity
+
+---
+
+## 🌙 Dark Mode Support
+
+The logo automatically adapts to dark environments using:
+
+### Automatic Detection
+```tsx
+// Detects system preference
+<UserLensLogo theme="auto" />
+```
+
+### Manual Control
+```tsx
+// Force specific theme
+<UserLensLogo theme="light" />
+<UserLensLogo theme="dark" />
+```
+
+### CSS Media Query
+```css
+@media (prefers-color-scheme: dark) {
+  .logo-light { display: none; }
+  .logo-dark { display: block; }
+}
+```
+
+---
+
+## ⚛️ React Component API
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `variant` | `'full' \| 'icon' \| 'wordmark'` | `'full'` | Logo variation |
+| `layout` | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction |
+| `size` | `'sm' \| 'md' \| 'lg' \| 'xl'` | `'md'` | Size preset |
+| `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` | Color theme |
+| `showTagline` | `boolean` | `true` | Show tagline text |
+| `animated` | `boolean` | `false` | Hover animations |
+| `className` | `string` | `''` | Additional CSS classes |
+
+### Convenience Components
+```tsx
+import { 
+  LogoIcon,        // Icon only
+  LogoWordmark,    // Text only
+  LogoHorizontal,  // Horizontal layout
+  LogoVertical,    // Vertical layout
+  LogoLight,       // Light theme
+  LogoDark         // Dark theme
+} from './components/UserLensLogo';
+```
+
+### Theme Hook
+```tsx
+import { useTheme } from './components/UserLensLogo';
+
+const { isDark } = useTheme();
+```
+
+---
+
+## 🎯 Usage Guidelines
+
+### ✅ Do's
+- Use official logo files only
+- Maintain proper clear space (0.5× logo height minimum)
+- Ensure sufficient contrast with backgrounds
+- Use dark mode variant on dark backgrounds
+- Scale proportionally (maintain aspect ratio)
+- Choose appropriate size for context
+
+### ❌ Don'ts
+- Don't stretch, skew, or distort the logo
+- Don't change colors arbitrarily
+- Don't add effects (shadows, glows, outlines)
+- Don't rotate or flip the logo
+- Don't place on busy or low-contrast backgrounds
+- Don't use low-resolution or pixelated versions
+- Don't recreate or modify the logo design
+
+### Background Guidelines
+**Preferred backgrounds:**
+- Pure white or light gray (light mode)
+- Dark charcoal (#1a1a1a) or black (dark mode)
+- Subtle, low-contrast gradients
+- Clean photography with clear space
+
+**Avoid:**
+- Busy patterns or textures
+- Competing gradients or colors
+- Low contrast combinations
+- Cluttered imagery
+
+---
+
+## 📁 File Structure
+
+```
+brand-assets/
+├── logos/
+│   ├── userlens-logo.svg          # Primary logo
+│   ├── userlens-logo-dark.svg     # Dark mode version
+│   └── UserLensLogo-Enhanced.tsx  # React component
+├── favicons/
+│   ├── favicon.ico                # Multi-size ICO
+│   ├── favicon-16x16.png         # Browser tabs
+│   ├── favicon-32x32.png         # Standard
+│   ├── favicon-48x48.png         # Windows taskbar
+│   ├── favicon-64x64.png         # Windows tiles
+│   ├── favicon-128x128.png       # Chrome store
+│   ├── favicon-180x180.png       # Apple touch
+│   ├── favicon-192x192.png       # Android
+│   └── favicon-512x512.png       # PWA/High-res
+├── documentation/
+│   ├── UserLens-Brand-Guide.md    # Complete guidelines
+│   ├── logo-demo-complete.html    # Interactive demo
+│   └── README.md                  # This file
+└── examples/
+    └── usage-examples.html        # Implementation examples
+```
+
+---
+
+## 🛠️ Installation & Setup
+
+### 1. Copy Files
+```bash
+# React component
+cp UserLensLogo-Enhanced.tsx src/components/
+
+# SVG logos
+cp userlens-logo*.svg public/assets/
+
+# Favicons
+cp favicon*.png favicon.ico public/
+```
+
+### 2. Import Component
+```tsx
+import { UserLensLogo } from './components/UserLensLogo';
+
+function App() {
+  return (
+    <header>
+      <UserLensLogo size="lg" />
+    </header>
+  );
+}
+```
+
+### 3. Add Favicons to HTML
+```html
+<head>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png">
+  <link rel="icon" sizes="192x192" href="/favicon-192x192.png">
+  <link rel="manifest" href="/site.webmanifest">
+</head>
+```
+
+---
+
+## 🎨 CSS Custom Properties
+
+```css
+:root {
+  /* Brand colors */
+  --userlens-blue: #2924fc;
+  --userlens-purple: #785ff9;
+  --userlens-gradient: linear-gradient(180deg, #785ff9 0%, #2924fc 100%);
+  
+  /* Dark mode colors */
+  --userlens-dark-gradient: linear-gradient(180deg, #ffffff 0%, #e5e7eb 100%);
+  
+  /* Supporting colors */
+  --userlens-dark-charcoal: #1a1a1a;
+  --userlens-medium-gray: #6b7280;
+  --userlens-light-gray: #f3f4f6;
+}
+
+/* Usage example */
+.brand-element {
+  background: var(--userlens-gradient);
+  color: var(--userlens-blue);
+}
+```
+
+---
+
+## 📱 Responsive Design
+
+### Breakpoint Recommendations
+```css
+/* Mobile first approach */
+.logo {
+  width: 32px; /* Mobile */
+}
+
+@media (min-width: 768px) {
+  .logo {
+    width: 48px; /* Tablet */
+  }
+}
+
+@media (min-width: 1024px) {
+  .logo {
+    width: 64px; /* Desktop */
+  }
+}
+```
+
+### React Responsive Example
+```tsx
+import { UserLensLogo } from './components/UserLensLogo';
+
+function ResponsiveLogo() {
+  return (
+    <UserLensLogo 
+      size="sm"
+      className="md:hidden" // Mobile only
+    />
+    <UserLensLogo 
+      size="lg"
+      className="hidden md:block" // Desktop only
+    />
+  );
+}
+```
+
+---
+
+## 🔍 Accessibility
+
+### Alt Text Guidelines
+```html
+<!-- Informative -->
+<img src="userlens-logo.svg" alt="UserLens">
+
+<!-- Decorative in branded context -->
+<img src="userlens-logo.svg" alt="" role="presentation">
+
+<!-- With context -->
+<img src="userlens-logo.svg" alt="UserLens - User Research Platform">
+```
+
+### Contrast Requirements
+- **Light mode**: Meets WCAG AA standards on white/light backgrounds
+- **Dark mode**: Optimized for dark backgrounds with sufficient contrast
+- **Minimum contrast ratio**: 4.5:1 for normal text, 3:1 for large text
+
+---
+
+## 🚀 Performance
+
+### File Sizes
+- **SVG logos**: ~2KB each (optimized)
+- **React component**: ~8KB (uncompressed)
+- **Favicons**: 1KB-15KB depending on size
+- **Total package**: <50KB
+
+### Optimization Tips
+```html
+<!-- Preload critical logos -->
+<link rel="preload" href="/userlens-logo.svg" as="image">
+
+<!-- Lazy load non-critical sizes -->
+<img src="userlens-logo.svg" loading="lazy" alt="UserLens">
+```
+
+---
+
+## 📊 Browser Support
+
+### SVG Support
+- ✅ All modern browsers (IE9+)
+- ✅ Mobile browsers
+- ✅ Print media
+
+### React Component
+- ✅ React 16.8+ (Hooks support)
+- ✅ TypeScript ready
+- ✅ SSR compatible
+
+---
+
+## 🔄 Updates & Versioning
+
+### Current Version: 1.0.0
+
+### Changelog
+- **1.0.0** (November 2025)
+  - Initial release with light/dark mode support
+  - Complete React component with theme detection
+  - Comprehensive brand guidelines
+  - Full favicon suite
+
+### Future Roadmap
+- [ ] Animated logo variants
+- [ ] Additional color themes
+- [ ] Vue.js component
+- [ ] Figma design system integration
+
+---
+
+## 🤝 Contributing
+
+### Reporting Issues
+Found a problem with the logo or components? Please check:
+
+1. **Design Issues**: Verify against brand guidelines
+2. **Technical Issues**: Test in multiple browsers/devices
+3. **Performance Issues**: Check file sizes and optimization
+
+### Requesting Changes
+For logo modifications or new variants:
+
+1. **Review brand guidelines** first
+2. **Document use case** and requirements
+3. **Provide context** for the change request
+
+---
+
+## 📞 Support & Resources
+
+### Documentation
+- 📖 **[Complete Brand Guide](UserLens-Brand-Guide.md)** - Comprehensive guidelines
+- 🎨 **[Interactive Demo](logo-demo-complete.html)** - Live examples
+- 💻 **[React Docs](UserLensLogo-Enhanced.tsx)** - Component documentation
+
+### Quick References
+- **Brand Colors**: Blue `#2924fc`, Purple `#785ff9`
+- **Minimum Size**: 16px digital, 0.5" print
+- **Clear Space**: 0.5× logo height minimum
+- **File Format**: SVG preferred, PNG for raster needs
+
+### Design Assets
+- **Figma**: [Design system components] (coming soon)
+- **Sketch**: [Symbol library] (coming soon)
+- **Adobe**: [Creative Cloud library] (coming soon)
+
+---
+
+## 📄 License
+
+UserLens brand assets are proprietary and intended for official UserLens projects only. 
+
+**Permitted uses:**
+- Official UserLens products and services
+- Authorized partner integrations
+- Press and media coverage (with permission)
+
+**Restricted uses:**
+- Commercial use without authorization
+- Modification or derivative works
+- Use that implies endorsement
+
+---
+
+## 🎉 Credits
+
+**Design**: UserLens Design Team  
+**Development**: Technical Content Team  
+**Documentation**: Brand Guidelines Team  
+
+*Created with ❤️ for the UserLens community*
+
+---
+
+**Need help?** Check the [Brand Guide](UserLens-Brand-Guide.md) or view the [Interactive Demo](logo-demo-complete.html)
+
+**Version**: 1.0.0 | **Updated**: November 2025
