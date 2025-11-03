@@ -25,109 +25,38 @@ export function UserLensLogo({
 
   const dimensions = sizeMap[size];
 
-  // Icon component - Focus Target (Concept 2)
+  // Icon component - Using exact SVG from logo-concept.svg
   const Icon = ({ size }: { size: number }) => (
     <svg 
       width={size} 
       height={size} 
-      viewBox="0 0 80 80" 
+      viewBox="0 0 480 397.65" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        {/* Main gradient - cyan to indigo for technical/research feel */}
-        <linearGradient id="lensGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#0EA5E9" />
-          <stop offset="100%" stopColor="#6366F1" />
-        </linearGradient>
-        
-        {/* User gradient matching the lens */}
-        <linearGradient id="userGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#0EA5E9" />
-          <stop offset="100%" stopColor="#6366F1" />
+        <clipPath id={`clippath-${size}`}>
+          <path 
+            clipRule="evenodd" 
+            fill="none" 
+            d="M95.83,198.82H0c0,109.81,89.02,198.82,198.82,198.82,53.49,0,103.36-21.01,141.13-58.77l140.05-140.05L339.42,58.23C303.44,22.26,253.73,0,198.82,0v95.83c-56.88,0-102.99,46.11-102.99,102.99M40.39,108.15c18.71,18.71,49.05,18.71,67.76,0,18.71-18.71,18.71-49.06,0-67.77-18.72-18.71-49.06-18.71-67.77,0-18.71,18.71-18.71,49.06,0,67.77ZM271.65,271.65c-18.64,18.63-44.39,30.16-72.83,30.16-56.88,0-102.99-46.11-102.99-102.99h102.99v-102.99c28.44,0,54.19,11.53,72.83,30.16l72.82,72.83-72.82,72.83Z"
+          />
+        </clipPath>
+        <linearGradient 
+          id={`linear-gradient-${size}`} 
+          x1="240" 
+          y1="429.3" 
+          x2="240" 
+          y2="0" 
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0" stopColor="#2924fc"/>
+          <stop offset="1" stopColor="#785ff9"/>
         </linearGradient>
       </defs>
-      
-      {/* Concentric circles - targeting reticle effect */}
-      <circle 
-        cx="40" 
-        cy="40" 
-        r="34" 
-        fill="none" 
-        stroke="url(#lensGradient)" 
-        strokeWidth="2"
-        opacity="0.3"
-      />
-      
-      <circle 
-        cx="40" 
-        cy="40" 
-        r="28" 
-        fill="none" 
-        stroke="url(#lensGradient)" 
-        strokeWidth="2.5"
-        opacity="0.5"
-      />
-      
-      <circle 
-        cx="40" 
-        cy="40" 
-        r="22" 
-        fill="none" 
-        stroke="url(#lensGradient)" 
-        strokeWidth="3"
-      />
-      
-      {/* Crosshair lines extending from center */}
-      <line 
-        x1="40" 
-        y1="12" 
-        x2="40" 
-        y2="22" 
-        stroke="url(#lensGradient)" 
-        strokeWidth="2.5"
-      />
-      
-      <line 
-        x1="40" 
-        y1="58" 
-        x2="40" 
-        y2="68" 
-        stroke="url(#lensGradient)" 
-        strokeWidth="2.5"
-      />
-      
-      <line 
-        x1="12" 
-        y1="40" 
-        x2="22" 
-        y2="40" 
-        stroke="url(#lensGradient)" 
-        strokeWidth="2.5"
-      />
-      
-      <line 
-        x1="58" 
-        y1="40" 
-        x2="68" 
-        y2="40" 
-        stroke="url(#lensGradient)" 
-        strokeWidth="2.5"
-      />
-      
-      {/* User silhouette in the center - Head */}
-      <circle 
-        cx="40" 
-        cy="37" 
-        r="6" 
-        fill="url(#userGradient)"
-      />
-      
-      {/* User silhouette - Body */}
-      <path 
-        d="M 30 50 Q 30 45 40 45 Q 50 45 50 50 L 50 52 Q 50 54 48 54 L 32 54 Q 30 54 30 52 Z" 
-        fill="url(#userGradient)"
-      />
+      <g clipPath={`url(#clippath-${size})`}>
+        <rect fill={`url(#linear-gradient-${size})`} width="480" height="397.65"/>
+      </g>
     </svg>
   );
 
@@ -153,7 +82,7 @@ export function UserLensLogo({
             className="text-gray-600"
             style={{ fontSize: `${dimensions.taglineSize}px` }}
           >
-            User Research & Testing Platform
+            Looking through the user's perspective
           </span>
         )}
       </div>
@@ -177,7 +106,7 @@ export function UserLensLogo({
               className="text-gray-600 leading-tight"
               style={{ fontSize: `${dimensions.taglineSize}px` }}
             >
-              User Research & Testing Platform
+              Looking through the user's perspective
             </span>
           )}
         </div>
@@ -199,7 +128,7 @@ export function UserLensLogo({
               className="text-gray-600 text-center leading-tight"
               style={{ fontSize: `${dimensions.taglineSize}px` }}
             >
-              User Research & Testing Platform
+              Looking through the user's perspective
             </span>
           )}
         </div>
