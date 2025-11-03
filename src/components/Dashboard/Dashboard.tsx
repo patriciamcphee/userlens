@@ -89,33 +89,107 @@ export function Dashboard({ onCreateProject, onEditProject, onOpenProject }: Das
               </button>
             </div>
             
-            {state.projects.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-12 text-center">
-                <LayoutDashboard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects yet</h3>
-                <p className="text-gray-600 mb-6">Create your first testing project to get started</p>
-                <button
-                  onClick={onCreateProject}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  Create Project
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {state.projects.map(project => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    participants={state.participants}
-                    onEdit={() => onEditProject(project)}
-                    onDelete={() => handleDeleteProject(Number(project.id))}
-                    onOpen={() => onOpenProject(project)}
-                    onStatusChange={(status) => handleStatusChange(Number(project.id), status)}
-                  />
-                ))}
-              </div>
-            )}
+            {(() => {
+              // Group projects by status
+              const activeProjects = state.projects.filter(p => p.status === 'active' || p.status === 'draft');
+              const completedProjects = state.projects.filter(p => p.status === 'completed');
+              const archivedProjects = state.projects.filter(p => p.status === 'archived');
+
+              if (state.projects.length === 0) {
+                return (
+                  <div className="bg-white rounded-lg shadow p-12 text-center">
+                    <LayoutDashboard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects yet</h3>
+                    <p className="text-gray-600 mb-6">Create your first testing project to get started</p>
+                    <button
+                      onClick={onCreateProject}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    >
+                      Create Project
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-8">
+                  {/* Active Projects Section */}
+                  {activeProjects.length > 0 && (
+                    <div>
+                      <div className="flex items-center space-x-2 mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">Active Projects</h3>
+                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                          {activeProjects.length}
+                        </span>
+                      </div>
+                      <div className="space-y-4">
+                        {activeProjects.map(project => (
+                          <ProjectCard
+                            key={project.id}
+                            project={project}
+                            participants={state.participants}
+                            onEdit={() => onEditProject(project)}
+                            onDelete={() => handleDeleteProject(Number(project.id))}
+                            onOpen={() => onOpenProject(project)}
+                            onStatusChange={(status) => handleStatusChange(Number(project.id), status)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Completed Projects Section */}
+                  {completedProjects.length > 0 && (
+                    <div>
+                      <div className="flex items-center space-x-2 mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">Completed Projects</h3>
+                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                          {completedProjects.length}
+                        </span>
+                      </div>
+                      <div className="space-y-4">
+                        {completedProjects.map(project => (
+                          <ProjectCard
+                            key={project.id}
+                            project={project}
+                            participants={state.participants}
+                            onEdit={() => onEditProject(project)}
+                            onDelete={() => handleDeleteProject(Number(project.id))}
+                            onOpen={() => onOpenProject(project)}
+                            onStatusChange={(status) => handleStatusChange(Number(project.id), status)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Archived Projects Section */}
+                  {archivedProjects.length > 0 && (
+                    <div>
+                      <div className="flex items-center space-x-2 mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">Archived Projects</h3>
+                        <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
+                          {archivedProjects.length}
+                        </span>
+                      </div>
+                      <div className="space-y-4 opacity-75">
+                        {archivedProjects.map(project => (
+                          <ProjectCard
+                            key={project.id}
+                            project={project}
+                            participants={state.participants}
+                            onEdit={() => onEditProject(project)}
+                            onDelete={() => handleDeleteProject(Number(project.id))}
+                            onOpen={() => onOpenProject(project)}
+                            onStatusChange={(status) => handleStatusChange(Number(project.id), status)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Participants Sidebar */}
