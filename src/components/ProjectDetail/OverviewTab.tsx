@@ -1,10 +1,11 @@
-// components/ProjectDetail/OverviewTab.tsx - WITH TASK DIFFICULTY BREAKDOWN
+// components/ProjectDetail/OverviewTab.tsx - WITH INLINE PARTICIPANT ADDING
 import React, { useState } from 'react';
-import { Users, CheckCircle, Target, Star, MessageSquare, Edit2, ChevronDown, ChevronUp, Camera, Mic, Shuffle, Mail, TrendingUp } from 'lucide-react';
+import { Users, CheckCircle, Target, Star, MessageSquare, Edit2, ChevronDown, ChevronUp, Camera, Mic, Shuffle, Mail, TrendingUp, Plus, UserPlus, User, UserX, X } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { Project, Participant, Task, EmailTemplate } from '../../types';
 import { EditTaskModal } from '../Modals/EditTaskModal';
 import { EmailModal } from '../Modals/EmailModal';
+import { UsageLevelModal } from '../Modals/UsageLevelModal';
 import { getUsageLevelLabel } from '../../utils/taskFiltering';
 import { generateSessionLink, DEFAULT_EMAIL_TEMPLATE } from '../../utils';
 
@@ -26,6 +27,11 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
   const [linkExpiry, setLinkExpiry] = useState('');
   const [expiryDays, setExpiryDays] = useState(7);
   const [emailTemplate, setEmailTemplate] = useState<EmailTemplate>(DEFAULT_EMAIL_TEMPLATE);
+
+  // Add participant modal state
+  const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
+  const [showUsageLevelModal, setShowUsageLevelModal] = useState(false);
+  const [participantToAdd, setParticipantToAdd] = useState<Participant | null>(null);
 
   // Calculate task difficulty breakdown
   const taskDifficultyBreakdown = {
@@ -125,9 +131,56 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
     });
   };
 
+  // Get available participants (not already in this project)
+  const availableParticipants = state.participants.filter(p =>
+    !project.participantIds.includes(p.id)
+  );
+
   const projectParticipants = state.participants.filter(p =>
     project.participantIds.includes(p.id)
   );
+
+  const handleAddParticipant = (participant: Participant) => {
+    setParticipantToAdd(participant);
+    setShowAddParticipantModal(false);
+    setShowUsageLevelModal(true);
+  };
+
+  const handleConfirmUsageLevel = (usageLevel: 'active' | 'occasionally' | 'non-user') => {
+    if (!participantToAdd) return;
+
+    // Update project with new participant
+    const updatedParticipantIds = [...project.participantIds, participantToAdd.id];
+    const updatedAssignments = [
+      ...(project.participantAssignments || []),
+      {
+        participantId: participantToAdd.id,
+        usageLevel
+      }
+    ];
+
+    actions.updateProject(project.id, {
+      participantIds: updatedParticipantIds,
+      participantAssignments: updatedAssignments
+    });
+
+    setShowUsageLevelModal(false);
+    setParticipantToAdd(null);
+  };
+
+  const handleRemoveParticipant = (participantId: string | number) => {
+    if (window.confirm('Remove this participant from the project?')) {
+      const updatedParticipantIds = project.participantIds.filter(id => String(id) !== String(participantId));
+      const updatedAssignments = (project.participantAssignments || []).filter(
+        a => String(a.participantId) !== String(participantId)
+      );
+
+      actions.updateProject(project.id, {
+        participantIds: updatedParticipantIds,
+        participantAssignments: updatedAssignments
+      });
+    }
+  };
 
   const getMediaPermissionLabel = (option: 'optional' | 'required' | 'disabled') => {
     switch (option) {
@@ -159,7 +212,7 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
         </div>
       </div>
 
-      {/* NEW: Task Difficulty Breakdown Card */}
+      {/* Task Difficulty Breakdown Card */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center space-x-3 mb-4">
           <TrendingUp className="w-6 h-6 text-blue-600" />
@@ -441,16 +494,40 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
         {/* Sidebar: Participants - Takes 1/3 on large screens */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow p-6 sticky top-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center space-x-2">
-              <Users className="w-6 h-6 text-blue-600" />
-              <span>Participants</span>
-              <span className="text-sm font-normal text-gray-500">({projectParticipants.length})</span>
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
+                <Users className="w-6 h-6 text-blue-600" />
+                <span>Participants</span>
+                <span className="text-sm font-normal text-gray-500">({projectParticipants.length})</span>
+              </h2>
+              {availableParticipants.length > 0 && (
+                <button
+                  onClick={() => setShowAddParticipantModal(true)}
+                  className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                  aria-label="Add participant"
+                  title="Add participant"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              )}
+            </div>
 
             {projectParticipants.length === 0 ? (
               <div className="text-center py-8">
-                <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-600 text-sm">No participants assigned</p>
+                <UserPlus className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-600 text-sm mb-4">No participants assigned</p>
+                {availableParticipants.length > 0 ? (
+                  <button
+                    onClick={() => setShowAddParticipantModal(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Add Participant
+                  </button>
+                ) : (
+                  <p className="text-xs text-gray-500">
+                    Create participants in the dashboard first
+                  </p>
+                )}
               </div>
             ) : (
               <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
@@ -468,13 +545,23 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
                       key={participant.id}
                       className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:shadow-sm transition-all"
                     >
-                      <div className="mb-3">
-                        <div className="font-semibold text-gray-900 text-sm mb-1 truncate" title={participant.name}>
-                          {participant.name}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-gray-900 text-sm mb-1 truncate" title={participant.name}>
+                            {participant.name}
+                          </div>
+                          <div className="text-xs text-gray-600 truncate" title={participant.email}>
+                            {participant.email}
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-600 truncate" title={participant.email}>
-                          {participant.email}
-                        </div>
+                        <button
+                          onClick={() => handleRemoveParticipant(participant.id)}
+                          className="text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 rounded transition-colors"
+                          aria-label="Remove participant"
+                          title="Remove from project"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
 
                       <div className="flex items-center justify-between mb-3">
@@ -516,12 +603,64 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
         </div>
       </div>
 
+      {/* Add Participant Modal */}
+      {showAddParticipantModal && availableParticipants.length > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Add Participant</h2>
+              <button
+                onClick={() => setShowAddParticipantModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">
+              Choose a participant to add to this project:
+            </p>
+
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {availableParticipants.map(participant => (
+                <button
+                  key={participant.id}
+                  onClick={() => handleAddParticipant(participant)}
+                  className="w-full p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                >
+                  <div className="font-medium text-gray-900">{participant.name}</div>
+                  <div className="text-sm text-gray-600">{participant.email}</div>
+                  {participant.defaultUsageLevel && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Default: {getUsageLevelLabel(participant.defaultUsageLevel)}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Edit Task Modal */}
       {editingTask && (
         <EditTaskModal
           task={editingTask}
           onSave={(updates) => handleSaveTask(Number(editingTask.id), updates)}
           onClose={() => setEditingTask(null)}
+        />
+      )}
+
+      {/* Usage Level Modal */}
+      {showUsageLevelModal && participantToAdd && (
+        <UsageLevelModal
+          show={showUsageLevelModal}
+          participant={participantToAdd}
+          onConfirm={handleConfirmUsageLevel}
+          onClose={() => {
+            setShowUsageLevelModal(false);
+            setParticipantToAdd(null);
+          }}
         />
       )}
 
