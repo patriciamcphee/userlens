@@ -1,6 +1,6 @@
-// components/ProjectDetail/OverviewTab.tsx
+// components/ProjectDetail/OverviewTab.tsx - WITH TASK DIFFICULTY BREAKDOWN
 import React, { useState } from 'react';
-import { Users, CheckCircle, Target, Star, MessageSquare, Edit2, ChevronDown, ChevronUp, Camera, Mic, Shuffle, Mail } from 'lucide-react';
+import { Users, CheckCircle, Target, Star, MessageSquare, Edit2, ChevronDown, ChevronUp, Camera, Mic, Shuffle, Mail, TrendingUp } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { Project, Participant, Task, EmailTemplate } from '../../types';
 import { EditTaskModal } from '../Modals/EditTaskModal';
@@ -26,6 +26,14 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
   const [linkExpiry, setLinkExpiry] = useState('');
   const [expiryDays, setExpiryDays] = useState(7);
   const [emailTemplate, setEmailTemplate] = useState<EmailTemplate>(DEFAULT_EMAIL_TEMPLATE);
+
+  // Calculate task difficulty breakdown
+  const taskDifficultyBreakdown = {
+    easy: project.setup.tasks.filter(task => task.difficulty === 'easy').length,
+    medium: project.setup.tasks.filter(task => task.difficulty === 'medium').length,
+    hard: project.setup.tasks.filter(task => task.difficulty === 'hard').length,
+    all: project.setup.tasks.filter(task => task.difficulty === 'all').length
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -56,8 +64,8 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
   const handleSendLink = (participant: Participant) => {
     // Generate session link with project and participant data embedded
     const { link, sessionLink: newSessionLink } = generateSessionLink(
-      project.id,
-      participant.id,
+      Number(project.id),
+      Number(participant.id),
       expiryDays,
       project,
       participant
@@ -80,8 +88,8 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
     // Regenerate the link with new expiry if modal is open
     if (selectedParticipant) {
       const { link, sessionLink: newSessionLink } = generateSessionLink(
-        project.id,
-        selectedParticipant.id,
+        Number(project.id),
+        Number(selectedParticipant.id),
         days,
         project,
         selectedParticipant
@@ -148,6 +156,80 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-2xl font-bold text-gray-900 capitalize">{project.mode}</div>
           <div className="text-sm text-gray-600">Mode</div>
+        </div>
+      </div>
+
+      {/* NEW: Task Difficulty Breakdown Card */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center space-x-3 mb-4">
+          <TrendingUp className="w-6 h-6 text-blue-600" />
+          <h2 className="text-xl font-bold text-gray-900">Task Difficulty Breakdown</h2>
+        </div>
+        <p className="text-sm text-gray-600 mb-4">
+          Tasks are filtered by participant experience level during sessions
+        </p>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Easy Tasks */}
+          <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-2xl font-bold text-green-700">{taskDifficultyBreakdown.easy}</div>
+              <div className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
+                Easy
+              </div>
+            </div>
+            <div className="text-sm text-green-600">Non-Users</div>
+            <div className="text-xs text-gray-500 mt-1">Basic tasks for beginners</div>
+          </div>
+
+          {/* Medium Tasks */}
+          <div className="bg-yellow-50 rounded-lg p-4 border-2 border-yellow-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-2xl font-bold text-yellow-700">{taskDifficultyBreakdown.medium}</div>
+              <div className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-medium">
+                Medium
+              </div>
+            </div>
+            <div className="text-sm text-yellow-600">Occasional Users</div>
+            <div className="text-xs text-gray-500 mt-1">Intermediate complexity</div>
+          </div>
+
+          {/* Hard Tasks */}
+          <div className="bg-red-50 rounded-lg p-4 border-2 border-red-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-2xl font-bold text-red-700">{taskDifficultyBreakdown.hard}</div>
+              <div className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">
+                Hard
+              </div>
+            </div>
+            <div className="text-sm text-red-600">Active Users</div>
+            <div className="text-xs text-gray-500 mt-1">Advanced features</div>
+          </div>
+
+          {/* All Users Tasks */}
+          <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-2xl font-bold text-blue-700">{taskDifficultyBreakdown.all}</div>
+              <div className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">
+                All Users
+              </div>
+            </div>
+            <div className="text-sm text-blue-600">Everyone</div>
+            <div className="text-xs text-gray-500 mt-1">Universal tasks</div>
+          </div>
+        </div>
+
+        {/* Additional info */}
+        <div className="mt-4 bg-gray-50 rounded-lg p-3">
+          <div className="text-sm text-gray-700">
+            <strong>Task Filtering Logic:</strong>
+            <ul className="mt-2 space-y-1 text-xs text-gray-600">
+              <li>• <strong>Non-Users</strong> see only Easy tasks ({taskDifficultyBreakdown.easy + taskDifficultyBreakdown.all} total)</li>
+              <li>• <strong>Occasional Users</strong> see Easy + Medium tasks ({taskDifficultyBreakdown.easy + taskDifficultyBreakdown.medium + taskDifficultyBreakdown.all} total)</li>
+              <li>• <strong>Active Users</strong> see all task types ({project.setup.tasks.length} total)</li>
+              <li>• <strong>All Users</strong> tasks are shown to everyone regardless of experience level</li>
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -412,7 +494,7 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
 
                       <div className="space-y-2">
                         <button
-                          onClick={() => onStartSession(participant.id)}
+                          onClick={() => onStartSession(Number(participant.id))}
                           className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                         >
                           Start Session
@@ -438,7 +520,7 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
       {editingTask && (
         <EditTaskModal
           task={editingTask}
-          onSave={(updates) => handleSaveTask(editingTask.id, updates)}
+          onSave={(updates) => handleSaveTask(Number(editingTask.id), updates)}
           onClose={() => setEditingTask(null)}
         />
       )}

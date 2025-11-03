@@ -54,8 +54,8 @@ export function TasksForm({ tasks, randomizeOrder, onTasksChange, onRandomizeCha
             task={task}
             index={index}
             canDelete={tasks.length > 1}
-            onUpdate={(updates) => updateTask(task.id, updates)}
-            onRemove={() => removeTask(task.id)}
+            onUpdate={(updates) => updateTask(Number(task.id), updates)}
+            onRemove={() => removeTask(Number(task.id))}
           />
         ))}
       </div>
