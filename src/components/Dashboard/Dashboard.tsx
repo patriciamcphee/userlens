@@ -5,7 +5,7 @@ import { useAppContext } from '../../contexts/AppContext';
 import { ProjectCard } from './ProjectCard';
 import { ParticipantsList } from './ParticipantsList';
 import { Project, Participant } from '../../types';
-import { LogoHorizontal } from '../Logo/InsightHubLogo';
+import { LogoHorizontal } from '../Logo/UserLenseLogo';
 
 <nav className="bg-white px-6 py-4">
   <LogoHorizontal size="md" />
