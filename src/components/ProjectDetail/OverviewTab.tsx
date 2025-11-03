@@ -1,6 +1,6 @@
 // components/ProjectDetail/OverviewTab.tsx - WITH INLINE PARTICIPANT ADDING
 import React, { useState } from 'react';
-import { Users, CheckCircle, Target, Star, MessageSquare, Edit2, ChevronDown, ChevronUp, Camera, Mic, Shuffle, Mail, TrendingUp, Plus, UserPlus, User, UserX, X } from 'lucide-react';
+import { Users, CheckCircle, Target, Star, MessageSquare, Edit2, ChevronDown, ChevronUp, ChevronRight, Camera, Mic, Shuffle, Mail, TrendingUp, Plus, UserPlus, User, UserX, X } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { Project, Participant, Task, EmailTemplate } from '../../types';
 import { EditTaskModal } from '../Modals/EditTaskModal';
@@ -19,6 +19,10 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showMessages, setShowMessages] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Task expansion state
+  const [expandedTasks, setExpandedTasks] = useState<Set<string | number>>(new Set());
+  const [allExpanded, setAllExpanded] = useState(false);
   
   // Email modal state
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -182,6 +186,28 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
     }
   };
 
+  // Task expansion functions
+  const toggleTask = (taskId: string | number) => {
+    const newExpanded = new Set(expandedTasks);
+    if (newExpanded.has(taskId)) {
+      newExpanded.delete(taskId);
+    } else {
+      newExpanded.add(taskId);
+    }
+    setExpandedTasks(newExpanded);
+  };
+
+  const toggleAllTasks = () => {
+    if (allExpanded) {
+      setExpandedTasks(new Set());
+      setAllExpanded(false);
+    } else {
+      const allTaskIds = new Set(project.setup.tasks.map(task => task.id));
+      setExpandedTasks(allTaskIds);
+      setAllExpanded(true);
+    }
+  };
+
   const getMediaPermissionLabel = (option: 'optional' | 'required' | 'disabled') => {
     switch (option) {
       case 'required': return 'Required';
@@ -291,11 +317,31 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
         {/* Tasks Section - Takes 2/3 on large screens */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center space-x-2">
-              <CheckCircle className="w-6 h-6 text-blue-600" />
-              <span>Tasks</span>
-              <span className="text-sm font-normal text-gray-500">({project.setup.tasks.length})</span>
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
+                <CheckCircle className="w-6 h-6 text-blue-600" />
+                <span>Tasks</span>
+                <span className="text-sm font-normal text-gray-500">({project.setup.tasks.length})</span>
+              </h2>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={toggleAllTasks}
+                  className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-1"
+                >
+                  {allExpanded ? (
+                    <>
+                      <ChevronUp className="w-4 h-4" />
+                      <span>Collapse All</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-4 h-4" />
+                      <span>Expand All</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
 
             {project.setup.randomizeOrder && (
               <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start space-x-2">
@@ -307,100 +353,144 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
             )}
 
             <div className="space-y-3">
-              {project.setup.tasks.map((task, index) => (
-                <div key={task.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-2 flex-wrap">
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex-shrink-0">
-                          {index + 1}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getDifficultyColor(task.difficulty)}`}>
-                          {task.difficulty.charAt(0).toUpperCase() + task.difficulty.slice(1)}
-                        </span>
-                      </div>
-                      <h3 className="text-base font-semibold text-gray-900 mb-3">{task.title}</h3>
-                      
-                      {/* New Task Structure Display */}
-                      <div className="space-y-2 text-sm">
-                        {task.estimatedTime && (
-                          <div className="flex items-start">
-                            <span className="text-gray-600 font-medium w-32 flex-shrink-0">Time:</span>
-                            <span className="text-gray-700">{task.estimatedTime}</span>
-                          </div>
-                        )}
-                        
-                        {task.objective && (
-                          <div className="flex items-start">
-                            <span className="text-gray-600 font-medium w-32 flex-shrink-0">Objective:</span>
-                            <span className="text-gray-700">{task.objective}</span>
-                          </div>
-                        )}
-                        
-                        {task.scenario && (
-                          <div className="flex items-start">
-                            <span className="text-gray-600 font-medium w-32 flex-shrink-0">Scenario:</span>
-                            <span className="text-gray-700 whitespace-pre-wrap">{task.scenario}</span>
-                          </div>
-                        )}
-                        
-                        {task.yourTask && task.yourTask.length > 0 && task.yourTask[0] !== '' && (
-                          <div className="flex items-start">
-                            <span className="text-gray-600 font-medium w-32 flex-shrink-0">Your Task:</span>
-                            <ol className="list-decimal list-inside text-gray-700 space-y-1">
-                              {task.yourTask.map((step, idx) => (
-                                step && <li key={idx}>{step}</li>
-                              ))}
-                            </ol>
-                          </div>
-                        )}
-                        
-                        {task.successCriteria && (
-                          <div className="flex items-start">
-                            <span className="text-gray-600 font-medium w-32 flex-shrink-0">Success:</span>
-                            <span className="text-gray-700">{task.successCriteria}</span>
-                          </div>
-                        )}
-                        
-                        {/* Fallback to old description for backwards compatibility */}
-                        {task.description && !task.objective && !task.scenario && (
-                          <p className="text-gray-600 text-sm leading-relaxed">{task.description}</p>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setEditingTask(task)}
-                      className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0 ml-2"
-                      aria-label="Edit task"
-                      title="Edit task"
+              {project.setup.tasks.map((task, index) => {
+                const isExpanded = expandedTasks.has(task.id);
+                
+                return (
+                  <div key={task.id} className="border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all">
+                    {/* Task Header - Always Visible */}
+                    <div 
+                      className="p-4 cursor-pointer"
+                      onClick={() => toggleTask(task.id)}
                     >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Task Features */}
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {task.ratingEnabled && (
-                      <div className="flex items-center space-x-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
-                        <Star className="w-3 h-3" />
-                        <span>{task.ratingLabel}</span>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-2 flex-wrap">
+                            <div className="flex items-center space-x-2">
+                              {isExpanded ? (
+                                <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                              )}
+                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex-shrink-0">
+                                {index + 1}
+                              </span>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getDifficultyColor(task.difficulty)}`}>
+                              {task.difficulty.charAt(0).toUpperCase() + task.difficulty.slice(1)}
+                            </span>
+                            {task.estimatedTime && (
+                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                {task.estimatedTime}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-base font-semibold text-gray-900 mb-1">{task.title}</h3>
+                          
+                          {/* Show brief description when collapsed */}
+                          {!isExpanded && (
+                            <div className="text-sm text-gray-600">
+                              {task.objective ? (
+                                <p className="line-clamp-2">{task.objective}</p>
+                              ) : task.description ? (
+                                <p className="line-clamp-2">{task.description}</p>
+                              ) : (
+                                <p className="text-gray-400 italic">Click to expand details</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Edit button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingTask(task);
+                          }}
+                          className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0 ml-2"
+                          aria-label="Edit task"
+                          title="Edit task"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
                       </div>
-                    )}
-                    {task.customQuestions && task.customQuestions.length > 0 && (
-                      <div className="flex items-center space-x-1 text-xs text-purple-700 bg-purple-50 px-2 py-1 rounded-md border border-purple-200">
-                        <MessageSquare className="w-3 h-3" />
-                        <span>{task.customQuestions.length} question{task.customQuestions.length !== 1 ? 's' : ''}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center space-x-1 text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-200">
-                      <Target className="w-3 h-3" />
-                      <span>
-                        {task.difficulty === 'easy' ? 'Non-Users' : task.difficulty === 'medium' ? 'Occasional Users' : task.difficulty === 'all' ? 'All Users' : 'Active Users'}
-                      </span>
                     </div>
+
+                    {/* Expanded Task Details */}
+                    {isExpanded && (
+                      <div className="px-4 pb-4 border-t border-gray-100">
+                        <div className="space-y-2 text-sm pt-3">
+                          {task.estimatedTime && (
+                            <div className="flex items-start">
+                              <span className="text-gray-600 font-medium w-32 flex-shrink-0">Time:</span>
+                              <span className="text-gray-700">{task.estimatedTime}</span>
+                            </div>
+                          )}
+                          
+                          {task.objective && (
+                            <div className="flex items-start">
+                              <span className="text-gray-600 font-medium w-32 flex-shrink-0">Objective:</span>
+                              <span className="text-gray-700">{task.objective}</span>
+                            </div>
+                          )}
+                          
+                          {task.scenario && (
+                            <div className="flex items-start">
+                              <span className="text-gray-600 font-medium w-32 flex-shrink-0">Scenario:</span>
+                              <span className="text-gray-700 whitespace-pre-wrap">{task.scenario}</span>
+                            </div>
+                          )}
+                          
+                          {task.yourTask && task.yourTask.length > 0 && task.yourTask[0] !== '' && (
+                            <div className="flex items-start">
+                              <span className="text-gray-600 font-medium w-32 flex-shrink-0">Your Task:</span>
+                              <ol className="list-decimal list-inside text-gray-700 space-y-1">
+                                {task.yourTask.map((step, idx) => (
+                                  step && <li key={idx}>{step}</li>
+                                ))}
+                              </ol>
+                            </div>
+                          )}
+                          
+                          {task.successCriteria && (
+                            <div className="flex items-start">
+                              <span className="text-gray-600 font-medium w-32 flex-shrink-0">Success:</span>
+                              <span className="text-gray-700">{task.successCriteria}</span>
+                            </div>
+                          )}
+                          
+                          {/* Fallback to old description for backwards compatibility */}
+                          {task.description && !task.objective && !task.scenario && (
+                            <p className="text-gray-600 text-sm leading-relaxed">{task.description}</p>
+                          )}
+                        </div>
+
+                        {/* Task Features */}
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          {task.ratingEnabled && (
+                            <div className="flex items-center space-x-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
+                              <Star className="w-3 h-3" />
+                              <span>{task.ratingLabel}</span>
+                            </div>
+                          )}
+                          {task.customQuestions && task.customQuestions.length > 0 && (
+                            <div className="flex items-center space-x-1 text-xs text-purple-700 bg-purple-50 px-2 py-1 rounded-md border border-purple-200">
+                              <MessageSquare className="w-3 h-3" />
+                              <span>{task.customQuestions.length} question{task.customQuestions.length !== 1 ? 's' : ''}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center space-x-1 text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-200">
+                            <Target className="w-3 h-3" />
+                            <span>
+                              {task.difficulty === 'easy' ? 'Non-Users' : task.difficulty === 'medium' ? 'Occasional Users' : task.difficulty === 'all' ? 'All Users' : 'Active Users'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
