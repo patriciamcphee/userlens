@@ -10,7 +10,7 @@ interface ProjectDetailProps {
   project: Project;
   onBack: () => void;
   onEdit: () => void;
-  onStartSession: (participantId: number) => void;
+  onStartSession: (participantId: string | number) => void;
 }
 
 export function ProjectDetail({ project, onBack, onEdit, onStartSession }: ProjectDetailProps) {

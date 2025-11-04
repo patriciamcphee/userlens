@@ -194,7 +194,7 @@ function App() {
   };
 
   // ✅ FIXED: Better handling for Start Session
-  const handleStartSession = (participantId: number) => {
+  const handleStartSession = (participantId: string | number) => {
     console.log('🎬 Starting session for participant ID:', participantId);
     
     if (!selectedProject) {

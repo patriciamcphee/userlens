@@ -11,7 +11,7 @@ import { generateSessionLink, DEFAULT_EMAIL_TEMPLATE } from '../../utils';
 
 interface OverviewTabProps {
   project: Project;
-  onStartSession: (participantId: number) => void;
+  onStartSession: (participantId: string | number) => void;
 }
 
 export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
@@ -677,7 +677,7 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
     e.preventDefault();
     e.stopPropagation();
     console.log('🔵 Button clicked for:', participant.name);
-    onStartSession(Number(participant.id));
+    onStartSession(participant.id);
   }}
   className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
 >
