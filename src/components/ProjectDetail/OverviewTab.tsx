@@ -142,7 +142,7 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
   );
 
   const projectParticipants = state.participants.filter(p =>
-    project.participantIds.includes(p.id)
+    project.participantIds.some(id => String(id) === String(p.id))
   );
 
   const handleAddParticipant = (participant: Participant) => {

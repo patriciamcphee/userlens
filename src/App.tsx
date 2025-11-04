@@ -158,33 +158,18 @@ function App() {
     setCurrentView('projectDetail');
   };
 
-  const handleStartSession = (projectId: string | number, participantId: number) => {
-  console.log('🎬 Starting session...', { projectId, participantId });
-  
-  const project = state.projects.find(p => String(p.id) === String(projectId));
-  const participant = state.participants.find(p => String(p.id) === String(participantId));
-  
-  if (!project) {
-    console.error('❌ Project not found');
-    alert('Project not found');
-    return;
-  }
-  
-  if (!participant) {
-    console.error('❌ Participant not found');
-    alert('Participant not found');
-    return;
-  }
-  
-  console.log('✅ Starting session:', { 
-    project: project.name, 
-    participant: participant.name 
-  });
-  
-  setSelectedProject(project);
-  setSelectedParticipant(participant);
-  setCurrentView('runSession');
-};
+  const handleStartSession = (participant: Participant, projectId: string | number) => {
+    const project = state.projects.find(p => String(p.id) === String(projectId));
+    
+    if (!project || !participant) {
+      alert('Error starting session');
+      return;
+    }
+    
+    setSelectedProject(project);
+    setSelectedParticipant(participant);
+    setCurrentView('runSession');
+  };
 
   const handleBackToDashboard = () => {
     setCurrentView('dashboard');
@@ -243,12 +228,17 @@ function App() {
           return null;
         }
         return (
-          <ProjectDetail
-            project={selectedProject}
-            onBack={handleBackToDashboard}
-            onEdit={() => handleEditProject(selectedProject)}
-            onStartSession={(participantId) => handleStartSession(selectedProject.id, participantId)}
-          />
+        <ProjectDetail
+          project={selectedProject}
+          onBack={handleBackToDashboard}
+          onEdit={() => handleEditProject(selectedProject)}
+          onStartSession={(participantId) => {
+            const participant = state.participants.find(p => p.id === participantId);
+            if (participant) {
+              handleStartSession(participant, selectedProject.id);
+            }
+          }}
+        />
         );
 
       case 'runSession':
