@@ -78,7 +78,8 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
       Number(participant.id),
       expiryDays,
       project,
-      participant
+      participant,
+      true // ← Enable short URLs
     );
     
     // Add to state

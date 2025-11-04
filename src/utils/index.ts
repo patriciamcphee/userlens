@@ -160,12 +160,7 @@ export const exportToCSV = (project: Project, participants: Participant[]) => {
 };
 
 export const generateSessionLink = (
-  projectId: number,
-  participantId: number,
-  expiryDays: number = 7,
-  project?: Project,
-  participant?: Participant
-): { linkId: string; link: string; sessionLink: SessionLink } => {
+projectId: number, participantId: number, expiryDays: number = 7, project?: Project, participant?: Participant, p0?: boolean): { linkId: string; link: string; sessionLink: SessionLink } => {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + expiryDays);
   

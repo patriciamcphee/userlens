@@ -159,8 +159,8 @@ function App() {
   };
 
   const handleStartSession = (projectId: string | number, participantId: number) => {
-    const project = state.projects.find(p => p.id === projectId);
-    const participant = state.participants.find(p => p.id === participantId);
+    const project = state.projects.find(p => String(p.id) === String(projectId));  // ✅ Works with both
+    const participant = state.participants.find(p => String(p.id) === String(participantId));  // ✅ Works with both
     
     if (project && participant) {
       setSelectedProject(project);
