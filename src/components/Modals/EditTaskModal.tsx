@@ -429,139 +429,140 @@ export function EditTaskModal({ task, onSave, onClose }: EditTaskModalProps) {
           </div>
 
           {/* Custom Questions - ACCORDION */}
-          <div className="bg-gray-50 rounded-lg border border-gray-200">
-            <button
-              type="button"
-              onClick={() => setShowQuestions(!showQuestions)}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-100 transition-colors rounded-t-lg"
-            >
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Custom Questions
-                </span>
-                {customQuestions.length > 0 && (
-                  <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                    {customQuestions.length}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addQuestion();
-                  }}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1 px-2 py-1 hover:bg-blue-50 rounded transition-colors"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Add Question</span>
-                </button>
-                {showQuestions ? (
-                  <ChevronUp className="w-5 h-5 text-gray-400" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
-                )}
-              </div>
-            </button>
+<div className="bg-gray-50 rounded-lg border border-gray-200">
+  <button
+    type="button"
+    onClick={() => setShowQuestions(!showQuestions)}
+    className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-100 transition-colors rounded-t-lg"
+  >
+    <div className="flex items-center space-x-2">
+      <span className="text-sm font-medium text-gray-700">
+        Custom Questions
+      </span>
+      {customQuestions.length > 0 && (
+        <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">
+          {customQuestions.length}
+        </span>
+      )}
+    </div>
+    <div className="flex items-center space-x-2">
+      {/* ✅ FIXED: Add Question button always visible */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          addQuestion();
+        }}
+        className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1 px-2 py-1 hover:bg-blue-50 rounded transition-colors"
+      >
+        <Plus className="w-3 h-3" />
+        <span>Add Question</span>
+      </button>
+      {showQuestions ? (
+        <ChevronUp className="w-5 h-5 text-gray-400" />
+      ) : (
+        <ChevronDown className="w-5 h-5 text-gray-400" />
+      )}
+    </div>
+  </button>
 
-            {showQuestions && (
-              <div className="px-4 pb-4 space-y-4">
-                {customQuestions.length === 0 ? (
-                  <p className="text-xs text-gray-500 italic pt-2">No custom questions yet</p>
-                ) : (
-                  customQuestions.map((q, idx) => (
-                    <div key={q.id} className="bg-white rounded-lg p-3 border border-gray-200">
-                      <div className="flex items-start space-x-2 mb-2">
-                        <span className="text-xs text-gray-500 mt-2 flex-shrink-0">Q{idx + 1}:</span>
-                        <div className="flex-1 space-y-2">
-                          <input
-                            type="text"
-                            value={q.question}
-                            onChange={(e) => updateQuestion(q.id, { question: e.target.value })}
-                            placeholder="Enter your question..."
-                            maxLength={300}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                          
-                          <div className="flex items-center space-x-3">
-                            <select
-                              value={q.type || 'text'}
-                              onChange={(e) => updateQuestion(q.id, { 
-                                type: e.target.value as 'text' | 'multiple-choice' | 'checkbox' | 'yes-no',
-                                options: (e.target.value === 'multiple-choice' || e.target.value === 'checkbox') 
-                                  ? (q.options || ['']) 
-                                  : undefined
-                              })}
-                              className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
-                            >
-                              <option value="text">Text Answer</option>
-                              <option value="yes-no">Yes/No</option>
-                              <option value="multiple-choice">Multiple Choice (single)</option>
-                              <option value="checkbox">Multiple Choice (multiple)</option>
-                            </select>
-                            
-                            <label className="flex items-center space-x-1 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={q.required || false}
-                                onChange={(e) => updateQuestion(q.id, { required: e.target.checked })}
-                                className="w-3 h-3 text-blue-600 rounded"
-                              />
-                              <span className="text-xs text-gray-600">Required</span>
-                            </label>
-                          </div>
+  {showQuestions && (
+    <div className="px-4 pb-4 space-y-4">
+      {customQuestions.length === 0 ? (
+        <p className="text-xs text-gray-500 italic pt-2">No custom questions yet</p>
+      ) : (
+        customQuestions.map((q, idx) => (
+          <div key={q.id} className="bg-white rounded-lg p-3 border border-gray-200">
+            <div className="flex items-start space-x-2 mb-2">
+              <span className="text-xs text-gray-500 mt-2 flex-shrink-0">Q{idx + 1}:</span>
+              <div className="flex-1 space-y-2">
+                <input
+                  type="text"
+                  value={q.question}
+                  onChange={(e) => updateQuestion(q.id, { question: e.target.value })}
+                  placeholder="Enter your question..."
+                  maxLength={300}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                
+                <div className="flex items-center space-x-3">
+                  <select
+                    value={q.type || 'text'}
+                    onChange={(e) => updateQuestion(q.id, { 
+                      type: e.target.value as 'text' | 'multiple-choice' | 'checkbox' | 'yes-no',
+                      options: (e.target.value === 'multiple-choice' || e.target.value === 'checkbox') 
+                        ? (q.options || ['']) 
+                        : undefined
+                    })}
+                    className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="text">Text Answer</option>
+                    <option value="yes-no">Yes/No</option>
+                    <option value="multiple-choice">Multiple Choice (single)</option>
+                    <option value="checkbox">Multiple Choice (multiple)</option>
+                  </select>
+                  
+                  <label className="flex items-center space-x-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={q.required || false}
+                      onChange={(e) => updateQuestion(q.id, { required: e.target.checked })}
+                      className="w-3 h-3 text-blue-600 rounded"
+                    />
+                    <span className="text-xs text-gray-600">Required</span>
+                  </label>
+                </div>
 
-                          {/* Options for multiple-choice and checkbox */}
-                          {(q.type === 'multiple-choice' || q.type === 'checkbox') && (
-                            <div className="mt-2 pl-4 border-l-2 border-blue-300 space-y-2">
-                              <div className="text-xs font-medium text-gray-700 mb-2">Options:</div>
-                              {(q.options || []).map((option, optIdx) => (
-                                <div key={optIdx} className="flex items-center space-x-2">
-                                  <span className="text-xs text-gray-500 w-6">{String.fromCharCode(65 + optIdx)}.</span>
-                                  <input
-                                    type="text"
-                                    value={option}
-                                    onChange={(e) => updateOption(q.id, optIdx, e.target.value)}
-                                    placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
-                                    maxLength={200}
-                                    className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                                  />
-                                  {(q.options?.length || 0) > 1 && (
-                                    <button
-                                      onClick={() => removeOption(q.id, optIdx)}
-                                      className="text-red-500 hover:text-red-700"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                              <button
-                                onClick={() => addOption(q.id)}
-                                className="text-xs text-blue-600 hover:text-blue-700 flex items-center space-x-1"
-                              >
-                                <Plus className="w-3 h-3" />
-                                <span>Add Option</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <button
-                          onClick={() => removeQuestion(q.id)}
-                          className="text-red-500 hover:text-red-700 mt-1 transition-colors"
-                          aria-label="Remove question"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                {/* Options for multiple-choice and checkbox */}
+                {((q.type || 'text') === 'multiple-choice' || (q.type || 'text') === 'checkbox') && (
+                  <div className="mt-2 pl-4 border-l-2 border-blue-300 space-y-2">
+                    <div className="text-xs font-medium text-gray-700 mb-2">Options:</div>
+                    {(q.options || []).map((option, optIdx) => (
+                      <div key={optIdx} className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500 w-6">{String.fromCharCode(65 + optIdx)}.</span>
+                        <input
+                          type="text"
+                          value={option}
+                          onChange={(e) => updateOption(q.id, optIdx, e.target.value)}
+                          placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
+                          maxLength={200}
+                          className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                        />
+                        {(q.options?.length || 0) > 1 && (
+                          <button
+                            onClick={() => removeOption(q.id, optIdx)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
-                    </div>
-                  ))
+                    ))}
+                    <button
+                      onClick={() => addOption(q.id)}
+                      className="text-xs text-blue-600 hover:text-blue-700 flex items-center space-x-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Add Option</span>
+                    </button>
+                  </div>
                 )}
               </div>
-            )}
+              
+              <button
+                onClick={() => removeQuestion(q.id)}
+                className="text-red-500 hover:text-red-700 mt-1 transition-colors"
+                aria-label="Remove question"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
+        ))
+      )}
+    </div>
+  )}
+</div>
         </div>
 
         {/* Footer */}
