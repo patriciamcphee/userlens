@@ -9,6 +9,7 @@ import { Task, Project } from '../types';
  * 2. Otherwise, return all tasks (participant sees everything)
  */
 // utils/taskFiltering.ts
+// utils/taskFiltering.ts
 export function getTasksForParticipant(
   project: Project,
   participantId: number
@@ -23,26 +24,26 @@ export function getTasksForParticipant(
     return project.setup.tasks;
   }
 
-  // Progressive filtering: users can do tasks at or below their level
+  // ✅ FIXED: Exclusive filtering - each level sees ONLY their tasks (+ "all" tasks)
   return project.setup.tasks.filter(task => {
     // Tasks marked as 'all' are shown to everyone
     if (task.difficulty === 'all') {
       return true;
     }
 
-    // Progressive access based on usage level
+    // Exclusive matching: only show tasks that match the user's exact level
     switch (assignment.usageLevel) {
       case 'non-user':
-        // Non-users only see easy tasks
+        // Non-users ONLY see easy tasks
         return task.difficulty === 'easy';
       
       case 'occasionally':
-        // Occasional users see easy + medium tasks
-        return task.difficulty === 'easy' || task.difficulty === 'medium';
+        // Occasional users ONLY see medium tasks
+        return task.difficulty === 'medium';
       
       case 'active':
-        // Active users see all tasks (easy + medium + hard)
-        return true;
+        // Active users ONLY see hard tasks
+        return task.difficulty === 'hard';
       
       default:
         return true;
@@ -76,32 +77,46 @@ export function getTasksForUsageLevel(
   tasks: any[],
   usageLevel: 'active' | 'occasionally' | 'non-user'
 ): any[] {
-  switch (usageLevel) {
-    case 'non-user':
-      return tasks.filter(task => task.difficulty === 'easy');
-    case 'occasionally':
-      return tasks.filter(task => task.difficulty === 'easy' || task.difficulty === 'medium');
-    case 'active':
-      return tasks; // See all tasks
-    default:
-      return tasks;
-  }
+  return tasks.filter(task => {
+    // "All Users" tasks shown to everyone
+    if (task.difficulty === 'all') {
+      return true;
+    }
+    
+    // Exclusive matching
+    switch (usageLevel) {
+      case 'non-user':
+        return task.difficulty === 'easy';
+      case 'occasionally':
+        return task.difficulty === 'medium';
+      case 'active':
+        return task.difficulty === 'hard';
+      default:
+        return true;
+    }
+  });
 }
 
 /**
  * Check if a participant should see a specific task based on their usage level
  */
 export function shouldShowTask(
-  taskDifficulty: 'easy' | 'medium' | 'hard',
+  taskDifficulty: 'easy' | 'medium' | 'hard' | 'all',
   usageLevel: 'active' | 'occasionally' | 'non-user'
 ): boolean {
+  // "All Users" tasks shown to everyone
+  if (taskDifficulty === 'all') {
+    return true;
+  }
+  
+  // Exclusive matching
   switch (usageLevel) {
     case 'non-user':
       return taskDifficulty === 'easy';
     case 'occasionally':
-      return taskDifficulty === 'easy' || taskDifficulty === 'medium';
+      return taskDifficulty === 'medium';
     case 'active':
-      return true; // See all tasks
+      return taskDifficulty === 'hard';
     default:
       return true;
   }

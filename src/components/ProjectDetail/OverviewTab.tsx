@@ -300,13 +300,14 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
         </div>
 
         {/* Additional info */}
+        {/* Task Filtering Logic info - around line 280 */}
         <div className="mt-4 bg-gray-50 rounded-lg p-3">
           <div className="text-sm text-gray-700">
             <strong>Task Filtering Logic:</strong>
             <ul className="mt-2 space-y-1 text-xs text-gray-600">
               <li>• <strong>Non-Users</strong> see only Easy tasks ({taskDifficultyBreakdown.easy + taskDifficultyBreakdown.all} total)</li>
-              <li>• <strong>Occasional Users</strong> see Easy + Medium tasks ({taskDifficultyBreakdown.easy + taskDifficultyBreakdown.medium + taskDifficultyBreakdown.all} total)</li>
-              <li>• <strong>Active Users</strong> see all task types ({project.setup.tasks.length} total)</li>
+              <li>• <strong>Occasional Users</strong> see only Medium tasks ({taskDifficultyBreakdown.medium + taskDifficultyBreakdown.all} total)</li>
+              <li>• <strong>Active Users</strong> see only Hard tasks ({taskDifficultyBreakdown.hard + taskDifficultyBreakdown.all} total)</li>
               <li>• <strong>All Users</strong> tasks are shown to everyone regardless of experience level</li>
             </ul>
           </div>
