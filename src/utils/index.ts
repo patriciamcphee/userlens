@@ -1,4 +1,4 @@
-// utils/index.ts - FIXED WITH SHORT URLs
+// utils/index.ts - FIXED VERSION with Short URLs
 import { Project, Participant, Analytics, SessionLink, EmailTemplate, Task } from '../types';
 import { DEFAULT_EMAIL_TEMPLATE } from '../constants';
 
@@ -159,13 +159,14 @@ export const exportToCSV = (project: Project, participants: Participant[]) => {
   document.body.removeChild(link);
 };
 
+// ✅ FIXED: Added useShortUrl parameter
 export const generateSessionLink = (
   projectId: number,
   participantId: number,
   expiryDays: number = 7,
   project?: Project,
   participant?: Participant,
-  enableShortUrls: boolean = false
+  useShortUrl: boolean = false  // ✅ NEW parameter
 ): { linkId: string; link: string; sessionLink: SessionLink } => {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + expiryDays);
@@ -177,30 +178,6 @@ export const generateSessionLink = (
     a => a.participantId === participantId
   );
 
-  const sessionData: SessionLinkData = {
-    projectId,
-    participantId,
-    expiresAt: expiresAt.toISOString(),
-    linkId,
-    projectSetup: project ? {
-      name: project.name,
-      description: project.description,
-      mode: project.mode,
-      beforeMessage: project.setup.beforeMessage,
-      duringScenario: project.setup.duringScenario,
-      afterMessage: project.setup.afterMessage,
-      tasks: project.setup.tasks,
-      randomizeOrder: project.setup.randomizeOrder,
-      cameraOption: project.cameraOption,
-      micOption: project.micOption
-    } : {} as any,
-    participant: participant ? {
-      name: participant.name,
-      email: participant.email,
-      usageLevel: assignment?.usageLevel || participant.defaultUsageLevel
-    } : {} as any
-  };
-  
   const sessionLink: SessionLink = {
     id: linkId,
     projectId,
@@ -212,31 +189,76 @@ export const generateSessionLink = (
   };
 
   const baseUrl = window.location.origin + window.location.pathname;
+  
   let link: string;
 
-  if (enableShortUrls) {
-    // SHORT URL: Store data in sessionStorage and just pass the linkId
-    // This creates much shorter URLs in emails
-    const storageKey = `session_${linkId}`;
-    
+  if (useShortUrl) {
+    // ✅ SHORT URL: Only encode the linkId, store full data in localStorage
+    const sessionData: SessionLinkData = {
+      projectId,
+      participantId,
+      expiresAt: expiresAt.toISOString(),
+      linkId,
+      projectSetup: project ? {
+        name: project.name,
+        description: project.description,
+        mode: project.mode,
+        beforeMessage: project.setup.beforeMessage,
+        duringScenario: project.setup.duringScenario,
+        afterMessage: project.setup.afterMessage,
+        tasks: project.setup.tasks,
+        randomizeOrder: project.setup.randomizeOrder,
+        cameraOption: project.cameraOption,
+        micOption: project.micOption
+      } : {} as any,
+      participant: participant ? {
+        name: participant.name,
+        email: participant.email,
+        usageLevel: assignment?.usageLevel || participant.defaultUsageLevel
+      } : {} as any
+    };
+
+    // Store session data in localStorage with linkId as key
     try {
-      sessionStorage.setItem(storageKey, JSON.stringify(sessionData));
-      console.log('✅ Session data stored in sessionStorage with key:', storageKey);
+      localStorage.setItem(`session_${linkId}`, JSON.stringify(sessionData));
+      console.log('✅ Stored session data in localStorage for short URL');
     } catch (error) {
-      console.warn('⚠️ Failed to store in sessionStorage, falling back to long URL:', error);
-      // Fall back to long URL if sessionStorage fails
+      console.error('Failed to store session data:', error);
+      // Fallback to long URL if storage fails
       const encodedData = btoa(JSON.stringify(sessionData));
       link = `${baseUrl}?session=${encodedData}`;
       return { linkId, link, sessionLink };
     }
-    
+
     // Create short URL with just the linkId
     link = `${baseUrl}?sid=${linkId}`;
     
-    console.log('📧 Short URL generated:', link);
-    console.log('   Long URL would be:', baseUrl + '?session=' + btoa(JSON.stringify(sessionData)).substring(0, 50) + '...');
   } else {
-    // LONG URL: Base64 encode all the session data (backwards compatible)
+    // ✅ LONG URL: Full data in URL (original behavior)
+    const sessionData: SessionLinkData = {
+      projectId,
+      participantId,
+      expiresAt: expiresAt.toISOString(),
+      linkId,
+      projectSetup: project ? {
+        name: project.name,
+        description: project.description,
+        mode: project.mode,
+        beforeMessage: project.setup.beforeMessage,
+        duringScenario: project.setup.duringScenario,
+        afterMessage: project.setup.afterMessage,
+        tasks: project.setup.tasks,
+        randomizeOrder: project.setup.randomizeOrder,
+        cameraOption: project.cameraOption,
+        micOption: project.micOption
+      } : {} as any,
+      participant: participant ? {
+        name: participant.name,
+        email: participant.email,
+        usageLevel: assignment?.usageLevel || participant.defaultUsageLevel
+      } : {} as any
+    };
+    
     const encodedData = btoa(JSON.stringify(sessionData));
     link = `${baseUrl}?session=${encodedData}`;
   }

@@ -676,40 +676,8 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
   onClick={(e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // ✅ FIXED: Validate ID before calling onStartSession
     console.log('🔵 Button clicked for:', participant.name);
-    console.log('🔍 Participant ID:', participant.id, 'Type:', typeof participant.id);
-    
-    // Don't use Number() - keep the ID as-is
-    const participantId = participant.id;
-    
-    // Validate the ID
-    if (participantId === undefined || participantId === null || participantId === '') {
-      console.error('❌ Invalid participant ID:', participantId);
-      alert(`Error: Participant ${participant.name} has an invalid ID.\n\nPlease try:\n1. Removing this participant from the project\n2. Re-adding them`);
-      return;
-    }
-    
-    // Convert to number only if it's a valid string number
-    let finalId: number;
-    if (typeof participantId === 'string') {
-      finalId = parseInt(participantId, 10);
-      if (isNaN(finalId)) {
-        console.error('❌ Cannot convert ID to number:', participantId);
-        alert(`Error: Participant ${participant.name} has an invalid ID format.\n\nPlease try:\n1. Removing this participant from the project\n2. Re-adding them`);
-        return;
-      }
-    } else if (typeof participantId === 'number') {
-      finalId = participantId;
-    } else {
-      console.error('❌ Unexpected ID type:', typeof participantId, participantId);
-      alert(`Error: Participant ${participant.name} has an invalid ID type.\n\nPlease try:\n1. Removing this participant from the project\n2. Re-adding them`);
-      return;
-    }
-    
-    console.log('✅ Calling onStartSession with ID:', finalId);
-    onStartSession(finalId);
+    onStartSession(Number(participant.id));
   }}
   className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
 >

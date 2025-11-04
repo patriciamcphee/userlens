@@ -1,4 +1,4 @@
-// components/ProjectDetail/ProjectDetail.tsx - IMPROVED FIX
+// components/ProjectDetail/ProjectDetail.tsx
 import React, { useState } from 'react';
 import { ArrowLeft, Settings } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
@@ -14,42 +14,7 @@ interface ProjectDetailProps {
 }
 
 export function ProjectDetail({ project, onBack, onEdit, onStartSession }: ProjectDetailProps) {
-  const { state } = useAppContext();
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics'>('overview');
-
-  // IMPROVED: Create a wrapper that finds the participant before calling onStartSession
-  const handleStartSession = (participantId: number) => {
-    console.log('🔵 ProjectDetail: Starting session for participant ID:', participantId);
-    console.log('🔍 Searching in state.participants:', state.participants.length, 'participants');
-    
-    // Try multiple ways to find the participant
-    let participant = state.participants.find(p => String(p.id) === String(participantId));
-    
-    if (!participant) {
-      console.warn('⚠️ Participant not found in state.participants, checking project.participantIds');
-      // Check if the ID exists in the project
-      const participantIdExists = project.participantIds.some(id => String(id) === String(participantId));
-      
-      if (participantIdExists) {
-        console.error('❌ Participant ID exists in project but not in state.participants!');
-        console.error('   This is a data consistency issue.');
-        console.error('   Project participantIds:', project.participantIds);
-        console.error('   State participants:', state.participants.map(p => ({ id: p.id, name: p.name })));
-      }
-    }
-    
-    if (participant) {
-      console.log('✅ Participant found:', participant.name, '(ID:', participant.id, ')');
-      onStartSession(participantId);
-    } else {
-      console.error('❌ Participant not found anywhere!');
-      console.error('   Looking for ID:', participantId, '(type:', typeof participantId, ')');
-      console.error('   Available participant IDs:', state.participants.map(p => `${p.id} (${typeof p.id})`));
-      
-      // Show more helpful error message
-      alert(`Error: Participant not found.\n\nThis might be a data sync issue. Try:\n1. Refreshing the page\n2. Re-adding the participant to the project\n\nDebug info: Looking for ID "${participantId}" (${typeof participantId})`);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -108,7 +73,7 @@ export function ProjectDetail({ project, onBack, onEdit, onStartSession }: Proje
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         {activeTab === 'overview' ? (
-          <OverviewTab project={project} onStartSession={handleStartSession} />
+          <OverviewTab project={project} onStartSession={onStartSession} />
         ) : (
           <AnalyticsTab project={project} />
         )}

@@ -1,4 +1,4 @@
-// App.tsx - FIXED VERSION
+// App.tsx - FIXED VERSION with Short URL Support
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from './contexts/AppContext';
 import { Dashboard } from './components/Dashboard/Dashboard';
@@ -8,12 +8,11 @@ import { ModeratedSession } from './components/Session/ModeratedSession';
 import { UnmoderatedSession } from './components/Session/UnmoderatedSession';
 import { SessionComplete } from './components/Session/SessionComplete';
 import { Project, Participant, View } from './types';
-
 import { azureUploadService } from './services/azureUploadService';
 
 function App() {
   useEffect(() => {
-    // Initialize Azure upload service on app start with proper validation
+    // Initialize Azure upload service
     const accountName = import.meta.env.VITE_AZURE_STORAGE_ACCOUNT_NAME;
     const sasToken = import.meta.env.VITE_AZURE_STORAGE_SAS_TOKEN;
     const containerName = import.meta.env.VITE_AZURE_STORAGE_CONTAINER_NAME || 'recordings';
@@ -32,7 +31,6 @@ function App() {
       });
       console.log('✅ Azure Upload Service initialized successfully');
       
-      // Test the connection
       azureUploadService.testConnection().then(result => {
         if (result) {
           console.log('✅ Azure connection test passed');
@@ -53,202 +51,130 @@ function App() {
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
-  // Session link handling - runs on mount
+  // ✅ FIXED: Session link handling with support for SHORT URLs
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     
-    // Check for short URL format first (?sid=linkId)
-    const shortSessionId = urlParams.get('sid');
-    if (shortSessionId) {
+    // Check for short URL format (sid parameter)
+    const shortId = urlParams.get('sid');
+    
+    // Check for long URL format (session parameter)
+    const sessionParam = urlParams.get('session');
+    
+    if (shortId) {
+      console.log('📎 Processing SHORT session link:', shortId);
+      
       try {
-        console.log('📱 Processing short session link:', shortSessionId);
+        // Retrieve session data from localStorage using linkId
+        const sessionDataStr = localStorage.getItem(`session_${shortId}`);
         
-        // Retrieve session data from sessionStorage
-        const storageKey = `session_${shortSessionId}`;
-        const storedData = sessionStorage.getItem(storageKey);
-        
-        if (!storedData) {
-          alert('This session link has expired or is invalid. Please request a new link from the administrator.');
+        if (!sessionDataStr) {
+          alert('This session link is invalid or has expired. Please contact the administrator for a new link.');
           window.history.replaceState({}, '', window.location.pathname);
           return;
         }
         
-        const sessionData = JSON.parse(storedData);
-        const { projectId, participantId, expiresAt, linkId, projectSetup, participant: participantData } = sessionData;
-        
-        // Check if expired
-        if (new Date(expiresAt) < new Date()) {
-          alert('This session link has expired. Please contact the administrator for a new link.');
-          sessionStorage.removeItem(storageKey); // Clean up
-          window.history.replaceState({}, '', window.location.pathname);
-          return;
-        }
-
-        // Check if link was already used
-        const usedLinksKey = 'usedSessionLinks';
-        const usedLinks = JSON.parse(localStorage.getItem(usedLinksKey) || '[]');
-        
-        if (usedLinks.includes(linkId)) {
-          alert('This session link has already been used on this device.');
-          window.history.replaceState({}, '', window.location.pathname);
-          return;
-        }
-
-        // Validate data
-        if (!projectSetup || !participantData) {
-          alert('This session link format is not supported. Please request a new link.');
-          window.history.replaceState({}, '', window.location.pathname);
-          return;
-        }
-
-        // Create temporary project object
-        const tempProject: Project = {
-          id: projectId,
-          name: projectSetup.name,
-          description: projectSetup.description,
-          mode: projectSetup.mode,
-          status: 'active',
-          participantIds: [participantId],
-          participantAssignments: participantData.usageLevel ? [{
-            participantId: participantId,
-            usageLevel: participantData.usageLevel
-          }] : [],
-          sessions: [],
-          cameraOption: projectSetup.cameraOption,
-          micOption: projectSetup.micOption,
-          setup: {
-            beforeMessage: projectSetup.beforeMessage,
-            duringScenario: projectSetup.duringScenario,
-            afterMessage: projectSetup.afterMessage,
-            randomizeOrder: projectSetup.randomizeOrder,
-            tasks: projectSetup.tasks
-          }
-        };
-
-        // Create temporary participant object
-        const tempParticipant: Participant = {
-          id: participantId,
-          name: participantData.name,
-          email: participantData.email,
-          defaultUsageLevel: participantData.usageLevel
-        };
-
-        // Mark link as used on this device
-        usedLinks.push(linkId);
-        localStorage.setItem(usedLinksKey, JSON.stringify(usedLinks));
-
-        // Clean up session storage after successful use
-        sessionStorage.removeItem(storageKey);
-
-        // Set current project and participant
-        setSelectedProject(tempProject);
-        setSelectedParticipant(tempParticipant);
-
-        // Navigate to session view
-        setCurrentView('runSession');
-
-        // Clean up URL parameter
-        window.history.replaceState({}, '', window.location.pathname);
-        
-        console.log('✅ Short session link processed successfully');
-        return;
+        const sessionData = JSON.parse(sessionDataStr);
+        processSessionData(sessionData, shortId);
         
       } catch (error) {
         console.error('Error parsing short session link:', error);
         alert('Invalid session link format. Please contact the administrator.');
         window.history.replaceState({}, '', window.location.pathname);
-        return;
       }
-    }
-    
-    // Check for long URL format (?session=base64data) - backwards compatibility
-    const sessionParam = urlParams.get('session');
-    if (sessionParam) {
+      
+    } else if (sessionParam) {
+      console.log('📎 Processing LONG session link');
+      
       try {
-        console.log('📱 Processing long session link (legacy format)');
-        
         // Decode the session data from URL
         const sessionData = JSON.parse(atob(sessionParam));
-        const { projectId, participantId, expiresAt, linkId, projectSetup, participant: participantData } = sessionData;
-        
-        // Check if expired
-        if (new Date(expiresAt) < new Date()) {
-          alert('This session link has expired. Please contact the administrator for a new link.');
-          window.history.replaceState({}, '', window.location.pathname);
-          return;
-        }
-
-        // Check if link was already used (optional - stored locally on participant's device)
-        const usedLinksKey = 'usedSessionLinks';
-        const usedLinks = JSON.parse(localStorage.getItem(usedLinksKey) || '[]');
-        
-        if (usedLinks.includes(linkId)) {
-          alert('This session link has already been used on this device.');
-          window.history.replaceState({}, '', window.location.pathname);
-          return;
-        }
-
-        // Create a temporary project and participant from the link data
-        if (!projectSetup || !participantData) {
-          alert('This session link format is not supported. Please request a new link.');
-          window.history.replaceState({}, '', window.location.pathname);
-          return;
-        }
-
-        // Create temporary project object
-        const tempProject: Project = {
-          id: projectId,
-          name: projectSetup.name,
-          description: projectSetup.description,
-          mode: projectSetup.mode,
-          status: 'active',
-          participantIds: [participantId],
-          participantAssignments: participantData.usageLevel ? [{
-            participantId: participantId,
-            usageLevel: participantData.usageLevel
-          }] : [],
-          sessions: [],
-          cameraOption: projectSetup.cameraOption,
-          micOption: projectSetup.micOption,
-          setup: {
-            beforeMessage: projectSetup.beforeMessage,
-            duringScenario: projectSetup.duringScenario,
-            afterMessage: projectSetup.afterMessage,
-            randomizeOrder: projectSetup.randomizeOrder,
-            tasks: projectSetup.tasks
-          }
-        };
-
-        // Create temporary participant object
-        const tempParticipant: Participant = {
-          id: participantId,
-          name: participantData.name,
-          email: participantData.email,
-          defaultUsageLevel: participantData.usageLevel
-        };
-
-        // Mark link as used on this device
-        usedLinks.push(linkId);
-        localStorage.setItem(usedLinksKey, JSON.stringify(usedLinks));
-
-        // Set current project and participant
-        setSelectedProject(tempProject);
-        setSelectedParticipant(tempParticipant);
-
-        // Navigate to session view
-        setCurrentView('runSession');
-
-        // Clean up URL parameter
-        window.history.replaceState({}, '', window.location.pathname);
-        
-        console.log('✅ Long session link processed successfully (legacy)');
+        processSessionData(sessionData, sessionData.linkId);
         
       } catch (error) {
-        console.error('Error parsing session link:', error);
+        console.error('Error parsing long session link:', error);
         alert('Invalid session link format. Please contact the administrator.');
         window.history.replaceState({}, '', window.location.pathname);
       }
     }
+    
+    // ✅ Helper function to process session data
+    function processSessionData(sessionData: any, linkId: string) {
+      const { projectId, participantId, expiresAt, projectSetup, participant: participantData } = sessionData;
+      
+      // Check if expired
+      if (new Date(expiresAt) < new Date()) {
+        alert('This session link has expired. Please contact the administrator for a new link.');
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
+
+      // Check if link was already used
+      const usedLinksKey = 'usedSessionLinks';
+      const usedLinks = JSON.parse(localStorage.getItem(usedLinksKey) || '[]');
+      
+      if (usedLinks.includes(linkId)) {
+        alert('This session link has already been used on this device.');
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
+
+      // Validate data
+      if (!projectSetup || !participantData) {
+        alert('This session link format is not supported. Please request a new link.');
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
+
+      // Create temporary project object
+      const tempProject: Project = {
+        id: projectId,
+        name: projectSetup.name,
+        description: projectSetup.description,
+        mode: projectSetup.mode,
+        status: 'active',
+        participantIds: [participantId],
+        participantAssignments: participantData.usageLevel ? [{
+          participantId: participantId,
+          usageLevel: participantData.usageLevel
+        }] : [],
+        sessions: [],
+        cameraOption: projectSetup.cameraOption,
+        micOption: projectSetup.micOption,
+        setup: {
+          beforeMessage: projectSetup.beforeMessage,
+          duringScenario: projectSetup.duringScenario,
+          afterMessage: projectSetup.afterMessage,
+          randomizeOrder: projectSetup.randomizeOrder,
+          tasks: projectSetup.tasks
+        }
+      };
+
+      // Create temporary participant object
+      const tempParticipant: Participant = {
+        id: participantId,
+        name: participantData.name,
+        email: participantData.email,
+        defaultUsageLevel: participantData.usageLevel
+      };
+
+      // Mark link as used
+      usedLinks.push(linkId);
+      localStorage.setItem(usedLinksKey, JSON.stringify(usedLinks));
+
+      console.log('✅ Session link processed successfully');
+      console.log('   Project:', tempProject.name);
+      console.log('   Participant:', tempParticipant.name);
+
+      // Set current project and participant
+      setSelectedProject(tempProject);
+      setSelectedParticipant(tempParticipant);
+      setCurrentView('runSession');
+
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    
   }, []); // Run only once on mount
 
   // Navigation handlers
@@ -267,15 +193,32 @@ function App() {
     setCurrentView('projectDetail');
   };
 
-  const handleStartSession = (participant: Participant, projectId: string | number) => {
-    const project = state.projects.find(p => String(p.id) === String(projectId));
+  // ✅ FIXED: Better handling for Start Session
+  const handleStartSession = (participantId: number) => {
+    console.log('🎬 Starting session for participant:', participantId);
+    console.log('   Selected project:', selectedProject?.name);
     
-    if (!project || !participant) {
-      alert('Error starting session');
+    if (!selectedProject) {
+      console.error('❌ No project selected');
+      alert('Error: No project selected');
       return;
     }
     
-    setSelectedProject(project);
+    // Find participant in state
+    const participant = state.participants.find(p => {
+      const pId = typeof p.id === 'number' ? p.id : parseInt(String(p.id), 10);
+      return pId === participantId;
+    });
+    
+    if (!participant) {
+      console.error('❌ Participant not found:', participantId);
+      console.log('   Available participants:', state.participants.map(p => ({ id: p.id, name: p.name })));
+      alert('Error: Participant not found');
+      return;
+    }
+    
+    console.log('✅ Found participant:', participant.name);
+    
     setSelectedParticipant(participant);
     setCurrentView('runSession');
   };
@@ -341,26 +284,25 @@ function App() {
             project={selectedProject}
             onBack={handleBackToDashboard}
             onEdit={() => handleEditProject(selectedProject)}
-            onStartSession={(participantId) => {
-              console.log('🔵 Starting session for participant ID:', participantId);
-              const participant = state.participants.find(p => String(p.id) === String(participantId));
-              if (participant) {
-                console.log('✅ Participant found:', participant.name);
-                handleStartSession(participant, selectedProject.id);
-              } else {
-                console.error('❌ Participant not found:', participantId);
-                console.log('Available participants:', state.participants.map(p => ({ id: p.id, name: p.name })));
-                alert('Error: Participant not found. Please try again.');
-              }
-            }}
+            onStartSession={handleStartSession}
           />
         );
 
       case 'runSession':
         if (!selectedProject || !selectedParticipant) {
+          console.error('❌ Missing data for session:', {
+            hasProject: !!selectedProject,
+            hasParticipant: !!selectedParticipant
+          });
           setCurrentView('dashboard');
           return null;
         }
+        
+        console.log('🎥 Rendering session view:', {
+          mode: selectedProject.mode,
+          project: selectedProject.name,
+          participant: selectedParticipant.name
+        });
         
         // Render moderated or unmoderated session based on project mode
         if (selectedProject.mode === 'moderated') {
