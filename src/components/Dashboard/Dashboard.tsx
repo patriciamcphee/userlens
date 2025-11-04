@@ -39,7 +39,6 @@ export function Dashboard({ onCreateProject, onEditProject, onOpenProject }: Das
             <div>
               <div className="flex items-center space-x-3">
                   <LogoHorizontal size="lg" />
-                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">Beta</span>
               </div>
             </div>
             <div className="flex items-center space-x-6">

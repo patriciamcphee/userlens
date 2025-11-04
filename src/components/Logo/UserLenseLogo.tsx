@@ -113,11 +113,11 @@ export function UserLensLogo({
     return (
       <div className={`flex flex-col ${className}`}>
         <span 
-          className={`font-bold ${textColorClasses} ${animated ? 'transition-colors duration-300' : ''}`}
-          style={{ fontSize: `${dimensions.fontSize}px` }}
-        >
-          UserLens
-        </span>
+  className={`font-bold ${textColorClasses} leading-tight ${animated ? 'transition-colors duration-300' : ''}`}
+  style={{ fontSize: `${dimensions.fontSize}px` }}
+>
+  UserLens<span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 ml-2 rounded-full text-[10px] font-semibold inline-flex items-center align-top">Beta</span>
+</span>
         {showTagline && (
           <span 
             className={`${taglineColorClasses} ${animated ? 'transition-colors duration-300' : ''}`}
@@ -137,11 +137,11 @@ export function UserLensLogo({
         <Icon size={dimensions.iconSize} animated={animated} />
         <div className="flex flex-col">
           <span 
-            className={`font-bold ${textColorClasses} leading-tight ${animated ? 'transition-colors duration-300' : ''}`}
-            style={{ fontSize: `${dimensions.fontSize}px` }}
-          >
-            UserLens
-          </span>
+  className={`font-bold ${textColorClasses} leading-tight ${animated ? 'transition-colors duration-300' : ''}`}
+  style={{ fontSize: `${dimensions.fontSize}px` }}
+>
+  UserLens<span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 ml-2 rounded-full text-[10px] font-semibold inline-flex items-center align-top">Beta</span>
+</span>
           {showTagline && (
             <span 
               className={`${taglineColorClasses} leading-tight ${animated ? 'transition-colors duration-300' : ''}`}
@@ -159,11 +159,11 @@ export function UserLensLogo({
         <Icon size={dimensions.iconSize} animated={animated} />
         <div className="flex flex-col items-center mt-3">
           <span 
-            className={`font-bold ${textColorClasses} leading-tight ${animated ? 'transition-colors duration-300' : ''}`}
-            style={{ fontSize: `${dimensions.fontSize}px` }}
-          >
-            UserLens
-          </span>
+  className={`font-bold ${textColorClasses} leading-tight ${animated ? 'transition-colors duration-300' : ''}`}
+  style={{ fontSize: `${dimensions.fontSize}px` }}
+>
+  UserLens<span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 ml-2 rounded-full text-[10px] font-semibold inline-flex items-center align-top">Beta</span>
+</span>
           {showTagline && (
             <span 
               className={`${taglineColorClasses} text-center leading-tight ${animated ? 'transition-colors duration-300' : ''}`}
