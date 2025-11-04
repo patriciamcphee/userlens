@@ -1,4 +1,4 @@
-// utils/index.ts
+// utils/index.ts - FIXED WITH SHORT URLs
 import { Project, Participant, Analytics, SessionLink, EmailTemplate, Task } from '../types';
 import { DEFAULT_EMAIL_TEMPLATE } from '../constants';
 
@@ -160,7 +160,13 @@ export const exportToCSV = (project: Project, participants: Participant[]) => {
 };
 
 export const generateSessionLink = (
-projectId: number, participantId: number, expiryDays: number = 7, project?: Project, participant?: Participant, p0?: boolean): { linkId: string; link: string; sessionLink: SessionLink } => {
+  projectId: number,
+  participantId: number,
+  expiryDays: number = 7,
+  project?: Project,
+  participant?: Participant,
+  enableShortUrls: boolean = false
+): { linkId: string; link: string; sessionLink: SessionLink } => {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + expiryDays);
   
@@ -195,9 +201,6 @@ projectId: number, participantId: number, expiryDays: number = 7, project?: Proj
     } : {} as any
   };
   
-  // Base64 encode the session data
-  const encodedData = btoa(JSON.stringify(sessionData));
-  
   const sessionLink: SessionLink = {
     id: linkId,
     projectId,
@@ -209,7 +212,34 @@ projectId: number, participantId: number, expiryDays: number = 7, project?: Proj
   };
 
   const baseUrl = window.location.origin + window.location.pathname;
-  const link = `${baseUrl}?session=${encodedData}`;
+  let link: string;
+
+  if (enableShortUrls) {
+    // SHORT URL: Store data in sessionStorage and just pass the linkId
+    // This creates much shorter URLs in emails
+    const storageKey = `session_${linkId}`;
+    
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify(sessionData));
+      console.log('✅ Session data stored in sessionStorage with key:', storageKey);
+    } catch (error) {
+      console.warn('⚠️ Failed to store in sessionStorage, falling back to long URL:', error);
+      // Fall back to long URL if sessionStorage fails
+      const encodedData = btoa(JSON.stringify(sessionData));
+      link = `${baseUrl}?session=${encodedData}`;
+      return { linkId, link, sessionLink };
+    }
+    
+    // Create short URL with just the linkId
+    link = `${baseUrl}?sid=${linkId}`;
+    
+    console.log('📧 Short URL generated:', link);
+    console.log('   Long URL would be:', baseUrl + '?session=' + btoa(JSON.stringify(sessionData)).substring(0, 50) + '...');
+  } else {
+    // LONG URL: Base64 encode all the session data (backwards compatible)
+    const encodedData = btoa(JSON.stringify(sessionData));
+    link = `${baseUrl}?session=${encodedData}`;
+  }
 
   return { linkId, link, sessionLink };
 };

@@ -56,10 +56,117 @@ function App() {
   // Session link handling - runs on mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const sessionParam = urlParams.get('session');
     
+    // Check for short URL format first (?sid=linkId)
+    const shortSessionId = urlParams.get('sid');
+    if (shortSessionId) {
+      try {
+        console.log('📱 Processing short session link:', shortSessionId);
+        
+        // Retrieve session data from sessionStorage
+        const storageKey = `session_${shortSessionId}`;
+        const storedData = sessionStorage.getItem(storageKey);
+        
+        if (!storedData) {
+          alert('This session link has expired or is invalid. Please request a new link from the administrator.');
+          window.history.replaceState({}, '', window.location.pathname);
+          return;
+        }
+        
+        const sessionData = JSON.parse(storedData);
+        const { projectId, participantId, expiresAt, linkId, projectSetup, participant: participantData } = sessionData;
+        
+        // Check if expired
+        if (new Date(expiresAt) < new Date()) {
+          alert('This session link has expired. Please contact the administrator for a new link.');
+          sessionStorage.removeItem(storageKey); // Clean up
+          window.history.replaceState({}, '', window.location.pathname);
+          return;
+        }
+
+        // Check if link was already used
+        const usedLinksKey = 'usedSessionLinks';
+        const usedLinks = JSON.parse(localStorage.getItem(usedLinksKey) || '[]');
+        
+        if (usedLinks.includes(linkId)) {
+          alert('This session link has already been used on this device.');
+          window.history.replaceState({}, '', window.location.pathname);
+          return;
+        }
+
+        // Validate data
+        if (!projectSetup || !participantData) {
+          alert('This session link format is not supported. Please request a new link.');
+          window.history.replaceState({}, '', window.location.pathname);
+          return;
+        }
+
+        // Create temporary project object
+        const tempProject: Project = {
+          id: projectId,
+          name: projectSetup.name,
+          description: projectSetup.description,
+          mode: projectSetup.mode,
+          status: 'active',
+          participantIds: [participantId],
+          participantAssignments: participantData.usageLevel ? [{
+            participantId: participantId,
+            usageLevel: participantData.usageLevel
+          }] : [],
+          sessions: [],
+          cameraOption: projectSetup.cameraOption,
+          micOption: projectSetup.micOption,
+          setup: {
+            beforeMessage: projectSetup.beforeMessage,
+            duringScenario: projectSetup.duringScenario,
+            afterMessage: projectSetup.afterMessage,
+            randomizeOrder: projectSetup.randomizeOrder,
+            tasks: projectSetup.tasks
+          }
+        };
+
+        // Create temporary participant object
+        const tempParticipant: Participant = {
+          id: participantId,
+          name: participantData.name,
+          email: participantData.email,
+          defaultUsageLevel: participantData.usageLevel
+        };
+
+        // Mark link as used on this device
+        usedLinks.push(linkId);
+        localStorage.setItem(usedLinksKey, JSON.stringify(usedLinks));
+
+        // Clean up session storage after successful use
+        sessionStorage.removeItem(storageKey);
+
+        // Set current project and participant
+        setSelectedProject(tempProject);
+        setSelectedParticipant(tempParticipant);
+
+        // Navigate to session view
+        setCurrentView('runSession');
+
+        // Clean up URL parameter
+        window.history.replaceState({}, '', window.location.pathname);
+        
+        console.log('✅ Short session link processed successfully');
+        return;
+        
+      } catch (error) {
+        console.error('Error parsing short session link:', error);
+        alert('Invalid session link format. Please contact the administrator.');
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
+    }
+    
+    // Check for long URL format (?session=base64data) - backwards compatibility
+    const sessionParam = urlParams.get('session');
     if (sessionParam) {
       try {
+        console.log('📱 Processing long session link (legacy format)');
+        
         // Decode the session data from URL
         const sessionData = JSON.parse(atob(sessionParam));
         const { projectId, participantId, expiresAt, linkId, projectSetup, participant: participantData } = sessionData;
@@ -133,6 +240,8 @@ function App() {
 
         // Clean up URL parameter
         window.history.replaceState({}, '', window.location.pathname);
+        
+        console.log('✅ Long session link processed successfully (legacy)');
         
       } catch (error) {
         console.error('Error parsing session link:', error);
@@ -228,17 +337,23 @@ function App() {
           return null;
         }
         return (
-        <ProjectDetail
-          project={selectedProject}
-          onBack={handleBackToDashboard}
-          onEdit={() => handleEditProject(selectedProject)}
-          onStartSession={(participantId) => {
-            const participant = state.participants.find(p => p.id === participantId);
-            if (participant) {
-              handleStartSession(participant, selectedProject.id);
-            }
-          }}
-        />
+          <ProjectDetail
+            project={selectedProject}
+            onBack={handleBackToDashboard}
+            onEdit={() => handleEditProject(selectedProject)}
+            onStartSession={(participantId) => {
+              console.log('🔵 Starting session for participant ID:', participantId);
+              const participant = state.participants.find(p => String(p.id) === String(participantId));
+              if (participant) {
+                console.log('✅ Participant found:', participant.name);
+                handleStartSession(participant, selectedProject.id);
+              } else {
+                console.error('❌ Participant not found:', participantId);
+                console.log('Available participants:', state.participants.map(p => ({ id: p.id, name: p.name })));
+                alert('Error: Participant not found. Please try again.');
+              }
+            }}
+          />
         );
 
       case 'runSession':
