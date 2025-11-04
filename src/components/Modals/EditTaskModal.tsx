@@ -487,15 +487,15 @@ export function EditTaskModal({ task, onSave, onClose }: EditTaskModalProps) {
                 
                 <div className="flex items-center space-x-3">
                   <select
-                    value={q.type || 'text'}
-                    onChange={(e) => updateQuestion(q.id, { 
-                      type: e.target.value as 'text' | 'multiple-choice' | 'checkbox' | 'yes-no',
-                      options: (e.target.value === 'multiple-choice' || e.target.value === 'checkbox') 
-                        ? (q.options || ['']) 
-                        : undefined
-                    })}
-                    className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
-                  >
+  value={q.type || 'text'}
+  onChange={(e) => updateQuestion(q.id, { 
+    type: e.target.value as 'text' | 'multiple-choice' | 'checkbox' | 'yes-no',
+    options: (e.target.value === 'multiple-choice' || e.target.value === 'checkbox') 
+      ? (q.options || ['']) 
+      : undefined
+  })}
+  className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+>
                     <option value="text">Text Answer</option>
                     <option value="yes-no">Yes/No</option>
                     <option value="multiple-choice">Multiple Choice (single)</option>

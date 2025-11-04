@@ -558,15 +558,21 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
     {currentTaskData.customQuestions.map((q, idx) => {
       const answer = getQuestionAnswer(q.id);
       
-      // ✅ FIXED: Handle undefined/missing type - default to 'text'
-      const questionType = q.type || 'text';
+      // ✅ SUPER DEFENSIVE: Handle null, undefined, empty string, and invalid types
+      let questionType: 'text' | 'yes-no' | 'multiple-choice' | 'checkbox' = 'text';
       
-      console.log(`🔍 UnmoderatedSession - Question ${idx + 1}:`, {
+      if (q.type && ['text', 'yes-no', 'multiple-choice', 'checkbox'].includes(q.type)) {
+        questionType = q.type as 'text' | 'yes-no' | 'multiple-choice' | 'checkbox';
+      }
+      
+      console.log(`🔍 Question ${idx + 1} Debug:`, {
         id: q.id,
         question: q.question,
         originalType: q.type,
-        resolvedType: questionType,
-        hasAnswer: !!answer
+        typeOf: typeof q.type,
+        typeIsNull: q.type === null,
+        typeIsUndefined: q.type === undefined,
+        resolvedType: questionType
       });
       
       return (
