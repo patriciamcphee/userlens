@@ -37,14 +37,35 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
   const recordingSupport = isRecordingSupported();
 
   useEffect(() => {
-    let tasksToUse = getTasksForParticipant(project, typeof participant.id === 'number' ? participant.id : parseInt(participant.id as string, 10));
-    
-    if (project.setup.randomizeOrder) {
-      tasksToUse = tasksToUse.sort(() => Math.random() - 0.5);
+  console.log('🎯 UnmoderatedSession - Setting up tasks:', {
+    projectName: project.name,
+    projectId: project.id,
+    participantId: participant.id,
+    participantIdType: typeof participant.id,
+    participantName: participant.name,
+    participantAssignments: project.participantAssignments,
+    totalTasksInProject: project.setup.tasks.length
+  });
+
+  // ✅ FIXED: Pass participant.id directly (no conversion needed)
+  let tasksToUse = getTasksForParticipant(project, participant.id);
+  
+  console.log('📊 Tasks after filtering:', {
+    filteredCount: tasksToUse.length,
+    taskDifficulties: {
+      easy: tasksToUse.filter(t => t.difficulty === 'easy').length,
+      medium: tasksToUse.filter(t => t.difficulty === 'medium').length,
+      hard: tasksToUse.filter(t => t.difficulty === 'hard').length,
+      all: tasksToUse.filter(t => t.difficulty === 'all').length
     }
-    
-    setDisplayTasks(tasksToUse);
-  }, [project, participant.id]);
+  });
+  
+  if (project.setup.randomizeOrder) {
+    tasksToUse = tasksToUse.sort(() => Math.random() - 0.5);
+  }
+  
+  setDisplayTasks(tasksToUse);
+}, [project, participant.id]);
 
   useEffect(() => {
     if (!sessionStarted || !recording.state.isRecording) return;
