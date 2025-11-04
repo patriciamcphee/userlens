@@ -554,102 +554,112 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
               )}
 
               {currentTaskData.customQuestions && currentTaskData.customQuestions.length > 0 && (
-                <div className="mb-6 pb-6 border-b border-gray-200 space-y-4">
-                  {currentTaskData.customQuestions.map((q, idx) => {
-                    const answer = getQuestionAnswer(q.id);
-                    const questionType = q.type || 'text';
-                    
-                    return (
-                      <div key={q.id}>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Question {idx + 1}: {q.question}
-                          {q.required && <span className="text-red-500 ml-1">*</span>}
-                        </label>
-                        
-                        {questionType === 'text' && (
-                          <textarea
-                            value={typeof answer === 'string' ? answer : ''}
-                            onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
-                            placeholder="Your answer..."
-                            rows={3}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                          />
-                        )}
-                        
-                        {questionType === 'yes-no' && (
-                          <div className="flex items-center space-x-6">
-                            <label className="flex items-center space-x-2 cursor-pointer">
-                              <input
-                                type="radio"
-                                name={`question-${q.id}`}
-                                value="Yes"
-                                checked={answer === 'Yes'}
-                                onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
-                                className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                              />
-                              <span className="text-sm text-gray-700">Yes</span>
-                            </label>
-                            <label className="flex items-center space-x-2 cursor-pointer">
-                              <input
-                                type="radio"
-                                name={`question-${q.id}`}
-                                value="No"
-                                checked={answer === 'No'}
-                                onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
-                                className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                              />
-                              <span className="text-sm text-gray-700">No</span>
-                            </label>
-                          </div>
-                        )}
-                        
-                        {questionType === 'multiple-choice' && (
-                          <div className="space-y-2">
-                            {(q.options || []).map((option, optIdx) => (
-                              <label
-                                key={optIdx}
-                                className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors"
-                              >
-                                <input
-                                  type="radio"
-                                  name={`question-${q.id}`}
-                                  value={option}
-                                  checked={answer === option}
-                                  onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
-                                  className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                                />
-                                <span className="text-sm text-gray-700">{option}</span>
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {questionType === 'checkbox' && (
-                          <div className="space-y-2">
-                            {(q.options || []).map((option, optIdx) => {
-                              const isChecked = Array.isArray(answer) && answer.includes(option);
-                              return (
-                                <label
-                                  key={optIdx}
-                                  className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={(e) => handleCheckboxChange(q.id, option, e.target.checked)}
-                                    className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                                  />
-                                  <span className="text-sm text-gray-700">{option}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+  <div className="mb-6 pb-6 border-b border-gray-200 space-y-4">
+    {currentTaskData.customQuestions.map((q, idx) => {
+      const answer = getQuestionAnswer(q.id);
+      
+      // ✅ FIXED: Handle undefined/missing type - default to 'text'
+      const questionType = q.type || 'text';
+      
+      console.log(`🔍 UnmoderatedSession - Question ${idx + 1}:`, {
+        id: q.id,
+        question: q.question,
+        originalType: q.type,
+        resolvedType: questionType,
+        hasAnswer: !!answer
+      });
+      
+      return (
+        <div key={q.id}>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Question {idx + 1}: {q.question}
+            {q.required && <span className="text-red-500 ml-1">*</span>}
+          </label>
+          
+          {questionType === 'text' && (
+            <textarea
+              value={typeof answer === 'string' ? answer : ''}
+              onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
+              placeholder="Your answer..."
+              rows={3}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+            />
+          )}
+          
+          {questionType === 'yes-no' && (
+            <div className="flex items-center space-x-6">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`question-${q.id}`}
+                  value="Yes"
+                  checked={answer === 'Yes'}
+                  onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
+                  className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-sm text-gray-700">Yes</span>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`question-${q.id}`}
+                  value="No"
+                  checked={answer === 'No'}
+                  onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
+                  className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-sm text-gray-700">No</span>
+              </label>
+            </div>
+          )}
+          
+          {questionType === 'multiple-choice' && (
+            <div className="space-y-2">
+              {(q.options || []).map((option, optIdx) => (
+                <label
+                  key={optIdx}
+                  className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="radio"
+                    name={`question-${q.id}`}
+                    value={option}
+                    checked={answer === option}
+                    onChange={(e) => handleQuestionAnswerChange(q.id, e.target.value)}
+                    className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">{option}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          
+          {questionType === 'checkbox' && (
+            <div className="space-y-2">
+              {(q.options || []).map((option, optIdx) => {
+                const isChecked = Array.isArray(answer) && answer.includes(option);
+                return (
+                  <label
+                    key={optIdx}
+                    className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => handleCheckboxChange(q.id, option, e.target.checked)}
+                      className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-sm text-gray-700">{option}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+)}
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
