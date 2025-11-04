@@ -672,11 +672,17 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
 
                       <div className="space-y-2">
                         <button
-                          onClick={() => onStartSession(Number(participant.id))}
-                          className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                        >
-                          Start Session
-                        </button>
+  type="button"
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🔵 Button clicked for:', participant.name);
+    onStartSession(Number(participant.id));
+  }}
+  className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+>
+  Start Session
+</button>
                         <button
                           onClick={() => handleSendLink(participant)}
                           className="w-full bg-white border-2 border-blue-600 text-blue-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"

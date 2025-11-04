@@ -159,15 +159,32 @@ function App() {
   };
 
   const handleStartSession = (projectId: string | number, participantId: number) => {
-    const project = state.projects.find(p => String(p.id) === String(projectId));  // ✅ Works with both
-    const participant = state.participants.find(p => String(p.id) === String(participantId));  // ✅ Works with both
-    
-    if (project && participant) {
-      setSelectedProject(project);
-      setSelectedParticipant(participant);
-      setCurrentView('runSession');
-    }
-  };
+  console.log('🎬 Starting session...', { projectId, participantId });
+  
+  const project = state.projects.find(p => String(p.id) === String(projectId));
+  const participant = state.participants.find(p => String(p.id) === String(participantId));
+  
+  if (!project) {
+    console.error('❌ Project not found');
+    alert('Project not found');
+    return;
+  }
+  
+  if (!participant) {
+    console.error('❌ Participant not found');
+    alert('Participant not found');
+    return;
+  }
+  
+  console.log('✅ Starting session:', { 
+    project: project.name, 
+    participant: participant.name 
+  });
+  
+  setSelectedProject(project);
+  setSelectedParticipant(participant);
+  setCurrentView('runSession');
+};
 
   const handleBackToDashboard = () => {
     setCurrentView('dashboard');
