@@ -4,28 +4,35 @@ import { Task, Project } from '../types';
 /**
  * Get the tasks that a participant should see based on their usage level
  * 
- * Priority order:
- * 1. Use project-specific assignment if exists
- * 2. Otherwise, return all tasks (participant sees everything)
+ * FIXED: Exclusive filtering - Non-users see ONLY Easy tasks, 
+ * Occasional users see ONLY Medium tasks, Active users see ONLY Hard tasks
+ * (Plus "All Users" tasks are shown to everyone)
  */
-// utils/taskFiltering.ts
-// utils/taskFiltering.ts
 export function getTasksForParticipant(
   project: Project,
-  participantId: number
+  participantId: number | string
 ): Task[] {
-  // Find the participant's assignment in this project
+  console.log('🔍 getTasksForParticipant called with:', {
+    participantId,
+    participantIdType: typeof participantId,
+    projectAssignments: project.participantAssignments
+  });
+
+  // ✅ FIXED: Use String() comparison to handle both string and number IDs
   const assignment = project.participantAssignments?.find(
-    a => a.participantId === participantId
+    a => String(a.participantId) === String(participantId)
   );
+
+  console.log('📋 Assignment found:', assignment);
 
   // If no assignment found, return all tasks (backwards compatibility)
   if (!assignment) {
+    console.warn('⚠️ No assignment found for participant, returning all tasks');
     return project.setup.tasks;
   }
 
-  // ✅ FIXED: Exclusive filtering - each level sees ONLY their tasks (+ "all" tasks)
-  return project.setup.tasks.filter(task => {
+  // ✅ EXCLUSIVE filtering: users only see tasks at their specific level (+ "all" tasks)
+  const filteredTasks = project.setup.tasks.filter(task => {
     // Tasks marked as 'all' are shown to everyone
     if (task.difficulty === 'all') {
       return true;
@@ -49,6 +56,20 @@ export function getTasksForParticipant(
         return true;
     }
   });
+
+  console.log('✅ Filtered tasks:', {
+    usageLevel: assignment.usageLevel,
+    totalTasks: project.setup.tasks.length,
+    filteredCount: filteredTasks.length,
+    tasksByDifficulty: {
+      easy: filteredTasks.filter(t => t.difficulty === 'easy').length,
+      medium: filteredTasks.filter(t => t.difficulty === 'medium').length,
+      hard: filteredTasks.filter(t => t.difficulty === 'hard').length,
+      all: filteredTasks.filter(t => t.difficulty === 'all').length
+    }
+  });
+
+  return filteredTasks;
 }
 
 /**
@@ -69,21 +90,17 @@ export function getUsageLevelLabel(level: 'active' | 'occasionally' | 'non-user'
 
 /**
  * Get tasks appropriate for a participant's usage level
- * - Non-users see easy tasks
- * - Occasional users see easy + medium tasks
- * - Active users see all tasks
+ * ✅ FIXED: Exclusive filtering
  */
 export function getTasksForUsageLevel(
   tasks: any[],
   usageLevel: 'active' | 'occasionally' | 'non-user'
 ): any[] {
   return tasks.filter(task => {
-    // "All Users" tasks shown to everyone
     if (task.difficulty === 'all') {
       return true;
     }
     
-    // Exclusive matching
     switch (usageLevel) {
       case 'non-user':
         return task.difficulty === 'easy';
@@ -99,17 +116,16 @@ export function getTasksForUsageLevel(
 
 /**
  * Check if a participant should see a specific task based on their usage level
+ * ✅ FIXED: Exclusive filtering
  */
 export function shouldShowTask(
   taskDifficulty: 'easy' | 'medium' | 'hard' | 'all',
   usageLevel: 'active' | 'occasionally' | 'non-user'
 ): boolean {
-  // "All Users" tasks shown to everyone
   if (taskDifficulty === 'all') {
     return true;
   }
   
-  // Exclusive matching
   switch (usageLevel) {
     case 'non-user':
       return taskDifficulty === 'easy';
