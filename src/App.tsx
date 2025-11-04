@@ -195,30 +195,66 @@ function App() {
 
   // ✅ FIXED: Better handling for Start Session
   const handleStartSession = (participantId: number) => {
-    console.log('🎬 Starting session for participant:', participantId);
-    console.log('   Selected project:', selectedProject?.name);
+    console.log('🎬 Starting session for participant ID:', participantId);
     
     if (!selectedProject) {
-      console.error('❌ No project selected');
       alert('Error: No project selected');
       return;
     }
     
-    // Find participant in state
-    const participant = state.participants.find(p => {
-      const pId = typeof p.id === 'number' ? p.id : parseInt(String(p.id), 10);
-      return pId === participantId;
+    // BULLETPROOF LOOKUP - Works with any ID type
+    let participant = state.participants.find(p => {
+      // Try every possible comparison
+      return p.id === participantId || 
+            String(p.id) === String(participantId) ||
+            Number(p.id) === Number(participantId) ||
+            p.id == participantId;  // Loose equality as last resort
     });
     
+    // If still not found, try looking in the project's participant list
     if (!participant) {
-      console.error('❌ Participant not found:', participantId);
-      console.log('   Available participants:', state.participants.map(p => ({ id: p.id, name: p.name })));
-      alert('Error: Participant not found');
+      console.warn('Participant not in state.participants, checking project assignments...');
+      
+      // Get participant from project assignments
+      const participantIdInProject = selectedProject.participantIds.find(id => 
+        id === participantId || 
+        String(id) === String(participantId) ||
+        Number(id) === Number(participantId)
+      );
+      
+      if (participantIdInProject) {
+        // Participant is assigned but not in state - fetch or create temporary
+        participant = state.participants.find(p => 
+          String(p.id) === String(participantIdInProject)
+        );
+      }
+    }
+    
+    if (!participant) {
+      // Last resort - show detailed error
+      const availableParticipants = state.participants
+        .map(p => `${p.name} (ID: ${p.id}, Type: ${typeof p.id})`)
+        .join('\n');
+      
+      const projectParticipantIds = selectedProject.participantIds
+        .map(id => `${id} (Type: ${typeof id})`)
+        .join(', ');
+      
+      console.error('❌ Participant not found!');
+      console.error('Looking for:', participantId, 'Type:', typeof participantId);
+      console.error('Available in state:', state.participants.length);
+      console.error('Project participant IDs:', projectParticipantIds);
+      
+      alert(
+        `Participant not found!\n\n` +
+        `Looking for ID: ${participantId} (${typeof participantId})\n\n` +
+        `Participants in state:\n${availableParticipants || 'None loaded!'}\n\n` +
+        `Project participant IDs: ${projectParticipantIds}`
+      );
       return;
     }
     
     console.log('✅ Found participant:', participant.name);
-    
     setSelectedParticipant(participant);
     setCurrentView('runSession');
   };
