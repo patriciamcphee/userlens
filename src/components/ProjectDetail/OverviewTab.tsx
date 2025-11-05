@@ -1,6 +1,6 @@
-// components/ProjectDetail/OverviewTab.tsx - WITH INLINE PARTICIPANT ADDING AND ACTIVE LINKS
+// components/ProjectDetail/OverviewTab.tsx - WITH INLINE PARTICIPANT ADDING
 import React, { useState } from 'react';
-import { Users, CheckCircle, Target, Star, MessageSquare, Edit2, ChevronDown, ChevronUp, ChevronRight, Camera, Mic, Shuffle, Mail, TrendingUp, Plus, UserPlus, User, UserX, X, RefreshCw } from 'lucide-react';
+import { Users, CheckCircle, Target, Star, MessageSquare, Edit2, ChevronDown, ChevronUp, ChevronRight, Camera, Mic, Shuffle, Mail, TrendingUp, Plus, UserPlus, User, UserX, X } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { Project, Participant, Task, EmailTemplate } from '../../types';
 import { EditTaskModal } from '../Modals/EditTaskModal';
@@ -86,34 +86,6 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
     actions.addSessionLink(newSessionLink);
     
     // Set up email modal
-    setSelectedParticipant(participant);
-    setSessionLink(link);
-    setLinkExpiry(newSessionLink.expiresAt);
-    setEmailTemplate(DEFAULT_EMAIL_TEMPLATE);
-    setShowEmailModal(true);
-  };
-
-  const handleRegenerateLink = (existingLink: any) => {
-    const participant = state.participants.find(p => String(p.id) === String(existingLink.participantId));
-    if (!participant) return;
-
-    // Mark old link as used/expired
-    actions.updateSessionLink(existingLink.id, { used: true });
-
-    // Generate new link with extended expiry
-    const { link, sessionLink: newSessionLink } = generateSessionLink(
-      Number(project.id),
-      Number(participant.id),
-      expiryDays,
-      project,
-      participant,
-      true
-    );
-    
-    // Add new link to state
-    actions.addSessionLink(newSessionLink);
-    
-    // Open email modal with new link
     setSelectedParticipant(participant);
     setSessionLink(link);
     setLinkExpiry(newSessionLink.expiresAt);
@@ -245,13 +217,6 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
     }
   };
 
-  // Get active links for this project
-  const activeLinks = state.sessionLinks?.filter(link => 
-    String(link.projectId) === String(project.id) && 
-    !link.used && 
-    new Date(link.expiresAt) > new Date()
-  ) || [];
-
   return (
     <div className="space-y-6">
       {/* Quick Stats */}
@@ -335,6 +300,7 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
         </div>
 
         {/* Additional info */}
+        {/* Task Filtering Logic info - around line 280 */}
         <div className="mt-4 bg-gray-50 rounded-lg p-3">
           <div className="text-sm text-gray-700">
             <strong>Task Filtering Logic:</strong>
@@ -707,17 +673,17 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
 
                       <div className="space-y-2">
                         <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('🔵 Button clicked for:', participant.name);
-                            onStartSession(participant.id);
-                          }}
-                          className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                        >
-                          Start Session
-                        </button>
+  type="button"
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🔵 Button clicked for:', participant.name);
+    onStartSession(participant.id);
+  }}
+  className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+>
+  Start Session
+</button>
                         <button
                           onClick={() => handleSendLink(participant)}
                           className="w-full bg-white border-2 border-blue-600 text-blue-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
@@ -729,42 +695,6 @@ export function OverviewTab({ project, onStartSession }: OverviewTabProps) {
                     </div>
                   );
                 })}
-              </div>
-            )}
-
-            {/* Active Links Section */}
-            {activeLinks.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center space-x-2">
-                  <Mail className="w-4 h-4 text-blue-600" />
-                  <span>Active Links</span>
-                  <span className="text-xs font-normal text-gray-500">({activeLinks.length})</span>
-                </h3>
-                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                  {activeLinks.map(link => {
-                    const participant = state.participants.find(p => String(p.id) === String(link.participantId));
-                    if (!participant) return null;
-
-                    return (
-                      <div key={link.id} className="bg-gray-50 rounded-lg p-3 text-xs border border-gray-200">
-                        <div className="font-medium text-gray-900 mb-1 truncate" title={participant.name}>
-                          {participant.name}
-                        </div>
-                        <div className="text-gray-600 mb-2 flex items-center space-x-1">
-                          <span>Expires:</span>
-                          <span className="font-medium">{new Date(link.expiresAt).toLocaleDateString()}</span>
-                        </div>
-                        <button
-                          onClick={() => handleRegenerateLink(link)}
-                          className="w-full bg-white border border-gray-300 text-gray-700 px-2 py-1.5 rounded text-xs font-medium hover:bg-gray-50 hover:border-blue-300 transition-colors flex items-center justify-center space-x-1"
-                        >
-                          <RefreshCw className="w-3 h-3" />
-                          <span>Regenerate Link</span>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
             )}
           </div>
