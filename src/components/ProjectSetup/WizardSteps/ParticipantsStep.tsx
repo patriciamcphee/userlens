@@ -98,7 +98,6 @@ export function ParticipantsStep({ data, updateData, participants }: Participant
         <div className="flex items-start space-x-3">
           <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-blue-900">
-            <p className="font-medium mb-1">Optional Step</p>
             <p className="mb-2">
               You can add participants now or later. Participants determine which tasks they'll see based on their experience level.
             </p>

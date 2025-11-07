@@ -117,12 +117,6 @@ export function BasicDetailsStep({ data, updateData, isEditing }: BasicDetailsSt
             </div>
           </button>
         </div>
-
-        {!data.mode && (
-          <p className="text-red-600 text-sm mt-2">
-            Select a testing mode to continue
-          </p>
-        )}
       </div>
 
       {/* Editing Notice - Only show if editing and relevant */}
