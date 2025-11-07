@@ -240,7 +240,7 @@ export function ProjectWizard({ editingProject, onCancel, onSave }: ProjectWizar
 
   const handleSave = async () => {
     if (!validateReview()) {
-      announce('Please complete all required fields before saving', 'assertive');
+      announce('Complete all required fields before saving', 'assertive');
       return;
     }
 
@@ -291,7 +291,7 @@ export function ProjectWizard({ editingProject, onCancel, onSave }: ProjectWizar
       onSave();
     } catch (error) {
       console.error('Error saving project:', error);
-      announce('Failed to save project. Please try again.', 'assertive');
+      announce('Failed to save project. Try again.', 'assertive');
     } finally {
       setIsSaving(false);
     }
@@ -454,7 +454,7 @@ export function ProjectWizard({ editingProject, onCancel, onSave }: ProjectWizar
                   <div className="flex items-center space-x-3">
                     {!canProceed && !currentStepData.isOptional && (
                       <span className="text-sm text-red-600">
-                        Please complete required fields to continue
+                        Complete required fields to continue
                       </span>
                     )}
                     

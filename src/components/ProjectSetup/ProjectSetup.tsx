@@ -70,7 +70,7 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
     }
 
     if (!projectMode) {
-      newErrors.mode = 'Please select a testing mode';
+      newErrors.mode = 'Sselect a testing mode';
     }
 
     setErrors(newErrors);
@@ -85,7 +85,7 @@ export function ProjectSetup({ editingProject, onCancel, onSave }: ProjectSetupP
     const filteredTasks = tasks.filter(t => t.title.trim() !== '');
 
     if (filteredTasks.length === 0) {
-      alert('Please add at least one task with a title');
+      alert('Add at least one task with a title');
       return;
     }
 

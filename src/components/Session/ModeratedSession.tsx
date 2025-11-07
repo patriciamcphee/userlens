@@ -108,7 +108,7 @@ export function ModeratedSession({ project, participant, onBack, onComplete }: M
       });
       
       if (!success && (project.cameraOption === 'required' || project.micOption === 'required')) {
-        alert('Failed to start required recording. Please check your camera/microphone permissions.');
+        alert('Failed to start required recording. Check your camera/microphone permissions.');
         setSessionStarted(false);
         setIsRecording(false);
         return;

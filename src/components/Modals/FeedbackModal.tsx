@@ -278,7 +278,7 @@ export function FeedbackModal({
               disabled={!canSubmit()}
               className="flex-1 bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {!canSubmit() ? 'Please complete required fields' : 'Submit & Continue'}
+              {!canSubmit() ? 'Complete required fields' : 'Submit & Continue'}
             </button>
             <button
               onClick={onSkip}
