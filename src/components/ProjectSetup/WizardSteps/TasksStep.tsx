@@ -448,7 +448,7 @@ export function TasksStep({ data, updateData }: TasksStepProps) {
             <div className="text-sm">
               <p className="font-medium text-amber-900">Incomplete tasks detected</p>
               <p className="text-amber-800 mt-1">
-                Some tasks are missing titles. Please complete all tasks before proceeding.
+                Some tasks are missing titles. Complete all tasks before proceeding.
               </p>
             </div>
           </div>

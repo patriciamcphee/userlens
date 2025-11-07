@@ -118,7 +118,7 @@ export function ReviewStep({ data, participants, isEditing, onEditStep }: Review
           <div className="flex items-start space-x-3">
             <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
             <div className="text-sm">
-              <p className="font-medium text-red-900 mb-2">Please complete the following before creating your project:</p>
+              <p className="font-medium text-red-900 mb-2">Complete the following before creating your project:</p>
               <ul className="space-y-1 text-red-800">
                 {!validation.hasName && <li>• Project name is required</li>}
                 {!validation.hasMode && <li>• Testing mode must be selected</li>}

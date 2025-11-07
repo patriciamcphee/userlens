@@ -30,7 +30,7 @@ export function ParticipantsList() {
     if (!email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!validateEmail(email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Enter a valid email address';
     }
 
     // Check for duplicate email (skip if editing same participant)

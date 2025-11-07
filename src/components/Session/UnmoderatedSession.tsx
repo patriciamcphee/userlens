@@ -108,7 +108,7 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
       });
       
       if (!success && (project.cameraOption === 'required' || project.micOption === 'required')) {
-        alert('Failed to start required recording. Please check your camera/microphone permissions.');
+        alert('Failed to start required recording. Check your camera/microphone permissions.');
         setSessionStarted(false);
         return;
       }
@@ -309,7 +309,7 @@ export function UnmoderatedSession({ project, participant, onBack, onComplete }:
                           ? 'Your screen and voice will be recorded together and securely uploaded'
                           : project.cameraOption !== 'disabled'
                           ? 'Your screen will be recorded and securely uploaded'
-                          : 'Your voice will be recorded and securely uploaded - please think aloud'}
+                          : 'Your voice will be recorded and securely uploaded - think aloud'}
                       </span>
                       {enableVideo && enableAudio && (
                         <div className="text-sm text-green-600 mt-1">

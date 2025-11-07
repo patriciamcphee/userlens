@@ -373,7 +373,7 @@ export const validators = {
     return value.trim() === '' ? message : undefined;
   },
 
-  email: (value: string, message = 'Please enter a valid email address') => {
+  email: (value: string, message = 'Enter a valid email address') => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return value && !emailRegex.test(value) ? message : undefined;
   },
@@ -386,7 +386,7 @@ export const validators = {
     return value.length > max ? (message || `Must be no more than ${max} characters`) : undefined;
   },
 
-  url: (value: string, message = 'Please enter a valid URL') => {
+  url: (value: string, message = 'Enter a valid URL') => {
     try {
       new URL(value);
       return undefined;
@@ -395,11 +395,11 @@ export const validators = {
     }
   },
 
-  number: (value: string, message = 'Please enter a valid number') => {
+  number: (value: string, message = 'Enter a valid number') => {
     return value && isNaN(Number(value)) ? message : undefined;
   },
 
-  positiveNumber: (value: string, message = 'Please enter a positive number') => {
+  positiveNumber: (value: string, message = 'Enter a positive number') => {
     const num = Number(value);
     return value && (isNaN(num) || num <= 0) ? message : undefined;
   }
