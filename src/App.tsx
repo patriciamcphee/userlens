@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from './contexts/AppContext';
 import { Dashboard } from './components/Dashboard/Dashboard';
-import { ProjectSetup } from './components/ProjectSetup/ProjectSetup';
+import { ProjectWizard } from './components/ProjectSetup/ProjectWizard';
 import { ProjectDetail } from './components/ProjectDetail/ProjectDetail';
 import { ModeratedSession } from './components/Session/ModeratedSession';
 import { UnmoderatedSession } from './components/Session/UnmoderatedSession';
@@ -294,7 +294,7 @@ function App() {
 
       case 'createProject':
         return (
-          <ProjectSetup
+          <ProjectWizard
             editingProject={null}
             onCancel={handleBackToDashboard}
             onSave={handleProjectSaved}
@@ -302,11 +302,19 @@ function App() {
         );
 
       case 'editProject':
+        function handleSave(): void {
+          throw new Error('Function not implemented.');
+        }
+
+        function handleCancel(): void {
+          throw new Error('Function not implemented.');
+        }
+
         return (
-          <ProjectSetup
+          <ProjectWizard 
             editingProject={editingProject}
-            onCancel={handleBackToProject}
-            onSave={handleProjectSaved}
+            onCancel={handleCancel}
+            onSave={handleSave}
           />
         );
 

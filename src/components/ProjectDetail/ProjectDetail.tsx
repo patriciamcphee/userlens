@@ -5,6 +5,7 @@ import { useAppContext } from '../../contexts/AppContext';
 import { Project } from '../../types';
 import { OverviewTab } from './OverviewTab';
 import { AnalyticsTab } from './AnalyticsTab';
+import { Breadcrumbs, BreadcrumbBuilders } from './components/Navigation/Breadcrumbs';
 
 interface ProjectDetailProps {
   project: Project;
