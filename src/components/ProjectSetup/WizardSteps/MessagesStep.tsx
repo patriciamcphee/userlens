@@ -32,6 +32,18 @@ export function MessagesStep({ data, updateData }: MessagesStepProps) {
         </div>
       </div>
 
+      {/* Best Practices */}
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <h4 className="font-medium text-amber-900 mb-2">Message Best Practices</h4>
+        <div className="text-sm text-amber-800 space-y-1">
+          <p>• Keep messages conversational and friendly</p>
+          <p>• Clearly explain what participants should expect</p>
+          <p>• Mention estimated time requirements</p>
+          <p>• Reassure participants there are no "wrong" answers</p>
+          <p>• Include contact information for questions or technical issues</p>
+        </div>
+      </div>
+
       {/* Before Session Message */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center space-x-3 mb-4">
@@ -159,73 +171,9 @@ export function MessagesStep({ data, updateData }: MessagesStepProps) {
         </div>
       </div>
 
-      {/* Message Flow Visualization */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <MessageCircle className="w-5 h-5 mr-2" />
-          Session Message Flow
-        </h3>
-        
-        <div className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-              1
-            </div>
-            <div className="flex-1">
-              <div className="font-medium text-gray-900">Welcome</div>
-              <div className="text-sm text-gray-600">Participant sees the welcome message and any recording preferences</div>
-            </div>
-          </div>
-          
-          <div className="ml-4 border-l-2 border-gray-300 h-6"></div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <Eye className="w-4 h-4 text-white" />
-            </div>
-            <div className="flex-1">
-              <div className="font-medium text-gray-900">Scenario</div>
-              <div className="text-sm text-gray-600">Participant reads the scenario context before starting tasks</div>
-            </div>
-          </div>
-          
-          <div className="ml-4 border-l-2 border-gray-300 h-6"></div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-              N
-            </div>
-            <div className="flex-1">
-              <div className="font-medium text-gray-900">Tasks</div>
-              <div className="text-sm text-gray-600">Participant completes tasks and provides feedback</div>
-            </div>
-          </div>
-          
-          <div className="ml-4 border-l-2 border-gray-300 h-6"></div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <CheckCircle className="w-4 h-4 text-white" />
-            </div>
-            <div className="flex-1">
-              <div className="font-medium text-gray-900">Completion</div>
-              <div className="text-sm text-gray-600">Participant sees the thank you message and session summary</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
-      {/* Best Practices */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <h4 className="font-medium text-amber-900 mb-2">Message Best Practices</h4>
-        <div className="text-sm text-amber-800 space-y-1">
-          <p>• Keep messages conversational and friendly</p>
-          <p>• Clearly explain what participants should expect</p>
-          <p>• Mention estimated time requirements</p>
-          <p>• Reassure participants there are no "wrong" answers</p>
-          <p>• Include contact information for questions or technical issues</p>
-        </div>
-      </div>
+      
     </div>
   );
 }

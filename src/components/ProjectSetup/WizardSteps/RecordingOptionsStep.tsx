@@ -159,22 +159,6 @@ export function RecordingOptionsStep({ data, updateData }: RecordingOptionsStepP
         </div>
       </div>
 
-      {/* Combined Recording Info */}
-      {data.cameraOption !== 'disabled' && data.micOption !== 'disabled' && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-start space-x-3">
-            <Shield className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-green-900">
-              <p className="font-medium mb-1">Synchronized Recording</p>
-              <p>
-                When both camera and microphone are enabled, they will be recorded together in a single 
-                synchronized file, ensuring audio stays perfectly in sync with video throughout the session.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Mode-specific recommendations */}
       {data.mode && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">

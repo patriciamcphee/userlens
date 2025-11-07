@@ -149,7 +149,7 @@ export function ProjectWizard({ editingProject, onCancel, onSave }: ProjectWizar
       description: 'Add participants and set their experience levels',
       component: ParticipantsStep,
       isValid: validateParticipants,
-      isOptional: true
+      isOptional: false
     },
     {
       id: 'messages',
@@ -385,9 +385,7 @@ export function ProjectWizard({ editingProject, onCancel, onSave }: ProjectWizar
                               'text-gray-700'
                             }`}>
                               {step.title}
-                              {step.isOptional && (
-                                <span className="text-xs text-gray-500 ml-2">(Optional)</span>
-                              )}
+
                             </div>
                             <div className={`text-xs mt-1 ${
                               isActive ? 'text-blue-700' : 
@@ -452,11 +450,7 @@ export function ProjectWizard({ editingProject, onCancel, onSave }: ProjectWizar
                   </Button>
 
                   <div className="flex items-center space-x-3">
-                    {!canProceed && !currentStepData.isOptional && (
-                      <span className="text-sm text-red-600">
-                        Complete required fields to continue
-                      </span>
-                    )}
+
                     
                     {isLastStep ? (
                       <Button
