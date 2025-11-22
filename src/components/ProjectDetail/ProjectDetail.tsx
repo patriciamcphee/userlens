@@ -1,11 +1,11 @@
 // components/ProjectDetail/ProjectDetail.tsx
-import React, { useState } from 'react';
+import{ useState } from 'react';
 import { ArrowLeft, Settings } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { Project } from '../../types';
 import { OverviewTab } from './OverviewTab';
 import { AnalyticsTab } from './AnalyticsTab';
-import { Breadcrumbs, BreadcrumbBuilders } from './components/Navigation/Breadcrumbs';
+import { Breadcrumbs, BreadcrumbBuilders } from '../Navigation/Breadcrumbs';
 
 interface ProjectDetailProps {
   project: Project;
