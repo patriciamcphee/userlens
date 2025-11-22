@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { GripVertical, Trash2, Plus, Target, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { Task, TaskQuestion } from '../../types';
-// QuestionBankModal is provided locally below to avoid module path issues
+import { QuestionBankModal } from '../Modals/QuestionBankModal';
 
 // Import the utility function for rating scales
 function getDefaultRatingScale(label: string): { low: string; high: string } {
@@ -37,7 +37,6 @@ const ESTIMATED_TIME_OPTIONS = [
 
 export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskItemProps) {
   const [showQuestions, setShowQuestions] = useState(false);
-  // ✅ NEW: Question Bank modal state
   const [showQuestionBank, setShowQuestionBank] = useState(false);
 
   // Handler to auto-populate rating scale values when label changes
@@ -62,7 +61,6 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
     setShowQuestions(true);
   };
 
-  // ✅ NEW: Handle questions selected from Question Bank
   const handleQuestionsFromBank = (questions: TaskQuestion[]) => {
     onUpdate({
       customQuestions: [...(task.customQuestions || []), ...questions]
@@ -395,7 +393,7 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
               )}
             </div>
 
-            {/* ✅ UPDATED: Custom Questions with Question Bank Integration */}
+            {/* Custom Questions with Question Bank Integration */}
             <div className="bg-gray-50 rounded-lg border border-gray-200">
               <button
                 type="button"
@@ -413,7 +411,6 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
                   )}
                 </div>
                 <div className="flex items-center space-x-2">
-                  {/* ✅ NEW: Question Bank Button */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -577,7 +574,7 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
         </div>
       </div>
 
-      {/* ✅ NEW: Question Bank Modal */}
+      {/* Question Bank Modal */}
       {showQuestionBank && (
         <QuestionBankModal
           onClose={() => setShowQuestionBank(false)}
@@ -586,85 +583,5 @@ export function TaskItem({ task, index, canDelete, onUpdate, onRemove }: TaskIte
         />
       )}
     </>
-  );
-}
-
-/**
- * Local QuestionBankModal - lightweight implementation to avoid missing module error.
- * Props:
- *  - onClose: close the modal
- *  - onSelectQuestions: returns an array of TaskQuestion to add to the task
- *  - existingQuestions: current questions to avoid duplicates (caller can handle merging)
- */
-export function QuestionBankModal({
-  onClose,
-  onSelectQuestions,
-  existingQuestions
-}: {
-  onClose: () => void;
-  onSelectQuestions: (questions: TaskQuestion[]) => void;
-  existingQuestions: TaskQuestion[];
-}) {
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-
-  // Example static bank — replace or extend with real data source as needed.
-  const bankQuestions: TaskQuestion[] = [
-    { id: 101, question: 'How easy was it to complete the task?', type: 'text', required: false },
-    { id: 102, question: 'Did you encounter any errors?', type: 'yes-no', required: false },
-    { id: 103, question: 'How satisfied are you with the result?', type: 'text', required: false }
-  ];
-
-  const toggle = (id: number) => {
-    setSelectedIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
-  };
-
-  const addSelected = () => {
-    const selected = bankQuestions
-      .filter(q => selectedIds.includes(q.id))
-      .map(q => ({ ...q, id: Date.now() + q.id })); // ensure unique ids when adding
-    if (selected.length > 0) {
-      onSelectQuestions(selected);
-    }
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-lg w-full max-w-2xl p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold">Question Bank</h3>
-          <button onClick={onClose} className="text-sm text-gray-600">Close</button>
-        </div>
-
-        <div className="space-y-2 max-h-72 overflow-auto">
-          {bankQuestions.map(q => (
-            <label key={q.id} className="flex items-center space-x-2 p-2 border rounded">
-              <input
-                type="checkbox"
-                checked={selectedIds.includes(q.id)}
-                onChange={() => toggle(q.id)}
-                className="w-4 h-4"
-              />
-              <span className="text-sm">{q.question}</span>
-            </label>
-          ))}
-        </div>
-
-        <div className="mt-4 flex justify-end space-x-2">
-          <button
-            onClick={onClose}
-            className="px-3 py-1 border rounded text-sm text-gray-700"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={addSelected}
-            className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
-          >
-            Add Selected
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

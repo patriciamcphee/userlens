@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { X, Target, Plus, Trash2, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { Task, TaskQuestion } from '../../types';
-import { QuestionBankModal } from '../QuestionBank/QuestionBankModal';
+import { QuestionBankModal } from './QuestionBankModal';
 
 // Import the utility function for rating scales
 function getDefaultRatingScale(label: string): { low: string; high: string } {
