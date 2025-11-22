@@ -345,7 +345,7 @@ export function searchQuestions(searchTerm: string): QuestionBankItem[] {
 
 // Helper to get all categories
 export function getCategories(): QuestionBankItem['category'][] {
-  return ['SUS', 'Post-Task', 'Pre-Test', 'Feature-Specific', 'Follow-Up', 'Demographics'];
+  return ['SUS', 'Post-Task', 'Feature-Specific', 'Follow-Up', 'Demographics'];
 }
 
 // Helper to get complete SUS question set

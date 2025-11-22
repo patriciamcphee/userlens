@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { X, Search, Plus, Check, Info, Tag } from 'lucide-react';
 import { TaskQuestion } from '../../types';
-import { QUESTION_BANK, QuestionBankItem, getCategories, searchQuestions } from '../../constants/questionBank';
+import { QUESTION_BANK, QuestionBankItem, getCategories } from '../../constants/questionBank';
 
 interface QuestionBankModalProps {
   onClose: () => void;
@@ -15,15 +15,13 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedQuestions, setSelectedQuestions] = useState<QuestionBankItem[]>([]);
 
-  // Debug logging
+  // Log on mount
   useEffect(() => {
-    console.log('=== Question Bank Debug ===');
-    console.log('Total questions in bank:', QUESTION_BANK.length);
-    console.log('Selected category:', selectedCategory);
-    console.log('Search term:', searchTerm);
-    console.log('Filtered questions count:', filteredQuestions.length);
-    console.log('Filtered questions:', filteredQuestions);
-  }, [selectedCategory, searchTerm]);
+    console.log('🔵 QuestionBankModal mounted');
+    console.log('🔵 Initial QUESTION_BANK length:', QUESTION_BANK.length);
+    console.log('🔵 Initial category:', selectedCategory);
+    console.log('🔵 Initial search term:', searchTerm);
+  }, []);
 
   // Filter questions based on category and search
   const filteredQuestions = QUESTION_BANK.filter(q => {
@@ -35,6 +33,16 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
     
     return matchesCategory && matchesSearch;
   });
+
+  // Log whenever filters change
+  useEffect(() => {
+    console.log('🟢 Filter changed:');
+    console.log('  - QUESTION_BANK.length:', QUESTION_BANK.length);
+    console.log('  - selectedCategory:', selectedCategory);
+    console.log('  - searchTerm:', searchTerm);
+    console.log('  - filteredQuestions.length:', filteredQuestions.length);
+    console.log('  - filteredQuestions:', filteredQuestions.map(q => q.question.substring(0, 50)));
+  }, [selectedCategory, searchTerm, filteredQuestions.length]);
 
   const handleToggleQuestion = (question: QuestionBankItem) => {
     const isSelected = selectedQuestions.some(q => q.question === question.question);
@@ -87,6 +95,8 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
     return QUESTION_BANK.filter(q => q.category === category).length;
   };
 
+  console.log('🔴 RENDER - filteredQuestions.length:', filteredQuestions.length);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
@@ -96,7 +106,7 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Question Bank</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Select from research-validated questions or create your own • {QUESTION_BANK.length} questions available
+              Select from research-validated questions • Total: {QUESTION_BANK.length} • Showing: {filteredQuestions.length}
             </p>
           </div>
           <button
@@ -116,16 +126,30 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                console.log('🔍 Search changed to:', e.target.value);
+                setSearchTerm(e.target.value);
+              }}
               placeholder="Search questions, tags, or descriptions..."
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           {/* Category Filters */}
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setSelectedCategory('all')}
+              onClick={() => {
+                console.log('📁 Category changed to: all');
+                setSelectedCategory('all');
+              }}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                 selectedCategory === 'all'
                   ? 'bg-blue-600 text-white'
@@ -137,7 +161,10 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
             {getCategories().map(category => (
               <button
                 key={category}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => {
+                  console.log('📁 Category changed to:', category);
+                  setSelectedCategory(category);
+                }}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                   selectedCategory === category
                     ? 'bg-blue-600 text-white'
@@ -160,14 +187,24 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
             </button>
           </div>
 
-          {/* Debug Info */}
-          <div className="text-xs text-gray-500 bg-yellow-50 border border-yellow-200 rounded p-2">
-            Debug: Showing {filteredQuestions.length} of {QUESTION_BANK.length} questions | Category: {selectedCategory} | Search: "{searchTerm}"
+          {/* Debug Banner */}
+          <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-3">
+            <div className="text-sm font-mono space-y-1">
+              <div className="font-bold text-yellow-900">🐛 DEBUG INFO:</div>
+              <div>Total in bank: <span className="font-bold">{QUESTION_BANK.length}</span></div>
+              <div>Current category: <span className="font-bold text-blue-600">{selectedCategory}</span></div>
+              <div>Search term: <span className="font-bold text-blue-600">"{searchTerm}"</span></div>
+              <div>Filtered results: <span className="font-bold text-green-600">{filteredQuestions.length}</span></div>
+            </div>
           </div>
         </div>
 
         {/* Questions List */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
+            📊 Rendering {filteredQuestions.length} questions below:
+          </div>
+          
           {filteredQuestions.length === 0 ? (
             <div className="text-center py-12">
               <Info className="w-12 h-12 text-gray-400 mx-auto mb-3" />
@@ -181,7 +218,7 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
                 
                 return (
                   <div
-                    key={index}
+                    key={`${question.category}-${index}`}
                     onClick={() => handleToggleQuestion(question)}
                     className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
                       isSelected
@@ -202,7 +239,9 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
                       {/* Question Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3 mb-2">
-                          <p className="font-medium text-gray-900">{question.question}</p>
+                          <p className="font-medium text-gray-900">
+                            #{index + 1}: {question.question}
+                          </p>
                           <span className={`px-2 py-1 rounded text-xs font-medium border whitespace-nowrap ${getCategoryColor(question.category)}`}>
                             {question.category}
                           </span>
