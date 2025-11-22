@@ -15,13 +15,6 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedQuestions, setSelectedQuestions] = useState<QuestionBankItem[]>([]);
 
-  // Log on mount
-  useEffect(() => {
-    console.log('🔵 QuestionBankModal mounted');
-    console.log('🔵 Initial QUESTION_BANK length:', QUESTION_BANK.length);
-    console.log('🔵 Initial category:', selectedCategory);
-    console.log('🔵 Initial search term:', searchTerm);
-  }, []);
 
   // Filter questions based on category and search
   const filteredQuestions = QUESTION_BANK.filter(q => {
@@ -33,16 +26,6 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
     
     return matchesCategory && matchesSearch;
   });
-
-  // Log whenever filters change
-  useEffect(() => {
-    console.log('🟢 Filter changed:');
-    console.log('  - QUESTION_BANK.length:', QUESTION_BANK.length);
-    console.log('  - selectedCategory:', selectedCategory);
-    console.log('  - searchTerm:', searchTerm);
-    console.log('  - filteredQuestions.length:', filteredQuestions.length);
-    console.log('  - filteredQuestions:', filteredQuestions.map(q => q.question.substring(0, 50)));
-  }, [selectedCategory, searchTerm, filteredQuestions.length]);
 
   const handleToggleQuestion = (question: QuestionBankItem) => {
     const isSelected = selectedQuestions.some(q => q.question === question.question);
@@ -94,8 +77,6 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
     if (category === 'all') return QUESTION_BANK.length;
     return QUESTION_BANK.filter(q => q.category === category).length;
   };
-
-  console.log('🔴 RENDER - filteredQuestions.length:', filteredQuestions.length);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
