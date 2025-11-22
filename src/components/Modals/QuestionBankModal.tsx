@@ -167,17 +167,6 @@ export function QuestionBankModal({ onClose, onSelectQuestions, existingQuestion
               + All SUS Questions (10)
             </button>
           </div>
-
-          {/* Debug Banner */}
-          <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-3">
-            <div className="text-sm font-mono space-y-1">
-              <div className="font-bold text-yellow-900">🐛 DEBUG INFO:</div>
-              <div>Total in bank: <span className="font-bold">{QUESTION_BANK.length}</span></div>
-              <div>Current category: <span className="font-bold text-blue-600">{selectedCategory}</span></div>
-              <div>Search term: <span className="font-bold text-blue-600">"{searchTerm}"</span></div>
-              <div>Filtered results: <span className="font-bold text-green-600">{filteredQuestions.length}</span></div>
-            </div>
-          </div>
         </div>
 
         {/* Questions List */}
