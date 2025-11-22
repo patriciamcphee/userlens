@@ -352,3 +352,6 @@ export function getCategories(): QuestionBankItem['category'][] {
 export function getCompleteSUSQuestions(): QuestionBankItem[] {
   return getQuestionsByCategory('SUS');
 }
+
+// At the bottom of questionBank.ts
+console.log('Question Bank loaded:', QUESTION_BANK.length, 'questions');
