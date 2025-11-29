@@ -66,6 +66,7 @@ export interface SessionHistoryEntry {
 }
 
 export interface ProjectParticipant {
+  segmentLevel: string;
   id: string;
   name: string;
   email: string;
@@ -98,6 +99,8 @@ export interface ProjectParticipant {
 // ============================================
 
 export interface Participant {
+  interviewCompleted: any;
+  usabilityCompleted: any;
   id: string;
   name: string;
   segment: string;

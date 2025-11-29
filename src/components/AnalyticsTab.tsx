@@ -8,6 +8,7 @@ interface AnalyticsTabProps {
 }
 
 interface SessionData {
+  completionRate: number;
   id: string;
   timestamp: string;
   duration: number;

@@ -1,6 +1,6 @@
 import { Card } from "./ui/card";
 import { TrendingUp, TrendingDown } from "lucide-react";
-import type { Participant } from "../App";
+import type { Participant } from "../types";
 
 interface Metric {
   label: string;
@@ -42,7 +42,7 @@ export function MetricsDashboard({ participants }: Props) {
 
   const avgDuration = completedParticipants.length > 0
     ? (completedParticipants.reduce((sum, p) => {
-        const mins = parseInt(p.duration);
+        const mins = parseInt(p.duration || "0");
         return sum + (isNaN(mins) ? 0 : mins);
       }, 0) / completedParticipants.length).toFixed(1)
     : "0.0";

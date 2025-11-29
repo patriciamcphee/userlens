@@ -10,8 +10,8 @@ import { Calendar as CalendarComponent } from "./ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { api } from "../utils/api";
-import { toast } from "sonner@2.0.3";
-import type { Participant } from "../App";
+import { toast } from "sonner";
+import type { Participant } from "../types";
 import { format } from "date-fns";
 
 const segmentColors: Record<string, string> = {
@@ -203,11 +203,10 @@ export function ParticipantTracking({ participants, onUpdate, projectId, readOnl
                 <div>
                   <Label htmlFor="segment">Segment</Label>
                   <Select
-                    id="segment"
                     value={formData.segment}
                     onValueChange={(value) => setFormData({ ...formData, segment: value })}
                   >
-                    <SelectTrigger className="w-full border border-slate-300 rounded px-3 py-2">
+                    <SelectTrigger id="segment" className="w-full border border-slate-300 rounded px-3 py-2">
                       <SelectValue>{formData.segment}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>

@@ -184,6 +184,7 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
       ...newParticipant,
       addedAt: new Date().toISOString(),
       status,
+      segmentLevel: "",
     };
 
     console.log("4. About to call API with participant:", participant);

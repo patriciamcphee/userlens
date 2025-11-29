@@ -49,7 +49,7 @@ export function QuestionBankDialog({ open, onClose, onAdd }: QuestionBankDialogP
     const questionsToAdd = Array.from(selectedQuestions).map((index) => {
       const bankQuestion = QUESTION_BANK[index];
       return {
-        id: `q-${Date.now()}-${index}`,
+        id: Date.now() + index,
         question: bankQuestion.question,
         type: bankQuestion.type,
         options: bankQuestion.options,
@@ -67,7 +67,7 @@ export function QuestionBankDialog({ open, onClose, onAdd }: QuestionBankDialogP
       .map((q, index) => ({ q, index }))
       .filter(({ q }) => q.category === 'SUS')
       .map(({ q, index }) => ({
-        id: `q-${Date.now()}-${index}`,
+        id: Date.now() + index,
         question: q.question,
         type: q.type,
         options: q.options,

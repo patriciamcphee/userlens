@@ -9,10 +9,11 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { api } from "../utils/api";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { CircularProgress } from "./ui/circular-progress";
 import { RecordingOptionsStep } from "./RecordingOptionsStep";
+import type { Project } from "../types";
 
 // Helper function to get SUS ranking (using the "Rank" column from the image)
 function getSUSRanking(score: number): string {
@@ -429,21 +430,25 @@ export function OverviewTab({ project, onUpdate, onDelete }: OverviewTabProps) {
             <div>
               <p className="text-sm text-slate-600 mb-1">Created</p>
               <p className="text-sm text-slate-900">
-                {new Date(project.createdAt).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </p>
-            </div>
+                {project.createdAt 
+                  ? new Date(project.createdAt).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })
+                  : 'Not set'}
             <div>
               <p className="text-sm text-slate-600 mb-1">Last Updated</p>
               <p className="text-sm text-slate-900">
-                {new Date(project.updatedAt).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
+                {project.updatedAt 
+                  ? new Date(project.updatedAt).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })
+                  : 'Not set'}
+              </p>
+            </div>
               </p>
             </div>
           </div>

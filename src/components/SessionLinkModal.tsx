@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Mail, Calendar, X, Link as LinkIcon, Send } from "lucide-react";
 import { ProjectParticipant, Project } from "../types";
 import { copyToClipboard } from "../utils/sessionLinks";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 interface SessionLinkModalProps {
   open: boolean;

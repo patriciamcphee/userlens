@@ -8,8 +8,14 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { api } from "../utils/api";
-import { toast } from "sonner@2.0.3";
-import type { StickyNote } from "../App";
+import { toast } from "sonner";
+
+interface StickyNote {
+  id: string;
+  text: string;
+  type: "barrier" | "insight" | "opportunity" | "quote";
+  cluster: string;
+}
 
 const typeColors = {
   barrier: "bg-rose-200 border-rose-300 text-rose-900",

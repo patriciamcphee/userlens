@@ -5,7 +5,26 @@ import { api } from "../utils/api";
 import { isLinkExpired } from "../utils/sessionLinks";
 import { RefreshCw, AlertCircle, Eye, Clock, Monitor, CheckCircle as Check, Activity, Mail } from "lucide-react";
 import { Button } from "./ui/button";
-import { UnmoderatedTaskView } from "./UnmoderatedTaskView";
+
+
+interface UnmoderatedTaskViewProps {
+  project: Project;
+  participant: ProjectParticipant;
+  mediaStream: MediaStream;
+  onSessionEnd: () => void;
+}
+
+function UnmoderatedTaskView({ project, participant, mediaStream, onSessionEnd }: UnmoderatedTaskViewProps) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Task View - {project.name}</h1>
+        <p>Session in progress for {participant.name}</p>
+        <Button onClick={onSessionEnd} className="mt-4">End Session</Button>
+      </div>
+    </div>
+  );
+}
 
 export function SessionPage() {
   const { projectId, participantId, token } = useParams<{
@@ -39,7 +58,7 @@ export function SessionPage() {
 
         // Load project data
         const projectsData = await api.getProjects();
-        const foundProject = projectsData.projects.find((p: Project) => p.id === projectId);
+        const foundProject = projectsData.find((p: Project) => p.id === projectId);
         
         if (!foundProject) {
           setError("Project not found");

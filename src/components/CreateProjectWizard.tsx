@@ -56,6 +56,7 @@ export function CreateProjectWizard({ open, onOpenChange, onCreateProject }: Cre
     interviewDuration: string;
     usabilityDate: string;
     usabilityTime: string;
+    segmentLevel: string;
   }>({
     name: "",
     email: "",
@@ -67,6 +68,7 @@ export function CreateProjectWizard({ open, onOpenChange, onCreateProject }: Cre
     interviewDuration: "",
     usabilityDate: "",
     usabilityTime: "",
+    segmentLevel: "",
   });
   const [currentTask, setCurrentTask] = useState({
     name: "",
@@ -87,8 +89,6 @@ export function CreateProjectWizard({ open, onOpenChange, onCreateProject }: Cre
       cameraOption: "optional",
       micOption: "optional",
     });
-    setParticipants([]);
-    setTasks([]);
     setCurrentParticipant({
       name: "",
       email: "",
@@ -100,7 +100,10 @@ export function CreateProjectWizard({ open, onOpenChange, onCreateProject }: Cre
       interviewDuration: "",
       usabilityDate: "",
       usabilityTime: "",
+      segmentLevel: "",
     });
+    setParticipants([]);
+    setTasks([]);
     setCurrentTask({ name: "", description: "", successCriteria: "" });
     setTagInput("");
   };
@@ -120,6 +123,7 @@ export function CreateProjectWizard({ open, onOpenChange, onCreateProject }: Cre
       interviewDuration: "",
       usabilityDate: "",
       usabilityTime: "",
+      segmentLevel: "",
     });
   };
 

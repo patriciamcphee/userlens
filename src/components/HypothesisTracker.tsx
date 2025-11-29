@@ -11,7 +11,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { api } from '../utils/api';
 import { toast } from 'sonner';
-import type { Hypothesis, ResearchQuestion } from '../App';
+// Define types locally since they're not exported from App
+export interface Hypothesis {
+  id: string;
+  hypothesis: string;
+  description?: string;
+  evidence: string;
+  status: 'validated' | 'disproven' | 'unclear' | 'testing';
+  priority?: 'high' | 'medium' | 'low';
+  supportingEvidence?: string;
+  segments?: string[];
+  expectedEvidence?: string;
+  howToTest?: string;
+  category?: 'primary' | 'workflow' | 'usability' | 'organizational';
+  researchQuestionId?: string;
+  expectedOutcome?: string;
+  roadmapImpact?: string;
+}
+
+export interface ResearchQuestion {
+  id: string;
+  question: string;
+  order: number;
+}
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
