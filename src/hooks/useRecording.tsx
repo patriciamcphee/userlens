@@ -1,7 +1,7 @@
 // hooks/useRecording.tsx
 import { useState, useRef, useCallback } from 'react';
+import { CombinedRecorder } from '../utils/recording';
 import { azureUploadService } from '../services/azureUploadService';
-import { CombinedRecorder } from '../services/CombinedRecorder';
 
 interface RecordingOptions {
   video: boolean;
