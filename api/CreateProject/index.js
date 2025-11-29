@@ -1,64 +1,57 @@
-const { getContainer } = require("../cosmosClient");
+const { getContainer, extractTenantId, extractUserInfo } = require("../cosmosClient");
 
 module.exports = async function (context, req) {
-  context.log('CreateProject function triggered');
-  
   try {
-    // Log the incoming request
-    context.log('Request body:', JSON.stringify(req.body));
+    const projectData = req.body;
     
-    if (!req.body) {
-      context.log.error('No request body provided');
-      context.res = {
-        status: 400,
-        body: { error: "Request body is required" }
-      };
-      return;
-    }
-
-    // Validate required fields
-    if (!req.body.name) {
-      context.log.error('Missing required field: name');
+    if (!projectData || !projectData.name) {
       context.res = {
         status: 400,
         body: { error: "Project name is required" }
       };
       return;
     }
-
-    context.log('Getting Projects container...');
-    const container = await getContainer("projects");
     
-    // Convert numeric ID to string for Cosmos DB
-    const project = {
-      ...req.body,
-      id: String(req.body.id), // Cosmos DB requires string IDs
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+    const container = await getContainer("projects");
+    const tenantId = extractTenantId(req);
+    const userInfo = extractUserInfo(req);
+    
+    const now = new Date().toISOString();
+    const projectId = `proj_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const newProject = {
+      id: projectId,
+      ...projectData,
+      // Multi-tenancy fields
+      tenantId: tenantId || null,
+      createdBy: userInfo?.userId || null,
+      createdByEmail: userInfo?.userDetails || null,
+      // Timestamps
+      createdAt: now,
+      updatedAt: now,
+      // Default values
+      status: projectData.status || 'active',
+      participants: projectData.participants || [],
+      tasks: projectData.tasks || [],
+      sessions: projectData.sessions || [],
+      totalSessions: 0,
+      completedSessions: 0
     };
     
-    context.log('Creating project in Cosmos DB:', JSON.stringify(project));
-    const { resource } = await container.items.create(project);
+    const { resource: created } = await container.items.create(newProject);
     
-    context.log('Project created successfully:', resource.id);
+    context.log(`Created project: ${projectId} for tenant: ${tenantId}`);
     
     context.res = {
       status: 201,
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: resource
+      headers: { "Content-Type": "application/json" },
+      body: created
     };
   } catch (error) {
     context.log.error("Error creating project:", error);
-    context.log.error("Error stack:", error.stack);
     context.res = {
       status: 500,
-      body: { 
-        error: "Failed to create project", 
-        message: error.message,
-        details: error.toString()
-      }
+      body: { error: "Failed to create project", message: error.message }
     };
   }
 };

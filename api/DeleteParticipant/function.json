@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["delete"],
-      "route": "participants/{id}"
+      "route": "participants/{participantId}"
     },
     {
       "type": "http",
