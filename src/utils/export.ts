@@ -1,4 +1,4 @@
-import type { Participant, StickyNote, Hypothesis } from "../App";
+import type { Participant, StickyNote, Hypothesis } from "../types";
 
 interface ExportData {
   participants: Participant[];

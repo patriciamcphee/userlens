@@ -116,12 +116,6 @@ function AppContent() {
             mode: "moderated",
             participants: [],
             tasks: [],
-            synthesis: {
-              notes: [],
-              hypotheses: [],
-              clusters: [],
-              researchQuestions: []
-            },
             cameraOption: "optional",
             micOption: "optional",
             setup: {} as ProjectSetup,
@@ -141,12 +135,6 @@ function AppContent() {
             mode: "unmoderated",
             participants: [],
             tasks: [],
-            synthesis: {
-              notes: [],
-              hypotheses: [],
-              clusters: [],
-              researchQuestions: []
-            },
             cameraOption: "optional",
             micOption: "optional",
             setup: {} as ProjectSetup,
@@ -155,8 +143,6 @@ function AppContent() {
             afterMessage: undefined
           },
         ]);
-      } else {
-        toast.error("Failed to load projects");
       }
     } finally {
       setLoading(false);
