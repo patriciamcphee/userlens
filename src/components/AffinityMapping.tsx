@@ -9,13 +9,7 @@ import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { api } from "../utils/api";
 import { toast } from "sonner";
-
-interface StickyNote {
-  id: string;
-  text: string;
-  type: "barrier" | "insight" | "opportunity" | "quote";
-  cluster: string;
-}
+import type { StickyNote } from "../types";
 
 const typeColors = {
   barrier: "bg-rose-200 border-rose-300 text-rose-900",

@@ -178,16 +178,7 @@ export function CreateProjectWizard({ open, onOpenChange, onCreateProject }: Cre
       startDate: projectData.startDate || undefined,
       endDate: projectData.endDate || undefined,
       tags: projectData.tags,
-      synthesis: {
-        notes: [],
-        hypotheses: [],
-        clusters: [],
-        researchQuestions: []
-      },
-      setup: {} as ProjectSetup,
-      beforeMessage: undefined,
-      duringMessage: undefined,
-      afterMessage: undefined
+      setup: {} as ProjectSetup
     });
 
     resetForm();

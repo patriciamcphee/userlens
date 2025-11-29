@@ -173,11 +173,6 @@ export interface Project {
   beforeMessage: string | undefined;
   duringMessage: string | undefined;
   afterMessage: string | undefined;
-  synthesis: {
-      notes: any[];
-      hypotheses: any[];
-      clusters: any[]; researchQuestions: never[]; 
-};
   id: string;
   name: string;
   description: string;

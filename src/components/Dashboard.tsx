@@ -132,7 +132,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
 
       {/* Create Project Wizard */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Create Project</DialogTitle>
             <DialogDescription>
@@ -150,7 +150,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label htmlFor="status">Status</Label>
                 <Select value={newProject.status} onValueChange={(value) => setNewProject({ ...newProject, status: value as 'active' | 'completed' | 'archived' })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Status" />
@@ -163,7 +163,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Mode</Label>
+                <Label htmlFor="mode">Mode</Label>
                 <Select value={newProject.mode} onValueChange={(value) => setNewProject({ ...newProject, mode: value as 'moderated' | 'unmoderated' })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Mode" />
@@ -309,7 +309,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
             <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
               Cancel
             </Button>
-              <Button type="submit" onClick={() => {
+            <Button type="submit" onClick={() => {
               const project: Omit<Project, "id" | "createdAt" | "updatedAt"> = {
                 name: newProject.name,
                 description: newProject.description,
@@ -328,13 +328,13 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                 afterMessage: newProject.afterMessage,
                 cameraOption: newProject.cameraOption || 'optional',
                 micOption: newProject.micOption || 'optional',
-                synthesis: {
-                  notes: [],
-                  hypotheses: [],
-                  clusters: [],
-                  researchQuestions: []
-                },
-                setup: {} as Project['setup']
+                setup: {
+                  tasks: [],
+                  beforeMessage: "",
+                  duringScenario: "",
+                  afterMessage: "",
+                  randomizeOrder: false
+                }
               };
               onCreateProject(project);
               setIsCreateDialogOpen(false);
@@ -413,7 +413,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                       </div>
                       <div className="flex items-center justify-between">
                         <span>Updated</span>
-                        <span>{project.updatedAt ? new Date(project.updatedAt).toLocaleDateString() : "—"}</span>
+                        <span>{new Date(project.updatedAt || project.createdAt || new Date()).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -494,7 +494,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                         </div>
                         <div className="flex items-center justify-between">
                           <span>Completed</span>
-                          <span>{project.updatedAt ? new Date(project.updatedAt).toLocaleDateString() : "—"}</span>
+                          <span>{new Date(project.updatedAt || project.createdAt || new Date()).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </CardContent>
@@ -576,7 +576,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                         </div>
                         <div className="flex items-center justify-between">
                           <span>Archived</span>
-                          <span>{project.updatedAt ? new Date(project.updatedAt).toLocaleDateString() : "—"}</span>
+                          <span>{new Date(project.updatedAt || project.createdAt || new Date()).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </CardContent>

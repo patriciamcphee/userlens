@@ -80,7 +80,7 @@ export function TaskEditor({ task, onSave, onCancel, existingTaskCount }: TaskEd
 
   const handleAddCustomQuestion = () => {
     const newQuestion: TaskQuestion = {
-      id: `q-${Date.now()}`,
+      id: Date.now(),
       question: "",
       type: "multiple-choice",
       options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"],
@@ -92,7 +92,7 @@ export function TaskEditor({ task, onSave, onCancel, existingTaskCount }: TaskEd
     });
   };
 
-  const handleUpdateQuestion = (questionId: string, updates: Partial<TaskQuestion>) => {
+  const handleUpdateQuestion = (questionId: number, updates: Partial<TaskQuestion>) => {
     setFormData({
       ...formData,
       questions: formData.questions?.map((q) =>
@@ -101,14 +101,14 @@ export function TaskEditor({ task, onSave, onCancel, existingTaskCount }: TaskEd
     });
   };
 
-  const handleRemoveQuestion = (questionId: string) => {
+  const handleRemoveQuestion = (questionId: number) => {
     setFormData({
       ...formData,
       questions: formData.questions?.filter((q) => q.id !== questionId),
     });
   };
 
-  const handleAddOption = (questionId: string) => {
+  const handleAddOption = (questionId: number) => {
     setFormData({
       ...formData,
       questions: formData.questions?.map((q) => {
@@ -121,7 +121,7 @@ export function TaskEditor({ task, onSave, onCancel, existingTaskCount }: TaskEd
     });
   };
 
-  const handleUpdateOption = (questionId: string, optionIndex: number, value: string) => {
+  const handleUpdateOption = (questionId: number, optionIndex: number, value: string) => {
     setFormData({
       ...formData,
       questions: formData.questions?.map((q) => {
@@ -135,7 +135,7 @@ export function TaskEditor({ task, onSave, onCancel, existingTaskCount }: TaskEd
     });
   };
 
-  const handleRemoveOption = (questionId: string, optionIndex: number) => {
+  const handleRemoveOption = (questionId: number, optionIndex: number) => {
     setFormData({
       ...formData,
       questions: formData.questions?.map((q) => {

@@ -11,7 +11,7 @@ import { Download, RefreshCw } from "lucide-react";
 import { Participant, StickyNote, Hypothesis, ResearchQuestion } from "../types";
 import { api } from "../utils/api";
 import { exportToPDF, exportToCSV } from "../utils/export";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 interface SynthesisTabProps {
   projectId: string;
