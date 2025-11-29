@@ -124,7 +124,10 @@ function AppContent() {
             },
             cameraOption: "optional",
             micOption: "optional",
-            setup: {} as ProjectSetup
+            setup: {} as ProjectSetup,
+            beforeMessage: undefined,
+            duringMessage: undefined,
+            afterMessage: undefined
           },
           {
             id: "demo-2",
@@ -146,7 +149,10 @@ function AppContent() {
             },
             cameraOption: "optional",
             micOption: "optional",
-            setup: {} as ProjectSetup
+            setup: {} as ProjectSetup,
+            beforeMessage: undefined,
+            duringMessage: undefined,
+            afterMessage: undefined
           },
         ]);
       } else {
