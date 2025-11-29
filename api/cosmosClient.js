@@ -2,7 +2,7 @@ const { CosmosClient } = require("@azure/cosmos");
 
 const endpoint = process.env.COSMOS_DB_ENDPOINT;
 const key = process.env.COSMOS_DB_KEY;
-const databaseId = process.env.COSMOS_DB_DATABASE || "ParticipantLensDB";
+const databaseId = process.env.COSMOS_DB_DATABASE || "insighthub";
 
 console.log('Cosmos DB Configuration:');
 console.log('  Endpoint:', endpoint);
