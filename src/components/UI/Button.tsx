@@ -1,188 +1,58 @@
-// components/UI/Button.tsx
-import React, { ButtonHTMLAttributes, ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
-  size?: 'sm' | 'md' | 'lg';
-  isLoading?: boolean;
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
-  fullWidth?: boolean;
-  tooltip?: string;
-}
+import { cn } from "./utils";
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      variant = 'primary',
-      size = 'md',
-      isLoading = false,
-      leftIcon,
-      rightIcon,
-      fullWidth = false,
-      tooltip,
-      disabled,
-      children,
-      className = '',
-      type = 'button',
-      ...props
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline:
+          "border bg-background text-foreground hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        icon: "size-9 rounded-md",
+      },
     },
-    ref
-  ) => {
-    const baseClasses = [
-      'inline-flex',
-      'items-center',
-      'justify-center',
-      'font-medium',
-      'transition-colors',
-      'focus:outline-none',
-      'focus:ring-2',
-      'focus:ring-offset-2',
-      'disabled:opacity-50',
-      'disabled:cursor-not-allowed',
-      'disabled:pointer-events-none'
-    ];
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
 
-    const variantClasses = {
-      primary: [
-        'bg-blue-600',
-        'text-white',
-        'border-transparent',
-        'hover:bg-blue-700',
-        'focus:ring-blue-500',
-        'disabled:hover:bg-blue-600'
-      ],
-      secondary: [
-        'bg-gray-100',
-        'text-gray-900',
-        'border-transparent',
-        'hover:bg-gray-200',
-        'focus:ring-gray-500',
-        'disabled:hover:bg-gray-100'
-      ],
-      danger: [
-        'bg-red-600',
-        'text-white',
-        'border-transparent',
-        'hover:bg-red-700',
-        'focus:ring-red-500',
-        'disabled:hover:bg-red-600'
-      ],
-      ghost: [
-        'bg-transparent',
-        'text-gray-700',
-        'border-transparent',
-        'hover:bg-gray-100',
-        'focus:ring-gray-500'
-      ],
-      outline: [
-        'bg-transparent',
-        'text-gray-700',
-        'border',
-        'border-gray-300',
-        'hover:bg-gray-50',
-        'focus:ring-blue-500'
-      ]
-    };
-
-    const sizeClasses = {
-      sm: ['px-3', 'py-1.5', 'text-sm', 'rounded'],
-      md: ['px-4', 'py-2', 'text-sm', 'rounded-lg'],
-      lg: ['px-6', 'py-3', 'text-base', 'rounded-lg']
-    };
-
-    const widthClasses = fullWidth ? ['w-full'] : [];
-
-    const allClasses = [
-      ...baseClasses,
-      ...variantClasses[variant],
-      ...sizeClasses[size],
-      ...widthClasses,
-      className
-    ].filter(Boolean).join(' ');
-
-    const isDisabled = disabled || isLoading;
-
-    const content = (
-      <>
-        {isLoading && (
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
-        )}
-        {!isLoading && leftIcon && (
-          <span className="mr-2" aria-hidden="true">{leftIcon}</span>
-        )}
-        {children}
-        {!isLoading && rightIcon && (
-          <span className="ml-2" aria-hidden="true">{rightIcon}</span>
-        )}
-      </>
-    );
-
-    const buttonElement = (
-      <button
-        ref={ref}
-        type={type}
-        disabled={isDisabled}
-        className={allClasses}
-        aria-busy={isLoading}
-        {...props}
-      >
-        {content}
-      </button>
-    );
-
-    if (tooltip && !isDisabled) {
-      return (
-        <div className="group relative">
-          {buttonElement}
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">
-            {tooltip}
-          </div>
-        </div>
-      );
+const Button = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<"button"> &
+    VariantProps<typeof buttonVariants> & {
+      asChild?: boolean;
     }
+>(({ className, variant, size, asChild = false, ...props }, ref) => {
+  const Comp = asChild ? Slot : "button";
 
-    return buttonElement;
-  }
-);
+  return (
+    <Comp
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, className }))}
+      ref={ref}
+      {...props}
+    />
+  );
+});
 
-Button.displayName = 'Button';
+Button.displayName = "Button";
 
-// Specialized button variants for common use cases
-export const SaveButton = ({ isLoading, ...props }: Omit<ButtonProps, 'variant'>) => (
-  <Button 
-    variant="primary" 
-    isLoading={isLoading}
-    {...props}
-  >
-    {isLoading ? 'Saving...' : 'Save'}
-  </Button>
-);
-
-export const CancelButton = (props: Omit<ButtonProps, 'variant'>) => (
-  <Button variant="outline" {...props}>
-    Cancel
-  </Button>
-);
-
-export const DeleteButton = ({ isLoading, ...props }: Omit<ButtonProps, 'variant'>) => (
-  <Button 
-    variant="danger" 
-    isLoading={isLoading}
-    {...props}
-  >
-    {isLoading ? 'Deleting...' : 'Delete'}
-  </Button>
-);
-
-export const LoadingButton = ({ 
-  isLoading, 
-  loadingText = 'Loading...',
-  children, 
-  ...props 
-}: ButtonProps & { loadingText?: string }) => (
-  <Button isLoading={isLoading} {...props}>
-    {isLoading ? loadingText : children}
-  </Button>
-);
+export { Button, buttonVariants };

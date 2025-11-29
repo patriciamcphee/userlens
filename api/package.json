@@ -1,19 +1,9 @@
 {
-  "name": "insighthub-api",
+  "name": "participantlens-api",
   "version": "1.0.0",
-  "license": "MIT",
-  "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
-    "prestart": "npm run build",
-    "start": "func start"
-  },
+  "description": "Azure Functions API for ParticipantLens",
   "dependencies": {
-    "@azure/cosmos": "^4.0.0"
-  },
-  "devDependencies": {
-    "@azure/functions": "^4.0.0",
-    "@types/node": "^24.9.2",
-    "typescript": "^5.0.0"
+    "@azure/cosmos": "^4.0.0",
+    "@azure/storage-blob": "^12.29.1"
   }
 }
