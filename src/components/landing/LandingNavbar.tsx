@@ -1,7 +1,17 @@
+// src/components/landing/LandingNavbar.tsx
+import { Book, HelpCircle, Mail, Menu, LogIn } from "lucide-react";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { ParticipantLensLogo } from "../ParticipantLensLogo";
-import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "../ui/sheet";
 
 interface LandingNavbarProps {
   onLogin: () => void;
@@ -9,99 +19,123 @@ interface LandingNavbarProps {
 }
 
 export function LandingNavbar({ onLogin, onSignUp }: LandingNavbarProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const navigation = [
-    { name: "Features", href: "#features" },
-    { name: "Pricing", href: "#pricing" },
-    { name: "Docs", href: "#docs" },
-    { name: "Blog", href: "#blog" },
+  const navigationLinks = [
+    { icon: Book, label: "User Guide", href: "#user-guide" },
+    { icon: HelpCircle, label: "Help Center", href: "#help-center" },
+    { icon: Mail, label: "Support", href: "#support" },
   ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center">
-            <ParticipantLensLogo variant="full" layout="horizontal" size="md" />
+    <nav className="sticky top-0 z-[100] bg-white border-b border-slate-200 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+        <div className="flex items-center justify-between">
+          {/* Left side - Logo and tagline with Beta badge */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <a href="/">
+              <ParticipantLensLogo 
+                variant="full"
+                layout="horizontal"
+                size="lg"
+                showTagline={true}
+              />
+            </a>
+            <Badge variant="secondary" className="h-4 -mt-8 bg-indigo-100 text-indigo-700 hover:bg-indigo-100 hidden sm:flex">
+              Beta
+            </Badge>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            {navigation.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="text-sm text-slate-700 hover:text-slate-900 transition-colors"
+          {/* Desktop Navigation - Hidden on mobile */}
+          <div className="hidden md:flex items-center gap-4 lg:gap-6">
+            {navigationLinks.map((link) => (
+              <Button 
+                key={link.href}
+                variant="ghost" 
+                className="gap-2 text-slate-700 hover:text-slate-900"
+                asChild
               >
-                {item.name}
-              </a>
-            ))}
-          </div>
-
-          {/* Desktop CTA Buttons */}
-          <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" onClick={onLogin}>
-              Log in
-            </Button>
-            <Button onClick={onSignUp}>
-              Sign up free
-            </Button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 text-slate-700"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-slate-200">
-            <div className="space-y-4">
-              {navigation.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="block text-slate-700 hover:text-slate-900 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item.name}
+                <a href={link.href}>
+                  <link.icon className="w-4 h-4" />
+                  {link.label}
                 </a>
-              ))}
-              <div className="pt-4 space-y-2 border-t border-slate-200">
-                <Button 
-                  variant="ghost" 
-                  className="w-full" 
-                  onClick={() => {
-                    onLogin();
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  Log in
-                </Button>
-                <Button 
-                  className="w-full"
-                  onClick={() => {
-                    onSignUp();
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  Sign up free
-                </Button>
-              </div>
+              </Button>
+            ))}
+            
+            {/* Login / Sign Up buttons */}
+            <div className="flex items-center gap-3 ml-2">
+              <Button 
+                variant="ghost" 
+                onClick={onLogin}
+                className="gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                Log in
+              </Button>
+              <Button 
+                onClick={onSignUp}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                Sign Up Free
+              </Button>
             </div>
           </div>
-        )}
+
+          {/* Mobile Navigation - Sheet/Drawer */}
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-64">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription>Explore UserLens features</SheetDescription>
+              </SheetHeader>
+              <div className="flex flex-col gap-2 mt-6">
+                {/* Navigation links */}
+                {navigationLinks.map((link) => (
+                  <Button
+                    key={link.href}
+                    variant="ghost"
+                    className="gap-3 justify-start text-slate-700 hover:text-slate-900"
+                    asChild
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <a href={link.href}>
+                      <link.icon className="w-4 h-4" />
+                      {link.label}
+                    </a>
+                  </Button>
+                ))}
+                
+                {/* Login / Sign Up */}
+                <div className="my-2 border-t border-slate-200" />
+                <Button
+                  variant="ghost"
+                  className="gap-3 justify-start"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onLogin();
+                  }}
+                >
+                  <LogIn className="w-4 h-4" />
+                  Log in
+                </Button>
+                <Button
+                  className="gap-3 justify-center bg-indigo-600 hover:bg-indigo-700"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onSignUp();
+                  }}
+                >
+                  Sign Up Free
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </nav>
   );
