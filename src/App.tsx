@@ -17,10 +17,21 @@ import { RefreshCw } from "lucide-react";
 // Import the API from the centralized api.ts file
 import { api, synthesisApi } from "./utils/api";
 
+// Local storage key for dev mode auth
+const DEV_AUTH_KEY = 'userlens_dev_authenticated';
+
 function AppContent() {
   const azureAuth = useAzureAuth();
-  const isAuthenticated = isAzureAuthEnabled ? azureAuth.isAuthenticated : true;
-  const signIn = azureAuth.signIn;
+  
+  // For local dev without Azure, use localStorage to persist auth state
+  const [localDevAuth, setLocalDevAuth] = useState(() => {
+    if (!isAzureAuthEnabled) {
+      return localStorage.getItem(DEV_AUTH_KEY) === 'true';
+    }
+    return false;
+  });
+  
+  const isAuthenticated = isAzureAuthEnabled ? azureAuth.isAuthenticated : localDevAuth;
   
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,10 +161,21 @@ function AppContent() {
 
   const handleGetStarted = async () => {
     if (isAzureAuthEnabled) {
-      await signIn();
+      await azureAuth.signIn();
     } else {
-      // Navigate to app if Azure not configured
-      window.location.href = '/app';
+      // For local dev, set auth state and navigate to app
+      localStorage.setItem(DEV_AUTH_KEY, 'true');
+      setLocalDevAuth(true);
+    }
+  };
+
+  const handleSignOut = () => {
+    if (isAzureAuthEnabled) {
+      azureAuth.signOut();
+    } else {
+      // For local dev, clear auth state
+      localStorage.removeItem(DEV_AUTH_KEY);
+      setLocalDevAuth(false);
     }
   };
 
@@ -187,7 +209,7 @@ function AppContent() {
         element={
           isAuthenticated ? (
             <div className="min-h-screen">
-              <Navbar />
+              <Navbar onSignOut={handleSignOut} />
               {loading ? (
                 <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
                   <div className="text-center">
