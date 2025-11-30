@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { Project, Participant, SessionLink, Session } from '../types';
 import { DEFAULT_PARTICIPANTS } from '../constants';
-import { api } from '../services/api';
+import { api } from '../utils/api';
 
 interface AppState {
   projects: Project[];
@@ -101,7 +101,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         projects: state.projects.map(p =>
           p.id === action.payload.projectId
-            ? { ...p, sessions: [...p.sessions, action.payload.session] }
+            ? { ...p, sessions: [...(p.sessions || []), action.payload.session] }
             : p
         )
       };
@@ -126,7 +126,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         participants: state.participants.filter(p => String(p.id) !== String(action.payload)),
         projects: state.projects.map(proj => ({
           ...proj,
-          participantIds: proj.participantIds.filter(id => String(id) !== String(action.payload)),
+          participantIds: (proj.participantIds || []).filter(id => String(id) !== String(action.payload)),
           participantAssignments: (proj.participantAssignments || []).filter(
             a => String(a.participantId) !== String(action.payload)
           )
@@ -174,7 +174,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         const [projects, participants] = await Promise.all([
           api.getProjects().catch(() => []),
-          api.getParticipants().catch(() => DEFAULT_PARTICIPANTS)
+          api.getParticipants().catch(() => [])
         ]);
         
         dispatch({ type: 'SET_PROJECTS', payload: projects });
