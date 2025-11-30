@@ -23,5 +23,9 @@
       "maxOutstandingRequests": 200,
       "maxConcurrentRequests": 100
     }
+  },
+  "Host": {
+    "CORS": "*",
+    "CORSCredentials": false
   }
 }

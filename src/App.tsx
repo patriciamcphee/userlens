@@ -12,50 +12,14 @@ import { useAzureAuth } from "./hooks/useAzureAuth";
 import { isAzureAuthEnabled } from "./utils/azure/authConfig";
 import { Project, SynthesisData, ProjectSetup } from "./types";
 import { toast } from "sonner";
-
-/**
- * Inline fallback API used by the app to avoid a missing './utils/api' module during compile.
- * This implementation calls the expected HTTP endpoints where possible and will surface
- * network errors to be handled by callers (which already include demo fallbacks).
- */
-const api = {
-  async getProjects(token?: string | null) {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    const res = await fetch("/api/projects", { headers });
-    if (!res.ok) {
-      // Throw to allow callers to detect network or server issues (they already catch).
-      throw new Error(`Failed to fetch projects: ${res.statusText}`);
-    }
-    return res.json();
-  },
-
-  async getSynthesisData(projectId: string): Promise<SynthesisData> {
-    const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/synthesis`);
-    if (!res.ok) {
-      throw new Error(`Failed to fetch synthesis for ${projectId}: ${res.statusText}`);
-    }
-    return res.json();
-  },
-
-  async createProject(projectData: any) {
-    const res = await fetch("/api/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(projectData),
-    });
-    if (!res.ok) {
-      throw new Error(`Failed to create project: ${res.statusText}`);
-    }
-    return res.json();
-  },
-};
 import { RefreshCw } from "lucide-react";
+
+// Import the API from the centralized api.ts file
+import { api, synthesisApi } from "./utils/api";
 
 function AppContent() {
   const azureAuth = useAzureAuth();
   const isAuthenticated = isAzureAuthEnabled ? azureAuth.isAuthenticated : true;
-  const getAccessToken = azureAuth.getAccessToken;
   const signIn = azureAuth.signIn;
   
   const [projects, setProjects] = useState<Project[]>([]);
@@ -66,15 +30,14 @@ function AppContent() {
   const loadProjects = async () => {
     try {
       setLoading(true);
-      const token = isAzureAuthEnabled ? await getAccessToken() : null;
-      const data = await api.getProjects(token);
-      setProjects(data.projects || []);
+      const data = await api.getProjects();
+      setProjects(data || []);
       
       // Load synthesis data for all active projects
-      const activeProjects = (data.projects || []).filter((p: Project) => p.status === 'active');
+      const activeProjects = (data || []).filter((p: Project) => p.status === 'active');
       const synthesisDataPromises = activeProjects.map(async (project: Project) => {
         try {
-          const synthesis: SynthesisData = await api.getSynthesisData(project.id);
+          const synthesis = await synthesisApi.getAll(project.id);
           return {
             projectId: project.id,
             hypothesesCount: synthesis.hypotheses?.length || 0,
@@ -95,10 +58,10 @@ function AppContent() {
     } catch (error) {
       console.error("Error loading projects:", error);
       
-      // Check if it's a network error (server not deployed)
+      // Check if it's a network error (server not available)
       if (error instanceof TypeError && error.message === "Failed to fetch") {
         console.warn("Backend server not available. Using demo mode.");
-        toast.error("Unable to connect to backend. Please deploy the Supabase edge function.", {
+        toast.error("Unable to connect to backend. Please ensure Azure Functions are running.", {
           duration: 8000,
         });
         
@@ -143,6 +106,9 @@ function AppContent() {
             afterMessage: undefined
           },
         ]);
+      } else {
+        // Other errors - show generic message
+        toast.error("Failed to load projects. Please try again.");
       }
     } finally {
       setLoading(false);

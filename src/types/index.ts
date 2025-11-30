@@ -150,6 +150,7 @@ export interface SynthesisData {
   notes: StickyNote[];
   hypotheses: Hypothesis[];
   researchQuestions: ResearchQuestion[];
+
 }
 
 // ============================================
@@ -194,6 +195,7 @@ export interface Project {
   startDate?: string;
   endDate?: string;
   tags?: string[];
+  emptyClusters?: string[];
 }
 
 export interface TaskFeedback {
@@ -242,6 +244,16 @@ export interface Session {
     audio?: RecordingData;
   };
 }
+
+export interface SessionLink {
+  id: string;
+  participantId: string | number;
+  sessionId: string | number;
+  projectId: string | number;
+  link: string;
+  createdAt: Date;
+}
+
 
 // ============================================
 // VIEW TYPES

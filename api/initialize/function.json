@@ -1,12 +1,12 @@
- { 
+{
   "bindings": [
     {
       "authLevel": "anonymous",
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get", "post", "put", "patch", "delete"],
-      "route": "research/{resource}/{itemId?}/{subRoute?}"
+      "methods": ["post"],
+      "route": "initialize-database"
     },
     {
       "type": "http",

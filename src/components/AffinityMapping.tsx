@@ -118,7 +118,9 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
     e.preventDefault();
     try {
       if (newStandaloneClusterName.trim()) {
-        await api.addClusterToProject(projectId, newStandaloneClusterName.trim());
+        const project = await api.getProject(projectId);
+        const updatedEmptyClusters = [...(project.emptyClusters || []), newStandaloneClusterName.trim()];
+        await api.updateProject(projectId, { ...project, emptyClusters: updatedEmptyClusters });
         toast.success("Cluster added!");
         setIsAddClusterDialogOpen(false);
         setNewStandaloneClusterName("");

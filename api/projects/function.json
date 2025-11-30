@@ -5,8 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get"],
-      "route": "projects"
+      "methods": ["get", "post", "put", "patch", "delete"],
+      "route": "projects/{projectId?}/{*route}"
     },
     {
       "type": "http",

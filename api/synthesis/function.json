@@ -1,4 +1,5 @@
- { 
+
+{
   "bindings": [
     {
       "authLevel": "anonymous",
@@ -6,7 +7,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get", "post", "put", "patch", "delete"],
-      "route": "research/{resource}/{itemId?}/{subRoute?}"
+      "route": "synthesis/{projectId}/{type?}/{itemId?}"
     },
     {
       "type": "http",
