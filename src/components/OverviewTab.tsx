@@ -32,6 +32,22 @@ function getNPSRanking(score: number): string {
   return "Critical Issues";
 }
 
+// Helper function to get status badge styling
+function getStatusBadgeClasses(status: string): string {
+  switch (status) {
+    case 'active':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'completed':
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'draft':
+      return 'bg-slate-100 text-slate-800 border-slate-200';
+    case 'archived':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    default:
+      return '';
+  }
+}
+
 interface OverviewTabProps {
   project: Project;
   onUpdate: () => void;
@@ -180,7 +196,7 @@ export function OverviewTab({ project, onUpdate, onDelete }: OverviewTabProps) {
                         <Label htmlFor="project-status">Status</Label>
                         <Select
                           value={projectFormData.status}
-                          onValueChange={(value: 'active' | 'completed' | 'archived') =>
+                          onValueChange={(value: 'draft' | 'active' | 'completed' | 'archived') =>
                             setProjectFormData({ ...projectFormData, status: value })
                           }
                         >
@@ -188,6 +204,7 @@ export function OverviewTab({ project, onUpdate, onDelete }: OverviewTabProps) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
                             <SelectItem value="active">Active</SelectItem>
                             <SelectItem value="completed">Completed</SelectItem>
                             <SelectItem value="archived">Archived</SelectItem>
@@ -417,7 +434,7 @@ export function OverviewTab({ project, onUpdate, onDelete }: OverviewTabProps) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-slate-600 mb-1">Status</p>
-              <Badge variant={project.status === 'active' ? 'default' : 'secondary'} className="capitalize">
+              <Badge className={`capitalize ${getStatusBadgeClasses(project.status)}`}>
                 {project.status}
               </Badge>
             </div>
@@ -437,6 +454,8 @@ export function OverviewTab({ project, onUpdate, onDelete }: OverviewTabProps) {
                       day: 'numeric' 
                     })
                   : 'Not set'}
+              </p>
+            </div>
             <div>
               <p className="text-sm text-slate-600 mb-1">Last Updated</p>
               <p className="text-sm text-slate-900">
@@ -447,8 +466,6 @@ export function OverviewTab({ project, onUpdate, onDelete }: OverviewTabProps) {
                       day: 'numeric' 
                     })
                   : 'Not set'}
-              </p>
-            </div>
               </p>
             </div>
           </div>

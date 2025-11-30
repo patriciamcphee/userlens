@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Button } from "./ui/button";
-import { Plus, Calendar, Users, Clock, FolderOpen, TrendingUp, ChevronDown, ChevronRight, X, Target, FileText, Filter, Copy } from "lucide-react";
+import { Plus, Calendar, Users, Clock, FolderOpen, TrendingUp, ChevronDown, ChevronRight, X, Target, FileText, Filter, Copy, CheckSquare, Lightbulb } from "lucide-react";
 import { Project, Participant } from "../types";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { useState } from "react";
@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "./ui/textarea";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "./ui/badge";
-import { Breadcrumbs } from "./Breadcrumbs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 import { NPSTrendAnalysis } from "./NPSTrendAnalysis";
 import { SUSTrendAnalysis } from "./SUSTrendAnalysis";
@@ -30,7 +29,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
   const [newProject, setNewProject] = useState<{
     name: string;
     description: string;
-    status: "active" | "completed" | "archived";
+    status: "draft" | "active" | "completed" | "archived";
     mode: "moderated" | "unmoderated";
     startDate: string;
     endDate: string;
@@ -45,7 +44,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
   }>({
     name: "",
     description: "",
-    status: "active" as const,
+    status: "draft" as const,
     mode: "moderated" as const,
     startDate: "",
     endDate: "",
@@ -55,6 +54,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
   });
   const [tagInput, setTagInput] = useState("");
 
+  const draftProjects = projects.filter(p => p.status === 'draft');
   const activeProjects = projects.filter(p => p.status === 'active');
   const completedProjects = projects.filter(p => p.status === 'completed');
   const archivedProjects = projects.filter(p => p.status === 'archived');
@@ -87,6 +87,12 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
     console.log('Projects for trend count:', projectsForTrend.length);
   }
 
+  // Helper function to get insights count for a project
+  const getInsightsCount = (projectId: string) => {
+    const data = synthesisData?.find(d => d.projectId === projectId);
+    return data?.notesCount || 0;
+  };
+
   const handleDuplicateProject = (project: Project, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation to project
     setNewProject({
@@ -112,12 +118,6 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
       <div className="max-w-7xl mx-auto px-6 pt-6 pb-6">
-        <Breadcrumbs 
-          items={[
-            { label: "Dashboard" }
-          ]}
-        />
-        
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4">
           <div>
             <h1 className="text-3xl text-slate-900 mb-2">User Research Projects</h1>
@@ -151,11 +151,12 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select value={newProject.status} onValueChange={(value) => setNewProject({ ...newProject, status: value as 'active' | 'completed' | 'archived' })}>
+                <Select value={newProject.status} onValueChange={(value) => setNewProject({ ...newProject, status: value as 'draft' | 'active' | 'completed' | 'archived' })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>
                     <SelectItem value="archived">Archived</SelectItem>
@@ -341,7 +342,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
               setNewProject({
                 name: "",
                 description: "",
-                status: "active" as const,
+                status: "draft" as const,
                 mode: "moderated" as const,
                 startDate: "",
                 endDate: "",
@@ -359,6 +360,94 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
 
       {/* Stats Overview */}
       <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Draft Projects */}
+        {draftProjects.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-slate-900 mb-4">Draft Projects</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {draftProjects.map((project) => (
+                <Card 
+                  key={project.id}
+                  className="hover:shadow-lg transition-shadow cursor-pointer border-dashed"
+                  onClick={() => navigate(`/app/project/${project.id}/overview`)}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-slate-900">{project.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleDuplicateProject(project, e)}
+                          className="h-7 w-7 p-0"
+                          title="Duplicate project"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                        <Badge className="bg-slate-100 text-slate-800 border-slate-200">Draft</Badge>
+                      </div>
+                    </div>
+                    <CardDescription className="line-clamp-2">
+                      {project.description || "No description"}
+                    </CardDescription>
+                    {project.tags && project.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {project.tags.map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs bg-slate-100">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 text-sm text-slate-600">
+                      {/* Quick Stats Row */}
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Users className="w-4 h-4 text-slate-500" />
+                          <span>{project.participants?.length || 0} participants</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <CheckSquare className="w-4 h-4 text-slate-500" />
+                          <span>{project.tasks?.length || 0} tasks</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Lightbulb className="w-4 h-4 text-slate-500" />
+                          <span>{getInsightsCount(project.id)} insights</span>
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-slate-200" />
+
+                      {/* Existing Info */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span>Sessions</span>
+                          <span>{project.completedSessions}/{project.totalSessions}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Mode</span>
+                          <Badge variant="outline" className="capitalize">
+                            {project.mode}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Project date</span>
+                          <span className="text-right">
+                            {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'} - {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Not set'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Active Projects */}
         {activeProjects.length > 0 && (
           <div className="mb-8">
@@ -383,7 +472,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                         >
                           <Copy className="w-4 h-4" />
                         </Button>
-                        <Badge variant="default">Active</Badge>
+                        <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
                       </div>
                     </div>
                     <CardDescription className="line-clamp-2">
@@ -400,20 +489,44 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                     )}
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2 text-sm text-slate-600">
-                      <div className="flex items-center justify-between">
-                        <span>Sessions</span>
-                        <span>{project.completedSessions}/{project.totalSessions}</span>
+                    <div className="space-y-3 text-sm text-slate-600">
+                      {/* Quick Stats Row */}
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Users className="w-4 h-4 text-slate-500" />
+                          <span>{project.participants?.length || 0} participants</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <CheckSquare className="w-4 h-4 text-slate-500" />
+                          <span>{project.tasks?.length || 0} tasks</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Lightbulb className="w-4 h-4 text-slate-500" />
+                          <span>{getInsightsCount(project.id)} insights</span>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span>Mode</span>
-                        <Badge variant="outline" className="capitalize">
-                          {project.mode}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>Updated</span>
-                        <span>{new Date(project.updatedAt || project.createdAt || new Date()).toLocaleDateString()}</span>
+
+                      {/* Divider */}
+                      <div className="border-t border-slate-200" />
+
+                      {/* Existing Info */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span>Sessions</span>
+                          <span>{project.completedSessions}/{project.totalSessions}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Mode</span>
+                          <Badge variant="outline" className="capitalize">
+                            {project.mode}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Project date</span>
+                          <span className="text-right">
+                            {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'} - {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Not set'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -464,7 +577,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                           >
                             <Copy className="w-4 h-4" />
                           </Button>
-                          <Badge className="bg-green-100 text-green-800 border-green-200">Completed</Badge>
+                          <Badge className="bg-blue-100 text-blue-800 border-blue-200">Completed</Badge>
                         </div>
                       </div>
                       <CardDescription className="line-clamp-2">
@@ -481,20 +594,44 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                       )}
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2 text-sm text-slate-600">
-                        <div className="flex items-center justify-between">
-                          <span>Sessions</span>
-                          <span>{project.completedSessions}/{project.totalSessions}</span>
+                      <div className="space-y-3 text-sm text-slate-600">
+                        {/* Quick Stats Row */}
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-4 h-4 text-slate-500" />
+                            <span>{project.participants?.length || 0} participants</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <CheckSquare className="w-4 h-4 text-slate-500" />
+                            <span>{project.tasks?.length || 0} tasks</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Lightbulb className="w-4 h-4 text-slate-500" />
+                            <span>{getInsightsCount(project.id)} insights</span>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span>Mode</span>
-                          <Badge variant="outline" className="capitalize">
-                            {project.mode}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Completed</span>
-                          <span>{new Date(project.updatedAt || project.createdAt || new Date()).toLocaleDateString()}</span>
+
+                        {/* Divider */}
+                        <div className="border-t border-slate-200" />
+
+                        {/* Existing Info */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span>Sessions</span>
+                            <span>{project.completedSessions}/{project.totalSessions}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>Mode</span>
+                            <Badge variant="outline" className="capitalize">
+                              {project.mode}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>Project date</span>
+                            <span className="text-right">
+                              {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'} - {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Not set'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -546,7 +683,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                           >
                             <Copy className="w-4 h-4" />
                           </Button>
-                          <Badge variant="outline">Archived</Badge>
+                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Archived</Badge>
                         </div>
                       </div>
                       <CardDescription className="line-clamp-2">
@@ -563,20 +700,44 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                       )}
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2 text-sm text-slate-600">
-                        <div className="flex items-center justify-between">
-                          <span>Sessions</span>
-                          <span>{project.completedSessions}/{project.totalSessions}</span>
+                      <div className="space-y-3 text-sm text-slate-600">
+                        {/* Quick Stats Row */}
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-4 h-4 text-slate-500" />
+                            <span>{project.participants?.length || 0} participants</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <CheckSquare className="w-4 h-4 text-slate-500" />
+                            <span>{project.tasks?.length || 0} tasks</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Lightbulb className="w-4 h-4 text-slate-500" />
+                            <span>{getInsightsCount(project.id)} insights</span>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span>Mode</span>
-                          <Badge variant="outline" className="capitalize">
-                            {project.mode}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Archived</span>
-                          <span>{new Date(project.updatedAt || project.createdAt || new Date()).toLocaleDateString()}</span>
+
+                        {/* Divider */}
+                        <div className="border-t border-slate-200" />
+
+                        {/* Existing Info */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span>Sessions</span>
+                            <span>{project.completedSessions}/{project.totalSessions}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>Mode</span>
+                            <Badge variant="outline" className="capitalize">
+                              {project.mode}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>Project date</span>
+                            <span className="text-right">
+                              {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'} - {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Not set'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
