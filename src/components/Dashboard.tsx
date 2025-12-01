@@ -13,6 +13,7 @@ import { Badge } from "./ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 import { NPSTrendAnalysis } from "./NPSTrendAnalysis";
 import { SUSTrendAnalysis } from "./SUSTrendAnalysis";
+import { formatDateRange, formatTimestamp } from "../utils/dateUtils";
 
 interface DashboardProps {
   projects: Project[];
@@ -112,6 +113,38 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
       micOption: project.micOption || 'optional',
     });
     setIsCreateDialogOpen(true);
+  };
+
+  // Helper function to render project card content
+  const renderProjectCardContent = (project: Project, type: 'active' | 'completed' | 'archived') => {
+    const dateRange = formatDateRange(project.startDate, project.endDate);
+    
+    return (
+      <div className="space-y-2 text-sm text-slate-600">
+        <div className="flex items-center justify-between">
+          <span>Sessions</span>
+          <span>{project.completedSessions}/{project.totalSessions}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span>Mode</span>
+          <Badge variant="outline" className="capitalize">
+            {project.mode}
+          </Badge>
+        </div>
+        {dateRange && (
+          <div className="flex items-center justify-between">
+            <span>Project date</span>
+            <span>{dateRange}</span>
+          </div>
+        )}
+        {!dateRange && (
+          <div className="flex items-center justify-between">
+            <span>{type === 'active' ? 'Updated' : type === 'completed' ? 'Completed' : 'Archived'}</span>
+            <span>{formatTimestamp(project.updatedAt || project.createdAt)}</span>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
