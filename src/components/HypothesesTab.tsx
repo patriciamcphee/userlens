@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AlchemyResearchHypotheses } from "./HypothesisTracker";
 import { Hypothesis, ResearchQuestion } from "../types";
-import { api } from "../utils/api";
+import { api, researchApi } from "../utils/api";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
@@ -57,19 +57,19 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
     setLoadingGlobal(true);
     
     try {
-      const [hypothesesRes, questionsRes] = await Promise.all([
-        fetch('/api/research/hypotheses').then(r => r.json()),
-        fetch('/api/research/questions').then(r => r.json())
+      const [hypotheses, questions] = await Promise.all([
+        researchApi.hypotheses.getAll(),
+        researchApi.questions.getAll()
       ]);
       
       setGlobalData({
-        hypotheses: hypothesesRes.hypotheses || [],
-        questions: questionsRes.questions || []
+        hypotheses: hypotheses || [],
+        questions: questions || []
       });
       
       // Pre-select all by default
-      setSelectedHypotheses(new Set((hypothesesRes.hypotheses || []).map((h: Hypothesis) => h.id)));
-      setSelectedQuestions(new Set((questionsRes.questions || []).map((q: ResearchQuestion) => q.id)));
+      setSelectedHypotheses(new Set((hypotheses || []).map((h: Hypothesis) => h.id)));
+      setSelectedQuestions(new Set((questions || []).map((q: ResearchQuestion) => q.id)));
       
     } catch (error) {
       console.error('Error loading global data:', error);
@@ -120,7 +120,18 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
   };
 
   const handleImport = async () => {
-    if (!globalData) return;
+    if (!globalData) {
+      console.error('No global data available');
+      toast.error('No global data available to import');
+      return;
+    }
+    
+    console.log('Starting import...', {
+      selectedQuestions: Array.from(selectedQuestions),
+      selectedHypotheses: Array.from(selectedHypotheses),
+      globalQuestions: globalData.questions.length,
+      globalHypotheses: globalData.hypotheses.length
+    });
     
     setImporting(true);
     
@@ -133,12 +144,15 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
           // Check if question already exists in project
           const exists = researchQuestions.some(q => q.id === question.id);
           if (!exists) {
-            await api.addResearchQuestion(projectId, {
+            console.log('Importing question:', question.id);
+            await api.addResearchQuestionToProject(projectId, {
               ...question,
               _importedFrom: 'global',
               _importedAt: new Date().toISOString()
             });
             importedCount++;
+          } else {
+            console.log('Question already exists:', question.id);
           }
         }
       }
@@ -149,16 +163,20 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
           // Check if hypothesis already exists in project
           const exists = hypotheses.some(h => h.id === hypothesis.id);
           if (!exists) {
+            console.log('Importing hypothesis:', hypothesis.id);
             await api.addHypothesisToProject(projectId, {
               ...hypothesis,
               _importedFrom: 'global',
               _importedAt: new Date().toISOString()
             });
             importedCount++;
+          } else {
+            console.log('Hypothesis already exists:', hypothesis.id);
           }
         }
       }
       
+      console.log('Import complete, count:', importedCount);
       toast.success(`Imported ${importedCount} items successfully!`);
       setIsImportDialogOpen(false);
       loadData(); // Refresh the data
