@@ -156,7 +156,7 @@ export const researchApi = {
       return data.questions;
     },
     
-    create: async (projectId: string, question: Partial<ResearchQuestion>): Promise<ResearchQuestion> => {
+    create: async (question: Partial<ResearchQuestion>): Promise<ResearchQuestion> => {
       return request<ResearchQuestion>(`${API_BASE}/research/questions`, {
         method: 'POST',
         body: JSON.stringify(question)
