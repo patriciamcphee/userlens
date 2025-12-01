@@ -189,9 +189,9 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
         onUpdate={loadData}
         projectId={projectId}
         renderImportButton={() => (
-          <TooltipProvider>
-            <Tooltip>
-              <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+            <TooltipProvider>
+              <Tooltip>
                 <TooltipTrigger asChild>
                   <DialogTrigger asChild>
                     <Button variant="outline" onClick={handleOpenImportDialog} className="gap-2">
@@ -204,7 +204,9 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
                 <TooltipContent>
                   <p>Import from the global research library to get started quickly.</p>
                 </TooltipContent>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+              </Tooltip>
+            </TooltipProvider>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
                   <DialogHeader>
                     <DialogTitle>Import from Global Research Library</DialogTitle>
                     <DialogDescription>
@@ -324,9 +326,7 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
                     </div>
                   )}
                 </DialogContent>
-              </Dialog>
-            </Tooltip>
-          </TooltipProvider>
+          </Dialog>
         )}
       />
     </div>
