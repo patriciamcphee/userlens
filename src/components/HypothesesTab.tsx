@@ -20,7 +20,7 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
       const synthesisResponse = await api.getSynthesisData(projectId);
       
       setHypotheses(synthesisResponse.hypotheses || []);
-      setResearchQuestions(synthesisResponse.researchQuestions || []);
+      setResearchQuestions(synthesisResponse.questions || []);
       
     } catch (error) {
       console.error('Error loading hypotheses data:', error);

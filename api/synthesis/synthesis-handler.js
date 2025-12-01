@@ -2,6 +2,7 @@
  * Synthesis API Handler
  * 
  * Project-scoped synthesis data (hypotheses, notes, clusters per project).
+ * Falls back to global research data if project-specific data is empty.
  * 
  * Routes:
  *   GET    /api/synthesis/{projectId}                    - Get all synthesis data for project
@@ -13,7 +14,14 @@
  *   DELETE /api/synthesis/{projectId}/{type}/{itemId}    - Delete item
  */
 
-const { synthesis, projects } = require("../cosmosService");
+const { 
+  synthesis, 
+  projects,
+  // Import global research services for fallback
+  hypotheses: globalHypotheses,
+  researchQuestions: globalResearchQuestions,
+  stickyNotes: globalStickyNotes
+} = require("../cosmosService");
 
 module.exports = async function (context, req) {
   const method = req.method.toUpperCase();
@@ -44,12 +52,28 @@ module.exports = async function (context, req) {
     
     // GET /api/synthesis/{projectId} - get all synthesis data
     if (method === 'GET' && !type) {
-      const [hypotheses, notes, clusters, questions] = await Promise.all([
+      let [hypotheses, notes, clusters, questions] = await Promise.all([
         synthesis.get(projectId, 'hypotheses'),
         synthesis.get(projectId, 'notes'),
         synthesis.get(projectId, 'clusters'),
         synthesis.get(projectId, 'questions')
       ]);
+      
+      // Fall back to global research data if project-specific data is empty
+      if (hypotheses.length === 0) {
+        context.log(`No project hypotheses for ${projectId}, falling back to global`);
+        hypotheses = await globalHypotheses.getAll();
+      }
+      
+      if (questions.length === 0) {
+        context.log(`No project questions for ${projectId}, falling back to global`);
+        questions = await globalResearchQuestions.getAll();
+      }
+      
+      if (notes.length === 0) {
+        context.log(`No project notes for ${projectId}, falling back to global`);
+        notes = await globalStickyNotes.getAll();
+      }
       
       return respond(context, 200, {
         projectId,
@@ -71,7 +95,19 @@ module.exports = async function (context, req) {
     
     // GET /api/synthesis/{projectId}/{type}
     if (method === 'GET' && type) {
-      const data = await synthesis.get(projectId, type);
+      let data = await synthesis.get(projectId, type);
+      
+      // Fall back to global data for individual type requests too
+      if (data.length === 0) {
+        if (type === 'hypotheses') {
+          data = await globalHypotheses.getAll();
+        } else if (type === 'questions') {
+          data = await globalResearchQuestions.getAll();
+        } else if (type === 'notes') {
+          data = await globalStickyNotes.getAll();
+        }
+      }
+      
       return respond(context, 200, { [type]: data });
     }
     
