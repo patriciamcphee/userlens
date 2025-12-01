@@ -31,7 +31,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
   const [newProject, setNewProject] = useState<{
     name: string;
     description: string;
-    status: "active" | "completed" | "archived";
+    status: "draft" | "active" | "completed" | "archived";
     mode: "moderated" | "unmoderated";
     startDate: string;
     endDate: string;
@@ -46,7 +46,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
   }>({
     name: "",
     description: "",
-    status: "active" as const,
+    status: "draft" as const,
     mode: "moderated" as const,
     startDate: "",
     endDate: "",
@@ -56,6 +56,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
   });
   const [tagInput, setTagInput] = useState("");
 
+  const draftProjects = projects.filter(p => p.status === 'draft');
   const activeProjects = projects.filter(p => p.status === 'active');
   const completedProjects = projects.filter(p => p.status === 'completed');
   const archivedProjects = projects.filter(p => p.status === 'archived');
@@ -110,8 +111,18 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
   };
 
   // Helper function to render project card content
-  const renderProjectCardContent = (project: Project, type: 'active' | 'completed' | 'archived') => {
+  const renderProjectCardContent = (project: Project, type: 'draft' | 'active' | 'completed' | 'archived') => {
     const dateRange = formatDateRange(project.startDate, project.endDate);
+    
+    const getDateLabel = () => {
+      switch (type) {
+        case 'draft': return 'Created';
+        case 'active': return 'Updated';
+        case 'completed': return 'Completed';
+        case 'archived': return 'Archived';
+        default: return 'Updated';
+      }
+    };
     
     return (
       <div className="space-y-2 text-sm text-slate-600">
@@ -133,7 +144,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
         )}
         {!dateRange && (
           <div className="flex items-center justify-between">
-            <span>{type === 'active' ? 'Updated' : type === 'completed' ? 'Completed' : 'Archived'}</span>
+            <span>{getDateLabel()}</span>
             <span>{formatTimestamp(project.updatedAt || project.createdAt)}</span>
           </div>
         )}
@@ -184,11 +195,12 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select value={newProject.status} onValueChange={(value) => setNewProject({ ...newProject, status: value as 'active' | 'completed' | 'archived' })}>
+                <Select value={newProject.status} onValueChange={(value) => setNewProject({ ...newProject, status: value as 'draft' | 'active' | 'completed' | 'archived' })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>
                     <SelectItem value="archived">Archived</SelectItem>
@@ -374,7 +386,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
               setNewProject({
                 name: "",
                 description: "",
-                status: "active" as const,
+                status: "draft" as const,
                 mode: "moderated" as const,
                 startDate: "",
                 endDate: "",
@@ -392,6 +404,55 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
 
       {/* Stats Overview */}
       <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Draft Projects */}
+        {draftProjects.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-slate-900 mb-4">Draft Projects</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {draftProjects.map((project) => (
+                <Card 
+                  key={project.id}
+                  className="hover:shadow-lg transition-shadow cursor-pointer opacity-80"
+                  onClick={() => navigate(`/app/project/${project.id}/overview`)}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-slate-900">{project.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleDuplicateProject(project, e)}
+                          className="h-7 w-7 p-0"
+                          title="Duplicate project"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                        <Badge className="bg-slate-100 text-slate-800 border-slate-200">Draft</Badge>
+                      </div>
+                    </div>
+                    <CardDescription className="line-clamp-2">
+                      {project.description || "No description"}
+                    </CardDescription>
+                    {project.tags && project.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {project.tags.map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs bg-slate-100">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {renderProjectCardContent(project, 'draft')}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Active Projects */}
         {activeProjects.length > 0 && (
           <div className="mb-8">

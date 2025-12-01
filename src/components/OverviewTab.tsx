@@ -185,7 +185,7 @@ export function OverviewTab({ project, onUpdate, onDelete, insightsCount = 0 }: 
                         <Label htmlFor="project-status">Status</Label>
                         <Select
                           value={projectFormData.status}
-                          onValueChange={(value: 'active' | 'completed' | 'archived') =>
+                          onValueChange={(value: 'draft' | 'active' | 'completed' | 'archived') =>
                             setProjectFormData({ ...projectFormData, status: value })
                           }
                         >
@@ -193,6 +193,7 @@ export function OverviewTab({ project, onUpdate, onDelete, insightsCount = 0 }: 
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
                             <SelectItem value="active">Active</SelectItem>
                             <SelectItem value="completed">Completed</SelectItem>
                             <SelectItem value="archived">Archived</SelectItem>
