@@ -167,7 +167,7 @@ export function CreateProjectWizard({ open, onOpenChange, onCreateProject }: Cre
     onCreateProject({
       name: projectData.name,
       description: projectData.description,
-      status: 'active',
+      status: 'draft',
       totalSessions: 0,
       completedSessions: 0,
       mode: projectData.mode,
