@@ -180,18 +180,9 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
   }
 
   const hasGlobalData = globalData && (globalData.hypotheses.length > 0 || globalData.questions.length > 0);
-  const hasNoProjectData = hypotheses.length === 0 && researchQuestions.length === 0;
 
   return (
     <div className="space-y-6">
-      {/* Import Prompt - Show prominently if project has no data */}
-      {hasNoProjectData && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-medium text-blue-900">No hypotheses yet</h3>
-          <p className="text-sm text-blue-700">Import from your global research library or create new ones below.</p>
-        </div>
-      )}
-
       <AlchemyResearchHypotheses 
         hypotheses={hypotheses} 
         researchQuestions={researchQuestions}
