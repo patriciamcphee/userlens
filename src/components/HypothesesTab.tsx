@@ -190,18 +190,20 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
         projectId={projectId}
         renderImportButton={() => (
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-            <TooltipProvider>
+            <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" onClick={handleOpenImportDialog} className="gap-2">
-                      <Download className="w-4 h-4" />
-                      <span className="hidden sm:inline">Import from Library</span>
-                      <span className="sm:hidden">Import</span>
-                    </Button>
-                  </DialogTrigger>
+                  <span className="inline-block">
+                    <DialogTrigger asChild>
+                      <Button variant="outline" onClick={handleOpenImportDialog} className="gap-2">
+                        <Download className="w-4 h-4" />
+                        <span className="hidden sm:inline">Import from Library</span>
+                        <span className="sm:hidden">Import</span>
+                      </Button>
+                    </DialogTrigger>
+                  </span>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent side="bottom">
                   <p>Import from the global research library to get started quickly.</p>
                 </TooltipContent>
               </Tooltip>
