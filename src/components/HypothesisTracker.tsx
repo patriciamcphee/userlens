@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Plus, Edit2, Trash2, Pencil, ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
+import { Plus, Edit2, Trash2, Pencil, ChevronDown, ChevronRight, GripVertical, HelpCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -123,6 +123,7 @@ export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpd
   const [editingQuestion, setEditingQuestion] = useState<ResearchQuestion | null>(null);
   const [isCreatingNewQuestion, setIsCreatingNewQuestion] = useState(false);
   const [newQuestionText, setNewQuestionText] = useState('');
+  const [isLearnMoreOpen, setIsLearnMoreOpen] = useState(false);
   
   const [hypothesisFormData, setHypothesisFormData] = useState<Partial<Hypothesis>>({
     status: 'testing',
@@ -1220,44 +1221,105 @@ export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpd
         )}
       </div>
 
-      {/* Success Criteria & Guidelines */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Success Criteria - Takes up 2 columns on large screens */}
-        <Card className="lg:col-span-2 p-6 shadow-lg">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">📊 Success Criteria for Hypothesis Validation</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h3 className="font-bold text-green-800 mb-2">Quantitative Thresholds:</h3>
-              <ul className="text-sm text-green-700 space-y-1">
-                <li>• If &gt;70% mention issue = <strong>VALIDATED</strong></li>
-                <li>• If &lt;30% mention issue = <strong>DISPROVEN</strong></li>
-                <li>• If 30-70% mention = <strong>UNCLEAR/NUANCED</strong></li>
-              </ul>
-            </div>
-            
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-bold text-blue-800 mb-2">Usability Benchmarks:</h3>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Task success &lt;50% = Major usability issue</li>
-                <li>• Time &gt;5 min for basic tasks = Efficiency problem</li>
-                <li>• SEQ scores &lt;4 = Poor task experience</li>
-              </ul>
-            </div>
+      {/* Success Criteria for Hypothesis Validation */}
+      <Card className="mt-8 p-6 shadow-lg">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            📊 Success Criteria for Hypothesis Validation
+          </h2>
+          <Dialog open={isLearnMoreOpen} onOpenChange={setIsLearnMoreOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-1 text-slate-600 hover:text-slate-900">
+                <HelpCircle className="w-4 h-4" />
+                Learn more
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  🔄 Hypothesis Refinement During Research
+                </DialogTitle>
+                <DialogDescription>
+                  Best practices for evolving your hypotheses as data emerges.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <p className="text-slate-700">
+                  These hypotheses will evolve as data emerges. Be prepared to:
+                </p>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <span className="text-lg">💡</span>
+                    <div>
+                      <strong className="text-slate-900">Add new hypotheses</strong>
+                      <p className="text-sm text-slate-600">Based on unexpected insights that emerge during research</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-lg">✏️</span>
+                    <div>
+                      <strong className="text-slate-900">Modify existing ones</strong>
+                      <p className="text-sm text-slate-600">As evidence suggests nuances or new directions</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-lg">🔍</span>
+                    <div>
+                      <strong className="text-slate-900">Pursue surprising findings</strong>
+                      <p className="text-sm text-slate-600">Even if not in original framework—these often yield the best insights</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-lg">👥</span>
+                    <div>
+                      <strong className="text-slate-900">Validate with broader team</strong>
+                      <p className="text-sm text-slate-600">Through mini-synthesis sessions to ensure alignment</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="border-l-4 border-l-green-500 bg-green-50 rounded-r-lg p-4">
+            <h3 className="font-bold text-green-800 mb-3">Quantitative Thresholds:</h3>
+            <ul className="text-sm text-green-700 space-y-2">
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                If &gt;70% mention issue = <strong>VALIDATED</strong>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                If &lt;30% mention issue = <strong>DISPROVEN</strong>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                If 30-70% mention = <strong>UNCLEAR/NUANCED</strong>
+              </li>
+            </ul>
           </div>
-        </Card>
-
-        {/* Research Notes - Takes up 1 column on large screens */}
-        <Card className="lg:col-span-1 p-6 shadow-lg bg-yellow-50 border border-yellow-200">
-          <h3 className="font-bold text-yellow-800 mb-2">🔄 Hypothesis Refinement During Research</h3>
-          <p className="text-yellow-700 mb-2">These hypotheses will evolve as data emerges. Be prepared to:</p>
-          <ul className="text-sm text-yellow-700 space-y-1">
-            <li>• <strong>Add new hypotheses</strong> based on unexpected insights</li>
-            <li>• <strong>Modify existing ones</strong> as evidence suggests nuances</li>
-            <li>• <strong>Pursue surprising findings</strong> even if not in original framework</li>
-            <li>• <strong>Validate with broader team</strong> through mini-synthesis sessions</li>
-          </ul>
-        </Card>
-      </div>
+          
+          <div className="border-l-4 border-l-blue-500 bg-blue-50 rounded-r-lg p-4">
+            <h3 className="font-bold text-blue-800 mb-3">Usability Benchmarks:</h3>
+            <ul className="text-sm text-blue-700 space-y-2">
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                Task success &lt;50% = Major usability issue
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                Time &gt;5 min for basic tasks = Efficiency problem
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                SEQ scores &lt;4 = Poor task experience
+              </li>
+            </ul>
+          </div>
+        </div>
+      </Card>
       </Card>
     </DndProvider>
   );
