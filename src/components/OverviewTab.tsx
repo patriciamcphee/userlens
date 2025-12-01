@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { CircularProgress } from "./ui/circular-progress";
 import { RecordingOptionsStep } from "./RecordingOptionsStep";
+import { formatDateRange, formatTimestamp } from "../utils/dateUtils";
 import type { Project } from "../types";
 
 // Helper function to get SUS ranking (using the "Rank" column from the image)
@@ -122,6 +123,9 @@ export function OverviewTab({ project, onUpdate, onDelete, insightsCount = 0 }: 
     .filter((score): score is number => score !== undefined && score !== null);
   const avgNPS = npsScores.length > 0 ? Math.round(npsScores.reduce((acc, score) => acc + score, 0) / npsScores.length) : null;
   const avgSUS = susScores.length > 0 ? Math.round(susScores.reduce((acc, score) => acc + score, 0) / susScores.length) : null;
+
+  // Get formatted date range
+  const dateRange = formatDateRange(project.startDate, project.endDate);
 
   return (
     <>
@@ -401,16 +405,10 @@ export function OverviewTab({ project, onUpdate, onDelete, insightsCount = 0 }: 
           {/* Project Header */}
           <div className="space-y-3 pb-6 border-b border-slate-200">
             <h2 className="text-2xl text-slate-900">{project.name}</h2>
-            {(project.startDate || project.endDate) && (
+            {dateRange && (
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <Calendar className="w-4 h-4" />
-                <span>
-                  {project.startDate 
-                    ? new Date(project.startDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                    : 'Not set'} - {project.endDate 
-                    ? new Date(project.endDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                    : 'Not set'}
-                </span>
+                <span>{dateRange}</span>
               </div>
             )}
           </div>
@@ -431,25 +429,13 @@ export function OverviewTab({ project, onUpdate, onDelete, insightsCount = 0 }: 
             <div>
               <p className="text-sm text-slate-600 mb-1">Created</p>
               <p className="text-sm text-slate-900">
-                {project.createdAt 
-                  ? new Date(project.createdAt).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })
-                  : 'Not set'}
+                {formatTimestamp(project.createdAt, 'long')}
               </p>
             </div>
             <div>
               <p className="text-sm text-slate-600 mb-1">Last Updated</p>
               <p className="text-sm text-slate-900">
-                {project.updatedAt 
-                  ? new Date(project.updatedAt).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })
-                  : 'Not set'}
+                {formatTimestamp(project.updatedAt, 'long')}
               </p>
             </div>
           </div>
