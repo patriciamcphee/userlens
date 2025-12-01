@@ -20,7 +20,7 @@ export function Hero({ onGetStarted }: HeroProps) {
   };
 
   return (
-    <section className="relative overflow-hidden py-20 sm:py-28 lg:py-32" style={{ background: 'linear-gradient(to bottom, #1e293b, #2924fc, #785ff9)' }}>
+    <section className="relative overflow-hidden py-10" style={{ background: 'linear-gradient(to bottom, #1e293b, #2924fc, #785ff9)' }}>
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Gradient orbs */}
