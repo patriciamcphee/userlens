@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Project } from "../types";
 import { Button } from "./ui/button";
@@ -12,10 +12,19 @@ import { HypothesesTab } from "./HypothesesTab";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { format } from "date-fns";
 import { Badge } from "./ui/badge";
+import { api } from "../utils/api";
 
 interface ProjectDetailProps {
   projects: Project[];
   onUpdate: () => void;
+}
+
+interface SynthesisData {
+  projectId: string;
+  hypotheses: any[];
+  notes: any[];
+  clusters: string[];
+  questions: any[];
 }
 
 export function ProjectDetail({
@@ -26,8 +35,23 @@ export function ProjectDetail({
   const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [synthesisData, setSynthesisData] = useState<SynthesisData | null>(null);
 
   const project = projects.find(p => p.id === projectId);
+
+  // Load synthesis data for insights count
+  useEffect(() => {
+    const loadSynthesisData = async () => {
+      if (!projectId) return;
+      try {
+        const data = await api.getSynthesisData(projectId);
+        setSynthesisData(data);
+      } catch (error) {
+        console.error('Error loading synthesis data:', error);
+      }
+    };
+    loadSynthesisData();
+  }, [projectId]);
 
   if (!project) {
     return (
@@ -87,12 +111,15 @@ export function ProjectDetail({
     return items;
   };
 
+  // Calculate insights count from synthesis notes
+  const insightsCount = synthesisData?.notes?.length || 0;
+
   const navItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "hypotheses", label: "Hypotheses", icon: Lightbulb },
     { id: "participants", label: "Participants", icon: Users, count: project.participants?.length || 0 },
     { id: "tasks", label: "Tasks", icon: ListTodo, count: project.tasks?.length || 0 },
-    { id: "synthesis", label: "Synthesis", icon: FileText },
+    { id: "synthesis", label: "Synthesis", icon: FileText, count: insightsCount },
     { id: "analytics", label: "Analytics", icon: BarChart3 },  
   ];
 
@@ -219,6 +246,7 @@ export function ProjectDetail({
                 project={project}
                 onUpdate={onUpdate}
                 onDelete={handleBackClick}
+                insightsCount={insightsCount}
               />
             )}
 
