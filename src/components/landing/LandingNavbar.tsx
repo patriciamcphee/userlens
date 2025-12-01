@@ -91,7 +91,7 @@ export function LandingNavbar({ onLogin, onSignUp }: LandingNavbarProps) {
             <SheetContent side="right" className="w-64">
               <SheetHeader>
                 <SheetTitle>Menu</SheetTitle>
-                <SheetDescription>Explore UserLens features</SheetDescription>
+                <SheetDescription>Explore UserLens Insights features</SheetDescription>
               </SheetHeader>
               <div className="flex flex-col gap-2 mt-6">
                 {/* Navigation links */}

@@ -59,7 +59,7 @@ export function Navbar({ onSignOut }: NavbarProps) {
                 showTagline={true}
               />
             </Link>
-            <Badge variant="secondary" className="h-4 -mt-8 bg-indigo-100 text-indigo-700 hover:bg-indigo-100 hidden sm:flex">
+            <Badge variant="secondary" className="h-4 -mt-8 -ml-2 bg-indigo-100 text-indigo-700 hover:bg-indigo-100 hidden sm:flex">
               Beta
             </Badge>
           </div>
