@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Calendar, Users, Clock, Edit, AlertTriangle, Trash2, X, TrendingUp, BarChart2, UserCheck, Target } from "lucide-react";
+import { Calendar, Users, Clock, Edit, AlertTriangle, Trash2, X, TrendingUp, BarChart2, UserCheck, Target, Lightbulb } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -36,9 +36,10 @@ interface OverviewTabProps {
   project: Project;
   onUpdate: () => void;
   onDelete?: () => void;
+  insightsCount?: number;
 }
 
-export function OverviewTab({ project, onUpdate, onDelete }: OverviewTabProps) {
+export function OverviewTab({ project, onUpdate, onDelete, insightsCount = 0 }: OverviewTabProps) {
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [projectFormData, setProjectFormData] = useState({
@@ -437,6 +438,8 @@ export function OverviewTab({ project, onUpdate, onDelete }: OverviewTabProps) {
                       day: 'numeric' 
                     })
                   : 'Not set'}
+              </p>
+            </div>
             <div>
               <p className="text-sm text-slate-600 mb-1">Last Updated</p>
               <p className="text-sm text-slate-900">
@@ -447,8 +450,6 @@ export function OverviewTab({ project, onUpdate, onDelete }: OverviewTabProps) {
                       day: 'numeric' 
                     })
                   : 'Not set'}
-              </p>
-            </div>
               </p>
             </div>
           </div>
@@ -473,9 +474,9 @@ export function OverviewTab({ project, onUpdate, onDelete }: OverviewTabProps) {
             </div>
           )}
 
-          {/* Project Stats */}
+          {/* Project Stats - Updated to 3 columns with Insights */}
           <div className="pt-4 border-t border-slate-200">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Calendar className="w-5 h-5 text-green-600" />
@@ -493,6 +494,16 @@ export function OverviewTab({ project, onUpdate, onDelete }: OverviewTabProps) {
                 <div>
                   <p className="text-sm text-slate-600">Tasks</p>
                   <p className="text-xl text-slate-900">{tasks.length}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Lightbulb className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">Insights</p>
+                  <p className="text-xl text-slate-900">{insightsCount}</p>
                 </div>
               </div>
             </div>
