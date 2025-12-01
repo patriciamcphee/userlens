@@ -4,6 +4,7 @@ import { Hypothesis, ResearchQuestion } from "../types";
 import { api } from "../utils/api";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Download, Check } from "lucide-react";
 import { toast } from "sonner";
 
@@ -132,7 +133,11 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
           // Check if question already exists in project
           const exists = researchQuestions.some(q => q.id === question.id);
           if (!exists) {
-            await api.addResearchQuestion(question);
+            await api.addResearchQuestion(projectId, {
+              ...question,
+              _importedFrom: 'global',
+              _importedAt: new Date().toISOString()
+            });
             importedCount++;
           }
         }
@@ -144,13 +149,17 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
           // Check if hypothesis already exists in project
           const exists = hypotheses.some(h => h.id === hypothesis.id);
           if (!exists) {
-            await api.addHypothesisToProject(projectId, hypothesis);
+            await api.addHypothesisToProject(projectId, {
+              ...hypothesis,
+              _importedFrom: 'global',
+              _importedAt: new Date().toISOString()
+            });
             importedCount++;
           }
         }
       }
       
-      toast.success(`Imported ${importedCount} items`);
+      toast.success(`Imported ${importedCount} items successfully!`);
       setIsImportDialogOpen(false);
       loadData(); // Refresh the data
       
@@ -175,141 +184,11 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Import Button - Show prominently if project has no data */}
+      {/* Import Prompt - Show prominently if project has no data */}
       {hasNoProjectData && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
-          <div>
-            <h3 className="font-medium text-blue-900">No hypotheses yet</h3>
-            <p className="text-sm text-blue-700">Import from your global research library or create new ones below.</p>
-          </div>
-          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleOpenImportDialog} className="gap-2">
-                <Download className="w-4 h-4" />
-                Import from Library
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-              <DialogHeader>
-                <DialogTitle>Import from Global Research Library</DialogTitle>
-                <DialogDescription>
-                  Select hypotheses and research questions to import into this project.
-                </DialogDescription>
-              </DialogHeader>
-              
-              {loadingGlobal ? (
-                <div className="py-8 text-center text-slate-600">Loading global research data...</div>
-              ) : !hasGlobalData ? (
-                <div className="py-8 text-center text-slate-600">No global research data found to import.</div>
-              ) : (
-                <div className="flex-1 overflow-y-auto space-y-6 py-4">
-                  {/* Research Questions */}
-                  {globalData && globalData.questions.length > 0 && (
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium text-slate-900">Research Questions ({globalData.questions.length})</h3>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={selectAllQuestions}>Select All</Button>
-                          <Button variant="ghost" size="sm" onClick={selectNoneQuestions}>Select None</Button>
-                        </div>
-                      </div>
-                      <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-2">
-                        {globalData.questions.map(question => (
-                          <label 
-                            key={question.id} 
-                            className="flex items-start gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedQuestions.has(question.id)}
-                              onChange={() => toggleQuestion(question.id)}
-                              className="mt-1"
-                            />
-                            <div>
-                              <span className="text-xs text-slate-500">{question.id}</span>
-                              <p className="text-sm text-slate-900">{question.question}</p>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Hypotheses */}
-                  {globalData && globalData.hypotheses.length > 0 && (
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium text-slate-900">Hypotheses ({globalData.hypotheses.length})</h3>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={selectAllHypotheses}>Select All</Button>
-                          <Button variant="ghost" size="sm" onClick={selectNoneHypotheses}>Select None</Button>
-                        </div>
-                      </div>
-                      <div className="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-2">
-                        {globalData.hypotheses.map(hypothesis => (
-                          <label 
-                            key={hypothesis.id} 
-                            className="flex items-start gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedHypotheses.has(hypothesis.id)}
-                              onChange={() => toggleHypothesis(hypothesis.id)}
-                              className="mt-1"
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-slate-500">{hypothesis.id}</span>
-                                <span className={`text-xs px-1.5 py-0.5 rounded ${
-                                  hypothesis.status === 'validated' ? 'bg-green-100 text-green-800' :
-                                  hypothesis.status === 'disproven' ? 'bg-red-100 text-red-800' :
-                                  hypothesis.status === 'testing' ? 'bg-blue-100 text-blue-800' :
-                                  'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                  {hypothesis.status}
-                                </span>
-                              </div>
-                              <p className="text-sm font-medium text-slate-900">{hypothesis.hypothesis}</p>
-                              {hypothesis.description && (
-                                <p className="text-xs text-slate-600 mt-1 line-clamp-2">{hypothesis.description}</p>
-                              )}
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {hasGlobalData && (
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <span className="text-sm text-slate-600">
-                    {selectedQuestions.size} questions, {selectedHypotheses.size} hypotheses selected
-                  </span>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleImport} 
-                      disabled={importing || (selectedHypotheses.size === 0 && selectedQuestions.size === 0)}
-                      className="gap-2"
-                    >
-                      {importing ? (
-                        <>Importing...</>
-                      ) : (
-                        <>
-                          <Check className="w-4 h-4" />
-                          Import Selected
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="font-medium text-blue-900">No hypotheses yet</h3>
+          <p className="text-sm text-blue-700">Import from your global research library or create new ones below.</p>
         </div>
       )}
 
@@ -318,6 +197,146 @@ export function HypothesesTab({ projectId }: HypothesesTabProps) {
         researchQuestions={researchQuestions}
         onUpdate={loadData}
         projectId={projectId}
+        renderImportButton={() => (
+          <TooltipProvider>
+            <Tooltip>
+              <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+                <TooltipTrigger asChild>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" onClick={handleOpenImportDialog} className="gap-2">
+                      <Download className="w-4 h-4" />
+                      <span className="hidden sm:inline">Import from Library</span>
+                      <span className="sm:hidden">Import</span>
+                    </Button>
+                  </DialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Import from the global research library to get started quickly.</p>
+                </TooltipContent>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+                  <DialogHeader>
+                    <DialogTitle>Import from Global Research Library</DialogTitle>
+                    <DialogDescription>
+                      Select hypotheses and research questions to import into this project.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  {loadingGlobal ? (
+                    <div className="py-8 text-center text-slate-600">Loading global research data...</div>
+                  ) : !hasGlobalData ? (
+                    <div className="py-8 text-center text-slate-600">No global research data found to import.</div>
+                  ) : (
+                    <div className="flex-1 overflow-y-auto space-y-6 py-4">
+                      {/* Research Questions */}
+                      {globalData && globalData.questions.length > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-medium text-slate-900">Research Questions ({globalData.questions.length})</h3>
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" onClick={selectAllQuestions}>Select All</Button>
+                              <Button variant="ghost" size="sm" onClick={selectNoneQuestions}>Select None</Button>
+                            </div>
+                          </div>
+                          <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+                            {globalData.questions.map(question => (
+                              <label 
+                                key={question.id} 
+                                className="flex items-start gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedQuestions.has(question.id)}
+                                  onChange={() => toggleQuestion(question.id)}
+                                  className="mt-1"
+                                />
+                                <div>
+                                  <span className="text-xs text-slate-500">{question.id}</span>
+                                  <p className="text-sm text-slate-900">{question.question}</p>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Hypotheses */}
+                      {globalData && globalData.hypotheses.length > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-medium text-slate-900">Hypotheses ({globalData.hypotheses.length})</h3>
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" onClick={selectAllHypotheses}>Select All</Button>
+                              <Button variant="ghost" size="sm" onClick={selectNoneHypotheses}>Select None</Button>
+                            </div>
+                          </div>
+                          <div className="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-2">
+                            {globalData.hypotheses.map(hypothesis => (
+                              <label 
+                                key={hypothesis.id} 
+                                className="flex items-start gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedHypotheses.has(hypothesis.id)}
+                                  onChange={() => toggleHypothesis(hypothesis.id)}
+                                  className="mt-1"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-slate-500">{hypothesis.id}</span>
+                                    <span className={`text-xs px-1.5 py-0.5 rounded ${
+                                      hypothesis.status === 'validated' ? 'bg-green-100 text-green-800' :
+                                      hypothesis.status === 'disproven' ? 'bg-red-100 text-red-800' :
+                                      hypothesis.status === 'testing' ? 'bg-blue-100 text-blue-800' :
+                                      'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                      {hypothesis.status}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm font-medium text-slate-900">{hypothesis.hypothesis}</p>
+                                  {hypothesis.description && (
+                                    <p className="text-xs text-slate-600 mt-1 line-clamp-2">{hypothesis.description}</p>
+                                  )}
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {hasGlobalData && (
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <span className="text-sm text-slate-600">
+                        {selectedQuestions.size} questions, {selectedHypotheses.size} hypotheses selected
+                      </span>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={handleImport} 
+                          disabled={importing || (selectedHypotheses.size === 0 && selectedQuestions.size === 0)}
+                          className="gap-2"
+                        >
+                          {importing ? (
+                            <>Importing...</>
+                          ) : (
+                            <>
+                              <Check className="w-4 h-4" />
+                              Import Selected
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       />
     </div>
   );

@@ -156,7 +156,7 @@ export const researchApi = {
       return data.questions;
     },
     
-    create: async (question: Partial<ResearchQuestion>): Promise<ResearchQuestion> => {
+    create: async (projectId: string, question: Partial<ResearchQuestion>): Promise<ResearchQuestion> => {
       return request<ResearchQuestion>(`${API_BASE}/research/questions`, {
         method: 'POST',
         body: JSON.stringify(question)
@@ -315,6 +315,36 @@ export const synthesisApi = {
         method: 'DELETE'
       });
     }
+  },
+  
+  // Research Questions (project-scoped)
+  questions: {
+    getAll: async (projectId: string): Promise<ResearchQuestion[]> => {
+      const data = await request<{ questions: ResearchQuestion[] }>(
+        `${API_BASE}/synthesis/${projectId}/questions`
+      );
+      return data.questions;
+    },
+    
+    create: async (projectId: string, question: Partial<ResearchQuestion>): Promise<ResearchQuestion> => {
+      return request<ResearchQuestion>(`${API_BASE}/synthesis/${projectId}/questions`, {
+        method: 'POST',
+        body: JSON.stringify(question)
+      });
+    },
+    
+    update: async (projectId: string, id: string, updates: Partial<ResearchQuestion>): Promise<ResearchQuestion> => {
+      return request<ResearchQuestion>(`${API_BASE}/synthesis/${projectId}/questions/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
+    },
+    
+    delete: async (projectId: string, id: string): Promise<void> => {
+      await request<void>(`${API_BASE}/synthesis/${projectId}/questions/${id}`, {
+        method: 'DELETE'
+      });
+    }
   }
 };
 
@@ -372,13 +402,18 @@ export const api = {
   updateParticipant: researchApi.participants.update,
   deleteParticipant: researchApi.participants.delete,
   
-  // Research Questions
+  // Research Questions (global)
   getResearchQuestions: researchApi.questions.getAll,
   addResearchQuestion: researchApi.questions.create,
   updateResearchQuestion: researchApi.questions.update,
   deleteResearchQuestion: researchApi.questions.delete,
   
-  // Hypotheses
+  // Research Questions (project-scoped)
+  addResearchQuestionToProject: synthesisApi.questions.create,
+  updateResearchQuestionInProject: synthesisApi.questions.update,
+  deleteResearchQuestionFromProject: synthesisApi.questions.delete,
+  
+  // Hypotheses (global)
   getHypotheses: researchApi.hypotheses.getAll,
   addHypothesis: researchApi.hypotheses.create,
   updateHypothesis: researchApi.hypotheses.update,

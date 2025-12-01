@@ -100,6 +100,7 @@ interface Props {
   researchQuestions: ResearchQuestion[];
   onUpdate: () => void;
   projectId: string;
+  renderImportButton?: () => React.ReactNode;
 }
 
 interface ValidationMetrics {
@@ -110,7 +111,7 @@ interface ValidationMetrics {
   testing: number;
 }
 
-export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpdate, projectId }: Props) {
+export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpdate, projectId, renderImportButton }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [editingHypothesis, setEditingHypothesis] = useState<Hypothesis | null>(null);
   const [showPredictions, setShowPredictions] = useState(false);
@@ -791,7 +792,7 @@ export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpd
             </div>
             
             {/* Actions Row */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
+            <div className="flex flex-col gap-3 w-full">
               <label className="flex items-center gap-2 text-sm whitespace-nowrap">
                 <input
                   type="checkbox"
@@ -802,15 +803,16 @@ export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpd
                 Show Expected Outcomes
               </label>
 
-              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <div className="flex flex-wrap gap-2 w-full">
                 <Dialog open={isAddQuestionDialogOpen} onOpenChange={setIsAddQuestionDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={() => {
+                    <Button variant="outline" className="gap-2" onClick={() => {
                       setEditingQuestion(null);
                       setQuestionFormData({ question: '' });
                     }}>
                       <Plus className="w-4 h-4" />
-                      Add Question
+                      <span className="hidden sm:inline">Add Question</span>
+                      <span className="sm:hidden">Question</span>
                     </Button>
                   </DialogTrigger>
                 <DialogContent className="max-w-2xl">
@@ -841,6 +843,9 @@ export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpd
                 </DialogContent>
               </Dialog>
 
+                {/* Import from Library button */}
+                {renderImportButton && renderImportButton()}
+
                 <Dialog open={isAddHypothesisDialogOpen} onOpenChange={(open) => {
                   setIsAddHypothesisDialogOpen(open);
                   if (!open) {
@@ -850,7 +855,7 @@ export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpd
                   }
                 }}>
                   <DialogTrigger asChild>
-                    <Button className="gap-2 w-full sm:w-auto" onClick={() => {
+                    <Button className="gap-2" onClick={() => {
                       setEditingHypothesis(null);
                       setHypothesisFormData({
                         status: 'testing',
@@ -867,7 +872,8 @@ export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpd
                       });
                     }}>
                       <Plus className="w-4 h-4" />
-                      Add Hypothesis
+                      <span className="hidden sm:inline">Add Hypothesis</span>
+                      <span className="sm:hidden">Hypothesis</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">

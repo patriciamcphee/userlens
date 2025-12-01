@@ -125,6 +125,8 @@ export interface StickyNote {
 export interface Hypothesis {
   id: string;
   status: "validated" | "disproven" | "unclear" | "testing";
+  _importedFrom?: string;
+  _importedAt?: string;
   hypothesis: string;
   description?: string;
   evidence: string;
