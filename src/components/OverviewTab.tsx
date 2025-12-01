@@ -416,7 +416,14 @@ export function OverviewTab({ project, onUpdate, onDelete, insightsCount = 0 }: 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-slate-600 mb-1">Status</p>
-              <Badge variant={project.status === 'active' ? 'default' : 'secondary'} className="capitalize">
+              <Badge 
+                className={`capitalize ${
+                  project.status === 'active' ? 'bg-green-100 text-green-800 border-green-200' :
+                  project.status === 'completed' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                  project.status === 'archived' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                  'bg-slate-100 text-slate-800 border-slate-200'
+                }`}
+              >
                 {project.status}
               </Badge>
             </div>

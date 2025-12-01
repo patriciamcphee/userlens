@@ -416,7 +416,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                         >
                           <Copy className="w-4 h-4" />
                         </Button>
-                        <Badge variant="default">Active</Badge>
+                        <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
                       </div>
                     </div>
                     <CardDescription className="line-clamp-2">
@@ -482,7 +482,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                           >
                             <Copy className="w-4 h-4" />
                           </Button>
-                          <Badge className="bg-green-100 text-green-800 border-green-200">Completed</Badge>
+                          <Badge className="bg-blue-100 text-blue-800 border-blue-200">Completed</Badge>
                         </div>
                       </div>
                       <CardDescription className="line-clamp-2">
@@ -549,7 +549,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                           >
                             <Copy className="w-4 h-4" />
                           </Button>
-                          <Badge variant="outline">Archived</Badge>
+                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Archived</Badge>
                         </div>
                       </div>
                       <CardDescription className="line-clamp-2">
