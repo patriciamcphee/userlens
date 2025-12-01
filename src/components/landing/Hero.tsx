@@ -59,7 +59,7 @@ export function Hero({ onGetStarted }: HeroProps) {
 
             {/* Subheadline */}
             <p className="mt-6 text-lg sm:text-xl text-white/90 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              Stop drowning in interview notes. UserLens helps you synthesize research, 
+              Stop drowning in interview notes. UserLens Insights helps you synthesize research, 
               spot patterns, and deliver insights that drive product decisions.
             </p>
 
@@ -136,7 +136,7 @@ export function Hero({ onGetStarted }: HeroProps) {
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
                       <span className="text-white font-bold text-xs">UL</span>
                     </div>
-                    <span className="font-semibold text-slate-900 text-sm">UserLens</span>
+                    <span className="font-semibold text-slate-900 text-sm">UserLens Insights</span>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
                     <span className="text-indigo-700 text-xs font-medium">PM</span>
