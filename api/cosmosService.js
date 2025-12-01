@@ -572,26 +572,33 @@ const synthesis = {
   },
 
   /**
-   * Update item in project synthesis
-   */
-  async updateItem(projectId, type, itemId, updates) {
-    const items = await this.get(projectId, type);
-    const index = items.findIndex(i => i.id === itemId);
-    if (index === -1) throw new Error(`Item not found: ${itemId}`);
-    
-    items[index] = { ...items[index], ...updates, id: itemId };
-    await this.set(projectId, type, items);
-    return items[index];
-  },
+ * Update item in project synthesis
+ */
+async updateItem(projectId, type, itemId, updates) {
+  const items = await this.get(projectId, type);
+  // Convert both to strings to ensure comparison works
+  const index = items.findIndex(i => String(i.id) === String(itemId));
+  if (index === -1) throw new Error(`Item not found: ${itemId}`);
+  
+  items[index] = { ...items[index], ...updates, id: itemId };
+  await this.set(projectId, type, items);
+  return items[index];
+},
 
   /**
-   * Delete item from project synthesis
-   */
-  async deleteItem(projectId, type, itemId) {
-    const items = await this.get(projectId, type);
-    const filtered = items.filter(i => i.id !== itemId);
-    await this.set(projectId, type, filtered);
-  },
+ * Delete item from project synthesis
+ */
+async deleteItem(projectId, type, itemId) {
+  const items = await this.get(projectId, type);
+  // Convert both to strings to ensure comparison works
+  const filtered = items.filter(i => String(i.id) !== String(itemId));
+  
+  if (filtered.length === items.length) {
+    throw new Error(`Item not found: ${itemId}`);
+  }
+  
+  await this.set(projectId, type, filtered);
+},
 
   /**
    * Initialize synthesis data for a new project
