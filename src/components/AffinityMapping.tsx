@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { Plus, Edit2, Trash2, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -18,13 +18,42 @@ const typeColors = {
   quote: "bg-purple-200 border-purple-300 text-purple-900",
 };
 
-const clusterIcons = {
+const clusterIcons: Record<string, string> = {
   "Onboarding Barriers": "🚧",
   "Template Pain Points": "📝",
   "Documentation Gaps": "📚",
   "What Works Well": "✅",
   "Emerging Opportunities": "💡",
+  "User Frustrations": "😤",
+  "Feature Requests": "🎯",
+  "Workflow Issues": "🔄",
+  "Learning Curve": "📈",
+  "Integration Challenges": "🔗",
+  "Performance Concerns": "⚡",
+  "UI/UX Feedback": "🎨",
+  "Communication Gaps": "💬",
+  "Success Stories": "🏆",
+  "Quick Wins": "🚀",
 };
+
+// Predefined clusters that users can choose from
+const predefinedClusters = [
+  { name: "Onboarding Barriers", icon: "🚧", description: "Issues users face when getting started" },
+  { name: "Template Pain Points", icon: "📝", description: "Problems with templates or boilerplates" },
+  { name: "Documentation Gaps", icon: "📚", description: "Missing or unclear documentation" },
+  { name: "What Works Well", icon: "✅", description: "Positive feedback and successes" },
+  { name: "Emerging Opportunities", icon: "💡", description: "New ideas and potential improvements" },
+  { name: "User Frustrations", icon: "😤", description: "Pain points and annoyances" },
+  { name: "Feature Requests", icon: "🎯", description: "Requested new features" },
+  { name: "Workflow Issues", icon: "🔄", description: "Problems in user workflows" },
+  { name: "Learning Curve", icon: "📈", description: "Difficulty learning the product" },
+  { name: "Integration Challenges", icon: "🔗", description: "Issues connecting with other tools" },
+  { name: "Performance Concerns", icon: "⚡", description: "Speed and performance issues" },
+  { name: "UI/UX Feedback", icon: "🎨", description: "Interface and experience feedback" },
+  { name: "Communication Gaps", icon: "💬", description: "Information sharing issues" },
+  { name: "Success Stories", icon: "🏆", description: "User wins and achievements" },
+  { name: "Quick Wins", icon: "🚀", description: "Easy improvements to implement" },
+];
 
 interface Props {
   stickyNotes: StickyNote[];
@@ -46,11 +75,28 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
   const [newClusterName, setNewClusterName] = useState("");
   const [isAddClusterDialogOpen, setIsAddClusterDialogOpen] = useState(false);
   const [newStandaloneClusterName, setNewStandaloneClusterName] = useState("");
+  const [selectedPredefinedClusters, setSelectedPredefinedClusters] = useState<Set<string>>(new Set());
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   // Combine clusters from notes and empty clusters
   const noteClusters = Array.from(new Set(stickyNotes.map(note => note.cluster)));
   const allClusters = Array.from(new Set([...noteClusters, ...emptyClusters]));
   const clusters = allClusters;
+
+  // Filter out predefined clusters that already exist
+  const availablePredefinedClusters = predefinedClusters.filter(
+    pc => !clusters.includes(pc.name)
+  );
+
+  const togglePredefinedCluster = (clusterName: string) => {
+    const newSelected = new Set(selectedPredefinedClusters);
+    if (newSelected.has(clusterName)) {
+      newSelected.delete(clusterName);
+    } else {
+      newSelected.add(clusterName);
+    }
+    setSelectedPredefinedClusters(newSelected);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,22 +160,53 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
     }
   };
 
-  const handleAddCluster = async (e: React.FormEvent) => {
+  const handleAddClusters = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (newStandaloneClusterName.trim()) {
-        const project = await api.getProject(projectId);
-        const updatedEmptyClusters = [...(project.emptyClusters || []), newStandaloneClusterName.trim()];
-        await api.updateProject(projectId, { ...project, emptyClusters: updatedEmptyClusters });
-        toast.success("Cluster added!");
-        setIsAddClusterDialogOpen(false);
-        setNewStandaloneClusterName("");
-        onUpdate();
+      const project = await api.getProject(projectId);
+      const currentEmptyClusters = project.emptyClusters || [];
+      
+      // Collect all new clusters to add
+      const newClusters: string[] = [];
+      
+      // Add selected predefined clusters
+      selectedPredefinedClusters.forEach(clusterName => {
+        if (!currentEmptyClusters.includes(clusterName) && !clusters.includes(clusterName)) {
+          newClusters.push(clusterName);
+        }
+      });
+      
+      // Add custom cluster if provided
+      if (showCustomInput && newStandaloneClusterName.trim()) {
+        const customName = newStandaloneClusterName.trim();
+        if (!currentEmptyClusters.includes(customName) && !clusters.includes(customName)) {
+          newClusters.push(customName);
+        }
       }
+      
+      if (newClusters.length > 0) {
+        const updatedEmptyClusters = [...currentEmptyClusters, ...newClusters];
+        await api.updateProject(projectId, { ...project, emptyClusters: updatedEmptyClusters });
+        toast.success(`Added ${newClusters.length} cluster${newClusters.length > 1 ? 's' : ''}!`);
+      } else {
+        toast.info("No new clusters to add");
+      }
+      
+      setIsAddClusterDialogOpen(false);
+      setNewStandaloneClusterName("");
+      setSelectedPredefinedClusters(new Set());
+      setShowCustomInput(false);
+      onUpdate();
     } catch (error) {
       console.error("Error adding cluster:", error);
       toast.error("Failed to add cluster");
     }
+  };
+
+  const resetAddClusterDialog = () => {
+    setNewStandaloneClusterName("");
+    setSelectedPredefinedClusters(new Set());
+    setShowCustomInput(false);
   };
 
   return (
@@ -137,32 +214,119 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h2 className="flex-shrink-0">Affinity Mapping/Pattern Recognition</h2>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <Dialog open={isAddClusterDialogOpen} onOpenChange={setIsAddClusterDialogOpen}>
+          <Dialog open={isAddClusterDialogOpen} onOpenChange={(open) => {
+            setIsAddClusterDialogOpen(open);
+            if (!open) resetAddClusterDialog();
+          }}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline" className="gap-2">
                 <Plus className="w-4 h-4" />
                 Add Cluster
               </Button>
             </DialogTrigger>
-            <DialogContent aria-describedby={undefined}>
+            <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
               <DialogHeader>
-                <DialogTitle>Add New Cluster</DialogTitle>
+                <DialogTitle>Add Clusters</DialogTitle>
+                <DialogDescription>
+                  Select from predefined clusters or create your own.
+                </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleAddCluster} className="space-y-4">
-                <div>
-                  <Label htmlFor="newClusterName">Cluster Name</Label>
-                  <Input
-                    id="newClusterName"
-                    value={newStandaloneClusterName}
-                    onChange={(e) => setNewStandaloneClusterName(e.target.value)}
-                    placeholder="Enter new cluster name..."
-                    autoFocus
-                    required
-                  />
+              <form onSubmit={handleAddClusters} className="flex-1 overflow-hidden flex flex-col">
+                {/* Predefined Clusters */}
+                {availablePredefinedClusters.length > 0 && (
+                  <div className="mb-4">
+                    <Label className="mb-2 block">Predefined Clusters</Label>
+                    <div className="max-h-64 overflow-y-auto border rounded-lg p-2 space-y-1">
+                      {availablePredefinedClusters.map((cluster) => (
+                        <label
+                          key={cluster.name}
+                          className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
+                            selectedPredefinedClusters.has(cluster.name)
+                              ? 'bg-indigo-50 border border-indigo-200'
+                              : 'hover:bg-slate-50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedPredefinedClusters.has(cluster.name)}
+                            onChange={() => togglePredefinedCluster(cluster.name)}
+                            className="rounded"
+                          />
+                          <span className="text-xl">{cluster.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-slate-900">{cluster.name}</div>
+                            <div className="text-xs text-slate-500 truncate">{cluster.description}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {availablePredefinedClusters.length === 0 && (
+                  <p className="text-sm text-slate-500 mb-4">
+                    All predefined clusters have already been added to this project.
+                  </p>
+                )}
+
+                {/* Custom Cluster */}
+                <div className="border-t pt-4">
+                  {!showCustomInput ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={() => setShowCustomInput(true)}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Custom Cluster
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="customClusterName">Custom Cluster Name</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="customClusterName"
+                          value={newStandaloneClusterName}
+                          onChange={(e) => setNewStandaloneClusterName(e.target.value)}
+                          placeholder="Enter custom cluster name..."
+                          autoFocus
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setShowCustomInput(false);
+                            setNewStandaloneClusterName("");
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <Button type="submit" className="w-full">
-                  Add Cluster
-                </Button>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-4 border-t mt-4">
+                  <span className="text-sm text-slate-600">
+                    {selectedPredefinedClusters.size + (showCustomInput && newStandaloneClusterName.trim() ? 1 : 0)} cluster(s) selected
+                  </span>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" onClick={() => setIsAddClusterDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit"
+                      disabled={selectedPredefinedClusters.size === 0 && (!showCustomInput || !newStandaloneClusterName.trim())}
+                      className="gap-2"
+                    >
+                      <Check className="w-4 h-4" />
+                      Add Selected
+                    </Button>
+                  </div>
+                </div>
               </form>
             </DialogContent>
           </Dialog>
@@ -263,7 +427,10 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
                       <SelectContent>
                         {clusters.map((cluster) => (
                           <SelectItem key={cluster} value={cluster}>
-                            {cluster}
+                            <div className="flex items-center gap-2">
+                              <span>{clusterIcons[cluster] || "📌"}</span>
+                              <span>{cluster}</span>
+                            </div>
                           </SelectItem>
                         ))}
                         <SelectItem value="__create_new__" className="text-blue-600 font-medium">
@@ -298,7 +465,7 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
             }}
           >
             <div className="flex items-center gap-2 sticky top-0 bg-white pb-2 z-10">
-              <span>{clusterIcons[cluster as keyof typeof clusterIcons] || "📌"}</span>
+              <span>{clusterIcons[cluster] || "📌"}</span>
               <h3 className="text-sm">{cluster}</h3>
             </div>
             <div className="space-y-2">
