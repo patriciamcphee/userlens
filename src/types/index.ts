@@ -143,6 +143,8 @@ export interface ResearchQuestion {
   id: string;
   question: string;
   order: number;
+  _importedFrom?: string;
+  _importedAt?: string;
 }
 
 export interface SynthesisData {
