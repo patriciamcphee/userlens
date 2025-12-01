@@ -75,7 +75,7 @@ export function ParticipantLensLogo({
           className="font-bold text-gray-600"
           style={{ fontSize: `${dimensions.fontSize}px` }}
         >
-          UserLens.app
+          User-Lens.io
         </span>
         {showTagline && (
           <span 
@@ -99,7 +99,7 @@ export function ParticipantLensLogo({
             className="font-bold text-gray-600 leading-tight"
             style={{ fontSize: `${dimensions.fontSize}px` }}
           >
-            UserLens.app
+            User-Lens.io
           </span>
           {showTagline && (
             <span 
@@ -121,7 +121,7 @@ export function ParticipantLensLogo({
             className="font-bold text-gray-600 leading-tight"
             style={{ fontSize: `${dimensions.fontSize}px` }}
           >
-            UserLens.app
+            User-Lens.io
           </span>
           {showTagline && (
             <span 
