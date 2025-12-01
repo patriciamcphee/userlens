@@ -110,7 +110,7 @@ export function QuestionBankDialog({ open, onClose, onAdd }: QuestionBankDialogP
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Question Bank</DialogTitle>
           <DialogDescription>

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Button } from "./ui/button";
-import { Plus, Calendar, Users, Clock, FolderOpen, TrendingUp, ChevronDown, ChevronRight, X, Target, FileText, Filter, Copy } from "lucide-react";
+import { Plus, Calendar, Users, Clock, FolderOpen, TrendingUp, ChevronDown, ChevronRight, X, Target, FileText, Filter, Copy, CheckSquare, Lightbulb } from "lucide-react";
 import { Project, Participant } from "../types";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { useState } from "react";
@@ -110,9 +110,26 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
     setIsCreateDialogOpen(true);
   };
 
+  // Helper function to get status badge styling
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return <Badge className="bg-slate-100 text-slate-800 border-slate-200">Draft</Badge>;
+      case 'active':
+        return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
+      case 'completed':
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Completed</Badge>;
+      case 'archived':
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Archived</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
   // Helper function to render project card content
   const renderProjectCardContent = (project: Project, type: 'draft' | 'active' | 'completed' | 'archived') => {
     const dateRange = formatDateRange(project.startDate, project.endDate);
+    const projectSynthesis = synthesisData?.find(s => s.projectId === project.id);
     
     const getDateLabel = () => {
       switch (type) {
@@ -126,6 +143,22 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
     
     return (
       <div className="space-y-2 text-sm text-slate-600">
+        {/* Participants, Tasks, Insights row */}
+        <div className="flex items-center gap-4 text-xs text-slate-500 pb-2 border-b border-slate-100">
+          <div className="flex items-center gap-1">
+            <Users className="w-3.5 h-3.5" />
+            <span>{project.participants?.length || 0} participants</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <CheckSquare className="w-3.5 h-3.5" />
+            <span>{project.tasks?.length || 0} tasks</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Lightbulb className="w-3.5 h-3.5" />
+            <span>{projectSynthesis?.notesCount || 0} insights</span>
+          </div>
+        </div>
+        
         <div className="flex items-center justify-between">
           <span>Sessions</span>
           <span>{project.completedSessions}/{project.totalSessions}</span>
@@ -151,6 +184,52 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
       </div>
     );
   };
+
+  // Helper function to render a project card
+  const renderProjectCard = (project: Project, type: 'draft' | 'active' | 'completed' | 'archived') => (
+    <Card 
+      key={project.id}
+      className={`hover:shadow-lg transition-shadow cursor-pointer ${
+        type === 'draft' ? 'opacity-80' : 
+        type === 'completed' ? 'opacity-90' : 
+        type === 'archived' ? 'opacity-75' : ''
+      }`}
+      onClick={() => navigate(`/app/project/${project.id}/overview`)}
+    >
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-slate-900">{project.name}</CardTitle>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => handleDuplicateProject(project, e)}
+              className="h-7 w-7 p-0"
+              title="Duplicate project"
+            >
+              <Copy className="w-4 h-4" />
+            </Button>
+            {getStatusBadge(type)}
+          </div>
+        </div>
+        <CardDescription className="line-clamp-2">
+          {project.description || "No description"}
+        </CardDescription>
+        {project.tags && project.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {project.tags.map((tag, index) => (
+              <Badge key={index} variant="outline" className="text-xs bg-slate-100">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </CardHeader>
+      <CardContent>
+        {renderProjectCardContent(project, type)}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -310,7 +389,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
                         name="micOption"
                         value="disabled"
                         checked={newProject.micOption === 'disabled'}
-                        onChange={(e) => setNewProject({ ...newProject, micOption: e.target.value as 'disabled' })}
+                        onChange={(e) => setNewProject({ ...newProject, micOption: e.target.value as 'optional' })}
                         className="w-4 h-4 text-blue-600"
                       />
                       <span className="text-sm">Disabled</span>
@@ -409,46 +488,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
           <div className="mb-8">
             <h2 className="text-slate-900 mb-4">Draft Projects</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {draftProjects.map((project) => (
-                <Card 
-                  key={project.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer opacity-80"
-                  onClick={() => navigate(`/app/project/${project.id}/overview`)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-slate-900">{project.name}</CardTitle>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleDuplicateProject(project, e)}
-                          className="h-7 w-7 p-0"
-                          title="Duplicate project"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                        <Badge className="bg-slate-100 text-slate-800 border-slate-200">Draft</Badge>
-                      </div>
-                    </div>
-                    <CardDescription className="line-clamp-2">
-                      {project.description || "No description"}
-                    </CardDescription>
-                    {project.tags && project.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {project.tags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs bg-slate-100">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {renderProjectCardContent(project, 'draft')}
-                  </CardContent>
-                </Card>
-              ))}
+              {draftProjects.map((project) => renderProjectCard(project, 'draft'))}
             </div>
           </div>
         )}
@@ -458,46 +498,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
           <div className="mb-8">
             <h2 className="text-slate-900 mb-4">Active Projects</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeProjects.map((project) => (
-                <Card 
-                  key={project.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/app/project/${project.id}/overview`)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-slate-900">{project.name}</CardTitle>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleDuplicateProject(project, e)}
-                          className="h-7 w-7 p-0"
-                          title="Duplicate project"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                        <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
-                      </div>
-                    </div>
-                    <CardDescription className="line-clamp-2">
-                      {project.description || "No description"}
-                    </CardDescription>
-                    {project.tags && project.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {project.tags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs bg-slate-100">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {renderProjectCardContent(project, 'active')}
-                  </CardContent>
-                </Card>
-              ))}
+              {activeProjects.map((project) => renderProjectCard(project, 'active'))}
             </div>
           </div>
         )}
@@ -524,46 +525,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {completedProjects.map((project) => (
-                  <Card 
-                    key={project.id}
-                    className="hover:shadow-lg transition-shadow cursor-pointer opacity-90"
-                    onClick={() => navigate(`/app/project/${project.id}/overview`)}
-                  >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="text-slate-900">{project.name}</CardTitle>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => handleDuplicateProject(project, e)}
-                            className="h-7 w-7 p-0"
-                            title="Duplicate project"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          <Badge className="bg-blue-100 text-blue-800 border-blue-200">Completed</Badge>
-                        </div>
-                      </div>
-                      <CardDescription className="line-clamp-2">
-                        {project.description || "No description"}
-                      </CardDescription>
-                      {project.tags && project.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {project.tags.map((tag, index) => (
-                            <Badge key={index} variant="outline" className="text-xs bg-slate-100">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </CardHeader>
-                    <CardContent>
-                      {renderProjectCardContent(project, 'completed')}
-                    </CardContent>
-                  </Card>
-                ))}
+                {completedProjects.map((project) => renderProjectCard(project, 'completed'))}
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -591,46 +553,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {archivedProjects.map((project) => (
-                  <Card 
-                    key={project.id}
-                    className="hover:shadow-lg transition-shadow cursor-pointer opacity-75"
-                    onClick={() => navigate(`/app/project/${project.id}/overview`)}
-                  >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="text-slate-900">{project.name}</CardTitle>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => handleDuplicateProject(project, e)}
-                            className="h-7 w-7 p-0"
-                            title="Duplicate project"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Archived</Badge>
-                        </div>
-                      </div>
-                      <CardDescription className="line-clamp-2">
-                        {project.description || "No description"}
-                      </CardDescription>
-                      {project.tags && project.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {project.tags.map((tag, index) => (
-                            <Badge key={index} variant="outline" className="text-xs bg-slate-100">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </CardHeader>
-                    <CardContent>
-                      {renderProjectCardContent(project, 'archived')}
-                    </CardContent>
-                  </Card>
-                ))}
+                {archivedProjects.map((project) => renderProjectCard(project, 'archived'))}
               </div>
             </CollapsibleContent>
           </Collapsible>
