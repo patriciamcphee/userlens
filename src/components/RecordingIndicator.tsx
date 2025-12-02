@@ -19,13 +19,20 @@ import {
 } from 'lucide-react';
 import { SessionRecording } from '../types';
 
-// Platform icons - you could replace these with actual brand icons
+// Platform icons
 const PlatformIcons: Record<string, React.ReactNode> = {
-  zoom: <Video className="h-3 w-3" />,
-  teams: <Video className="h-3 w-3" />,
-  meet: <Video className="h-3 w-3" />,
-  webex: <Video className="h-3 w-3" />,
-  browser: <Video className="h-3 w-3" />,
+  zoom: <Play className="h-3 w-3" />,
+  teams: <Play className="h-3 w-3" />,
+  meet: <Play className="h-3 w-3" />,
+  webex: <Play className="h-3 w-3" />,
+  browser: <Play className="h-3 w-3" />,
+  youtube: <Play className="h-3 w-3" />,
+  vimeo: <Play className="h-3 w-3" />,
+  loom: <Play className="h-3 w-3" />,
+  sharepoint: <Play className="h-3 w-3" />,
+  gdrive: <Play className="h-3 w-3" />,
+  dropbox: <Play className="h-3 w-3" />,
+  other: <Play className="h-3 w-3" />,
 };
 
 const PlatformNames: Record<string, string> = {
@@ -34,6 +41,13 @@ const PlatformNames: Record<string, string> = {
   meet: 'Meet',
   webex: 'Webex',
   browser: 'Browser',
+  youtube: 'YouTube',
+  vimeo: 'Vimeo',
+  loom: 'Loom',
+  sharepoint: 'SharePoint',
+  gdrive: 'Google Drive',
+  dropbox: 'Dropbox',
+  other: 'External',
 };
 
 // Re-export types from types.ts for convenience
@@ -87,7 +101,7 @@ export function RecordingIndicator({
                 <span className="sm:hidden">Add</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent side="top" sideOffset={5} className="z-[9999]">
               <p>Add a recording URL</p>
             </TooltipContent>
           </Tooltip>
@@ -115,7 +129,7 @@ export function RecordingIndicator({
               Pending
             </span>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="top" sideOffset={5} className="z-[9999]">
             <p>Recording will be available after the session</p>
           </TooltipContent>
         </Tooltip>
@@ -134,7 +148,7 @@ export function RecordingIndicator({
               Uploading...
             </span>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="top" sideOffset={5} className="z-[9999]">
             <p>Recording is being uploaded</p>
           </TooltipContent>
         </Tooltip>
@@ -153,7 +167,7 @@ export function RecordingIndicator({
               Processing...
             </span>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="top" sideOffset={5} className="z-[9999]">
             <p>Recording is being processed and will be available soon</p>
           </TooltipContent>
         </Tooltip>
@@ -164,29 +178,23 @@ export function RecordingIndicator({
   // External recording (stored on Zoom/Teams/etc.)
   if (recording.status === 'external' && recording.externalUrl) {
     const platformName = recording.platform ? PlatformNames[recording.platform] : 'External';
-    const platformIcon = recording.platform ? PlatformIcons[recording.platform] : <ExternalLink className="h-3 w-3" />;
+    const platformIcon = recording.platform ? PlatformIcons[recording.platform] : <Play className="h-3 w-3" />;
+    const tooltipText = recording.duration 
+      ? `Open recording in ${platformName} (${formatDuration(recording.duration)})`
+      : `Open recording in ${platformName}`;
 
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-6 px-2 text-xs gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 ${className}`}
-              onClick={() => onExternalOpen?.(recording.externalUrl!)}
-            >
-              {platformIcon}
-              {platformName}
-              <ExternalLink className="h-2.5 w-2.5 ml-0.5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Open recording in {platformName}</p>
-            {recording.duration && <p className="text-xs text-slate-400">{formatDuration(recording.duration)}</p>}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Button
+        variant="ghost"
+        size="sm"
+        title={tooltipText}
+        className={`h-6 px-2 text-xs gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 ${className}`}
+        onClick={() => onExternalOpen?.(recording.externalUrl!)}
+      >
+        {platformIcon}
+        {platformName}
+        <ExternalLink className="h-2.5 w-2.5 ml-0.5" />
+      </Button>
     );
   }
 
@@ -211,7 +219,7 @@ export function RecordingIndicator({
               )}
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="top" sideOffset={5} className="z-[9999]">
             <p>Play recording</p>
             {recording.hasTranscript && <p className="text-xs text-slate-400">Transcript available</p>}
           </TooltipContent>

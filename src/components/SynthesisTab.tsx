@@ -108,6 +108,8 @@ export function SynthesisTab({ projectId }: SynthesisTabProps) {
           npsScore: p.npsScore,
           interviewCompleted: p.interviewCompleted || false,
           usabilityCompleted: p.usabilityCompleted || false,
+          interviewRecording: p.interviewRecording,   // ← ADD THIS
+          usabilityRecording: p.usabilityRecording,   // ← ADD THIS
         };
       });
       

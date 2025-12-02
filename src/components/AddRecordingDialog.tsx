@@ -273,11 +273,7 @@ export function AddRecordingDialog({
     const recording: SessionRecording = {
       status: 'external',
       storageType: 'external',
-      platform: (platform === 'youtube' || platform === 'vimeo' || platform === 'loom' || 
-                 platform === 'sharepoint' || platform === 'gdrive' || platform === 'dropbox' || 
-                 platform === 'other') 
-        ? undefined  // These aren't in RecordingPlatform type
-        : platform as RecordingPlatform,
+      platform: platform as any,  // Store all platform types for display purposes
       externalUrl: url,
       duration: parseDuration(duration),
       hasTranscript: false,
