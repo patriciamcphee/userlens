@@ -234,13 +234,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData }: Dashboar
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
-      <div className="max-w-7xl mx-auto px-6 pt-6 pb-6">
-        <Breadcrumbs 
-          items={[
-            { label: "Dashboard" }
-          ]}
-        />
-        
+      <div className="max-w-7xl mx-auto px-6 pt-6 pb-6">        
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4">
           <div>
             <h1 className="text-3xl text-slate-900 mb-2">User Research Projects</h1>
