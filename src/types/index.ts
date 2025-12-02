@@ -49,6 +49,30 @@ export interface Task {
 }
 
 // ============================================
+// RECORDING TYPES
+// ============================================
+
+export type RecordingStatus = 'none' | 'scheduled' | 'external' | 'uploading' | 'processing' | 'ready';
+export type RecordingStorageType = 'external' | 'internal';
+export type RecordingPlatform = 'zoom' | 'teams' | 'meet' | 'webex' | 'browser';
+
+export interface SessionRecording {
+  status: RecordingStatus;
+  storageType?: RecordingStorageType;
+  platform?: RecordingPlatform;
+  externalUrl?: string;         // For external: link to Zoom/Teams/etc.
+  blobUrl?: string;             // For internal: Azure Blob Storage URL
+  duration?: number;            // Duration in seconds
+  hasTranscript?: boolean;
+  transcriptStatus?: 'none' | 'processing' | 'ready';
+  transcriptUrl?: string;       // URL to transcript file
+  recordedAt?: string;          // ISO timestamp of when recording was made
+  uploadedAt?: string;          // ISO timestamp of when recording was uploaded
+  fileSize?: number;            // File size in bytes
+  mimeType?: string;            // e.g., 'video/mp4', 'video/webm'
+}
+
+// ============================================
 // PARTICIPANT TYPES
 // ============================================
 
@@ -63,6 +87,8 @@ export interface SessionHistoryEntry {
   recordingUrl?: string;
   recordingStoragePath?: string;
   completionRate: number; // percentage
+  startTime: string;
+  clickCount?: number;
 }
 
 export interface ProjectParticipant {
@@ -77,9 +103,11 @@ export interface ProjectParticipant {
   interviewTime?: string;
   interviewDuration?: string;
   interviewCompleted?: boolean; // Track if interview is completed
+  interviewRecording?: SessionRecording; // Recording for interview session
   usabilityDate?: string;
   usabilityTime?: string;
   usabilityCompleted?: boolean; // Track if usability test is completed
+  usabilityRecording?: SessionRecording; // Recording for usability session
   addedAt: string;
   status?: 'invited' | 'completed' | 'in-progress' | 'scheduled' | 'no-show'; // Optional - automatically set to "invited" when interview date/time is entered
   sessionId?: string;
@@ -113,6 +141,8 @@ export interface Participant {
   status: "completed" | "scheduled" | "in-progress" | "invited" | "no-show";
   susScore?: number;
   npsScore?: number;
+  interviewRecording?: SessionRecording; // Recording for interview session
+  usabilityRecording?: SessionRecording; // Recording for usability session
 }
 
 export interface StickyNote {
@@ -302,6 +332,16 @@ export interface OrganizationSettings {
   requireApprovalForJoin: boolean;
   sessionRecordingEnabled: boolean;
   dataRetentionDays: number;
+  // Recording storage settings
+  recordingStorage: RecordingStorageSettings;
+}
+
+export interface RecordingStorageSettings {
+  mode: 'external' | 'internal' | 'both';  // Where recordings are stored
+  externalPlatforms: RecordingPlatform[];  // Which external platforms are enabled
+  autoImport: boolean;                      // Auto-import from connected platforms
+  retentionDays: number;                    // How long to keep recordings
+  maxStorageGB?: number;                    // Storage limit for internal recordings
 }
 
 export interface OrganizationMember {
@@ -336,6 +376,17 @@ export interface User {
   lastActiveAt: string;
   createdAt: string;
   updatedAt: string;
+  // Connected platform accounts for recording import
+  connectedPlatforms?: ConnectedPlatform[];
+}
+
+export interface ConnectedPlatform {
+  platform: RecordingPlatform;
+  accountId: string;
+  accountEmail: string;
+  connectedAt: string;
+  lastSyncAt?: string;
+  status: 'active' | 'expired' | 'revoked';
 }
 
 export interface UserSettings {
@@ -407,6 +458,9 @@ export interface ProjectSettings {
   beforeMessage?: string;
   duringMessage?: string;
   afterMessage?: string;
+  // Recording settings at project level
+  recordingMode?: 'external' | 'internal' | 'both';
+  defaultRecordingPlatform?: RecordingPlatform;
 }
 
 // Project member with explicit access level (for future granular permissions)
@@ -459,7 +513,10 @@ export type ActivityType =
   | 'team_member_added'
   | 'team_member_removed'
   | 'team_created'
-  | 'settings_changed';
+  | 'settings_changed'
+  | 'recording_uploaded'
+  | 'recording_imported'
+  | 'recording_transcribed';
 
 export interface Activity {
   id: string;

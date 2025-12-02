@@ -13,6 +13,7 @@ import { api } from "../utils/api";
 import { toast } from "sonner";
 import type { Participant } from "../types";
 import { format } from "date-fns";
+import { RecordingIndicator, SessionRecording } from "./RecordingIndicator";
 
 const segmentColors: Record<string, string> = {
   "Active": "bg-green-100 text-green-700 border-green-200",
@@ -42,17 +43,30 @@ function getNPSLabel(score: number): { category: string; color: string } {
   return { category: "Detractor", color: "text-red-600" };
 }
 
+// Extended Participant type with recording fields
+interface ParticipantWithRecordings extends Participant {
+  interviewRecording?: SessionRecording;
+  usabilityRecording?: SessionRecording;
+}
+
 interface Props {
-  participants: Participant[];
+  participants: ParticipantWithRecordings[];
   onUpdate: () => void;
   projectId?: string;
   readOnly?: boolean;
+  onPlayRecording?: (participant: ParticipantWithRecordings, sessionType: 'interview' | 'usability') => void;
 }
 
-export function ParticipantTracking({ participants, onUpdate, projectId, readOnly = false }: Props) {
+export function ParticipantTracking({ 
+  participants, 
+  onUpdate, 
+  projectId, 
+  readOnly = false,
+  onPlayRecording 
+}: Props) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null);
-  const [formData, setFormData] = useState<Partial<Participant>>({
+  const [editingParticipant, setEditingParticipant] = useState<ParticipantWithRecordings | null>(null);
+  const [formData, setFormData] = useState<Partial<ParticipantWithRecordings>>({
     segment: "Active",
     role: "",
     date: "",
@@ -128,7 +142,7 @@ export function ParticipantTracking({ participants, onUpdate, projectId, readOnl
           return max;
         }, 0);
         const newId = `P${String(maxNum + 1).padStart(2, "0")}`;
-        await api.addParticipant({ ...formData, id: newId, name: newId });
+        await api.createParticipant({ ...formData, id: newId, name: newId });
         toast.success("Participant added!");
       }
       setIsAddDialogOpen(false);
@@ -147,13 +161,13 @@ export function ParticipantTracking({ participants, onUpdate, projectId, readOnl
     }
   };
 
-  const handleEdit = (participant: Participant) => {
+  const handleEdit = (participant: ParticipantWithRecordings) => {
     setEditingParticipant(participant);
     setFormData(participant);
     setIsAddDialogOpen(true);
   };
 
-  const handleToggleStatus = async (participant: Participant) => {
+  const handleToggleStatus = async (participant: ParticipantWithRecordings) => {
     try {
       const newStatus = participant.status === "completed" ? "invited" : "completed";
       
@@ -176,6 +190,18 @@ export function ParticipantTracking({ participants, onUpdate, projectId, readOnl
       console.error("Error updating status:", error);
       toast.error("Failed to update status");
     }
+  };
+
+  // Handle playing a recording
+  const handlePlayRecording = (participant: ParticipantWithRecordings, sessionType: 'interview' | 'usability') => {
+    if (onPlayRecording) {
+      onPlayRecording(participant, sessionType);
+    }
+  };
+
+  // Handle opening external recording
+  const handleExternalOpen = (url: string) => {
+    window.open(url, '_blank');
   };
 
   return (
@@ -490,36 +516,55 @@ export function ParticipantTracking({ participants, onUpdate, projectId, readOnl
                 <div className="flex items-center gap-1">
                   <span className="text-slate-500">Role:</span> {participant.role}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  {participant.interviewCompleted ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
-                  ) : (
-                    <Circle className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
-                  )}
-                  <span className="text-slate-500">Interview:</span>
-                  <span>
-                    {participant.date && participant.time 
-                      ? `${participant.date} at ${participant.time}` 
-                      : participant.date 
-                      ? participant.date 
-                      : 'TBD'}
-                  </span>
+                
+                {/* Interview Row with Recording Indicator */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    {participant.interviewCompleted ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                    ) : (
+                      <Circle className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
+                    )}
+                    <span className="text-slate-500 flex-shrink-0">Interview:</span>
+                    <span className="truncate">
+                      {participant.date && participant.time 
+                        ? `${participant.date} at ${participant.time}` 
+                        : participant.date 
+                        ? participant.date 
+                        : 'TBD'}
+                    </span>
+                  </div>
+                  <RecordingIndicator
+                    recording={participant.interviewRecording}
+                    onPlay={() => handlePlayRecording(participant, 'interview')}
+                    onExternalOpen={handleExternalOpen}
+                  />
                 </div>
-                <div className="flex items-center gap-1.5">
-                  {participant.usabilityCompleted ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
-                  ) : (
-                    <Circle className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
-                  )}
-                  <span className="text-slate-500">Testing:</span>
-                  <span>
-                    {participant.usabilityDate && participant.usabilityTime 
-                      ? `${participant.usabilityDate} at ${participant.usabilityTime}` 
-                      : participant.usabilityDate 
-                      ? participant.usabilityDate 
-                      : 'TBD'}
-                  </span>
+                
+                {/* Testing Row with Recording Indicator */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    {participant.usabilityCompleted ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                    ) : (
+                      <Circle className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
+                    )}
+                    <span className="text-slate-500 flex-shrink-0">Testing:</span>
+                    <span className="truncate">
+                      {participant.usabilityDate && participant.usabilityTime 
+                        ? `${participant.usabilityDate} at ${participant.usabilityTime}` 
+                        : participant.usabilityDate 
+                        ? participant.usabilityDate 
+                        : 'TBD'}
+                    </span>
+                  </div>
+                  <RecordingIndicator
+                    recording={participant.usabilityRecording}
+                    onPlay={() => handlePlayRecording(participant, 'usability')}
+                    onExternalOpen={handleExternalOpen}
+                  />
                 </div>
+                
                 <div className="flex items-center gap-1 mt-2 pt-2 border-t border-slate-200">
                   <span className="text-slate-500">SUS:</span> 
                   {participant.susScore !== undefined ? (
