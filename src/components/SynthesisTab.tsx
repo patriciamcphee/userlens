@@ -124,14 +124,14 @@ export function SynthesisTab({ projectId }: SynthesisTabProps) {
         const newData = await api.getSynthesisData(projectId);
         setStickyNotes(newData.notes);
         setHypotheses(newData.hypotheses);
-        setResearchQuestions(newData.researchQuestions || []);
+        setResearchQuestions(newData.questions || []);
         setEmptyClusters(newData.clusters || []);
       } else {
         setStickyNotes(data.notes);
         setHypotheses(data.hypotheses);
         
         // Set research questions (no default fallback)
-        setResearchQuestions(data.researchQuestions || []);
+        setResearchQuestions(data.questions || []);
         setEmptyClusters(data.clusters || []);
       }
     } catch (error) {

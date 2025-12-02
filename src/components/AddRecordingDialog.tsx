@@ -259,7 +259,13 @@ export function AddRecordingDialog({
   }, [url]);
 
   const handleSave = () => {
+    console.log("AddRecordingDialog handleSave called");
+    console.log("URL:", url);
+    console.log("Platform:", platform);
+    console.log("Duration:", duration);
+
     if (!url || !isValidUrl(url)) {
+      console.log("URL validation failed");
       setUrlError('Please enter a valid URL');
       return;
     }
@@ -279,7 +285,10 @@ export function AddRecordingDialog({
       recordedAt: new Date().toISOString(),
     };
 
+    console.log("Created recording object:", recording);
+    console.log("Calling onSave...");
     onSave(recording);
+    console.log("onSave called, closing dialog");
     onOpenChange(false);
   };
 

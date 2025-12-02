@@ -56,6 +56,7 @@ interface Props {
   projectId?: string;
   readOnly?: boolean;
   onPlayRecording?: (participant: ParticipantWithRecordings, sessionType: 'interview' | 'usability') => void;
+  onSaveRecording?: (participant: ParticipantWithRecordings, sessionType: 'interview' | 'usability', recording: SessionRecording) => Promise<void>;
 }
 
 export function ParticipantTracking({ 
@@ -63,7 +64,8 @@ export function ParticipantTracking({
   onUpdate, 
   projectId, 
   readOnly = false,
-  onPlayRecording 
+  onPlayRecording,
+  onSaveRecording
 }: Props) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingParticipant, setEditingParticipant] = useState<ParticipantWithRecordings | null>(null);
@@ -148,18 +150,18 @@ export function ParticipantTracking({
           return max;
         }, 0);
         const newId = `P${String(maxNum + 1).padStart(2, "0")}`;
-        if (projectId) {
-          await api.addParticipantToProject(projectId, { 
-            ...formData, 
-            id: newId, 
-            name: newId,
-            usageLevel: formData.segment === 'Active' ? 'active' : 
-                       formData.segment === 'Occasional' ? 'occasional' : 'non-user'
-          });
-        } else {
+        if (!projectId) {
           toast.error("Cannot add participant without a project");
           return;
         }
+        await api.addParticipantToProject(projectId, { 
+          ...formData, 
+          id: newId, 
+          name: newId,
+          // Map segment to usageLevel for the API
+          usageLevel: formData.segment === 'Active' ? 'active' : 
+                     formData.segment === 'Occasional' ? 'occasional' : 'non-user'
+        });
         toast.success("Participant added!");
       }
       setIsAddDialogOpen(false);
@@ -230,8 +232,28 @@ export function ParticipantTracking({
 
   // Handle saving a recording URL
   const handleSaveRecording = async (recording: SessionRecording) => {
-    if (!recordingParticipant || !projectId) {
-      toast.error("Unable to save recording");
+    console.log("handleSaveRecording called with:", recording);
+    console.log("recordingParticipant:", recordingParticipant);
+    console.log("projectId:", projectId);
+    console.log("recordingSessionType:", recordingSessionType);
+
+    if (!recordingParticipant) {
+      console.error("No participant selected");
+      toast.error("No participant selected");
+      return;
+    }
+
+    // If onSaveRecording prop is provided, use that instead
+    if (onSaveRecording) {
+      console.log("Using onSaveRecording callback");
+      await onSaveRecording(recordingParticipant, recordingSessionType, recording);
+      return;
+    }
+
+    // Otherwise, try to save via API
+    if (!projectId) {
+      console.error("No projectId provided - cannot save recording");
+      toast.error("Unable to save recording - project context missing");
       return;
     }
 
@@ -244,6 +266,8 @@ export function ParticipantTracking({
         updateData.usabilityRecording = recording;
       }
 
+      console.log("Calling API to update participant with:", updateData);
+
       await api.updateParticipantInProject(projectId, recordingParticipant.id, {
         ...recordingParticipant,
         ...updateData,
@@ -252,6 +276,7 @@ export function ParticipantTracking({
                    recordingParticipant.segment === 'Occasional' ? 'occasional' : 'non-user'
       });
 
+      console.log("API call successful");
       toast.success("Recording URL added successfully!");
       onUpdate();
     } catch (error) {
