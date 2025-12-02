@@ -14,7 +14,10 @@ import {
   Clock,
   VideoOff,
   Video,
+  Link2,
+  Plus,
 } from 'lucide-react';
+import { SessionRecording } from '../types';
 
 // Platform icons - you could replace these with actual brand icons
 const PlatformIcons: Record<string, React.ReactNode> = {
@@ -33,25 +36,15 @@ const PlatformNames: Record<string, string> = {
   browser: 'Browser',
 };
 
-export type RecordingStatus = 'none' | 'scheduled' | 'external' | 'uploading' | 'processing' | 'ready';
-export type StorageType = 'external' | 'internal';
-export type Platform = 'zoom' | 'teams' | 'meet' | 'webex' | 'browser';
-
-export interface SessionRecording {
-  status: RecordingStatus;
-  storageType?: StorageType;
-  platform?: Platform;
-  externalUrl?: string;
-  blobUrl?: string;
-  duration?: number;
-  hasTranscript?: boolean;
-  transcriptStatus?: 'none' | 'processing' | 'ready';
-}
+// Re-export types from types.ts for convenience
+export type { SessionRecording, RecordingStatus, RecordingStorageType as StorageType, RecordingPlatform as Platform } from '../types';
 
 interface RecordingIndicatorProps {
   recording?: SessionRecording;
   onPlay?: () => void;
   onExternalOpen?: (url: string) => void;
+  onAddRecording?: () => void;  // New: callback to open add recording dialog
+  showAddOption?: boolean;       // New: whether to show "Add URL" when no recording
   size?: 'sm' | 'md';
   className?: string;
 }
@@ -72,11 +65,37 @@ export function RecordingIndicator({
   recording,
   onPlay,
   onExternalOpen,
+  onAddRecording,
+  showAddOption = true,
   size = 'sm',
   className = '',
 }: RecordingIndicatorProps) {
   // No recording data at all
   if (!recording || recording.status === 'none') {
+    // Show "Add URL" option if callback is provided
+    if (showAddOption && onAddRecording) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onAddRecording}
+                className={`text-xs text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1 transition-colors ${className}`}
+              >
+                <Link2 className="h-3 w-3" />
+                <span className="hidden sm:inline">Add URL</span>
+                <span className="sm:hidden">Add</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Add a recording URL</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    
+    // Default: show "No recording" text
     return (
       <span className={`text-xs text-slate-400 flex items-center gap-1 ${className}`}>
         <VideoOff className="h-3 w-3" />
@@ -211,9 +230,10 @@ export function RecordingIndicator({
 
 // Demo component showing all states
 export function RecordingIndicatorDemo() {
-  const states: { label: string; recording?: SessionRecording }[] = [
-    { label: 'No recording (undefined)', recording: undefined },
-    { label: 'No recording (none)', recording: { status: 'none' } },
+  const states: { label: string; recording?: SessionRecording; showAdd?: boolean }[] = [
+    { label: 'No recording + Add URL', recording: undefined, showAdd: true },
+    { label: 'No recording (no add option)', recording: undefined, showAdd: false },
+    { label: 'No recording (none status)', recording: { status: 'none' }, showAdd: true },
     { label: 'Scheduled', recording: { status: 'scheduled' } },
     { label: 'Uploading', recording: { status: 'uploading' } },
     { label: 'Processing', recording: { status: 'processing' } },
@@ -235,6 +255,15 @@ export function RecordingIndicatorDemo() {
         platform: 'teams',
         externalUrl: 'https://teams.microsoft.com/rec/456',
         duration: 1845,
+      } 
+    },
+    { 
+      label: 'External (no platform)', 
+      recording: { 
+        status: 'external', 
+        storageType: 'external',
+        externalUrl: 'https://example.com/video/123',
+        duration: 1200,
       } 
     },
     { 
@@ -270,6 +299,8 @@ export function RecordingIndicatorDemo() {
               recording={state.recording}
               onPlay={() => console.log('Play clicked')}
               onExternalOpen={(url) => window.open(url, '_blank')}
+              onAddRecording={state.showAdd !== false ? () => console.log('Add recording clicked') : undefined}
+              showAddOption={state.showAdd !== false}
             />
           </div>
         ))}

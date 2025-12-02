@@ -11,9 +11,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { api } from "../utils/api";
 import { toast } from "sonner";
-import type { Participant } from "../types";
+import type { Participant, SessionRecording } from "../types";
 import { format } from "date-fns";
-import { RecordingIndicator, SessionRecording } from "./RecordingIndicator";
+import { RecordingIndicator } from "./RecordingIndicator";
+import { AddRecordingDialog } from "./AddRecordingDialog";
 
 const segmentColors: Record<string, string> = {
   "Active": "bg-green-100 text-green-700 border-green-200",
@@ -73,6 +74,11 @@ export function ParticipantTracking({
     duration: "45m",
     status: "scheduled",
   });
+
+  // State for AddRecordingDialog
+  const [addRecordingDialogOpen, setAddRecordingDialogOpen] = useState(false);
+  const [recordingParticipant, setRecordingParticipant] = useState<ParticipantWithRecordings | null>(null);
+  const [recordingSessionType, setRecordingSessionType] = useState<'interview' | 'usability'>('interview');
 
   // Parse time from formData.time (HH:MM format) into components
   const parseTime = (timeString?: string) => {
@@ -142,7 +148,18 @@ export function ParticipantTracking({
           return max;
         }, 0);
         const newId = `P${String(maxNum + 1).padStart(2, "0")}`;
-        await api.createParticipant({ ...formData, id: newId, name: newId });
+        if (projectId) {
+          await api.addParticipantToProject(projectId, { 
+            ...formData, 
+            id: newId, 
+            name: newId,
+            usageLevel: formData.segment === 'Active' ? 'active' : 
+                       formData.segment === 'Occasional' ? 'occasional' : 'non-user'
+          });
+        } else {
+          toast.error("Cannot add participant without a project");
+          return;
+        }
         toast.success("Participant added!");
       }
       setIsAddDialogOpen(false);
@@ -202,6 +219,45 @@ export function ParticipantTracking({
   // Handle opening external recording
   const handleExternalOpen = (url: string) => {
     window.open(url, '_blank');
+  };
+
+  // Handle opening add recording dialog
+  const handleOpenAddRecording = (participant: ParticipantWithRecordings, sessionType: 'interview' | 'usability') => {
+    setRecordingParticipant(participant);
+    setRecordingSessionType(sessionType);
+    setAddRecordingDialogOpen(true);
+  };
+
+  // Handle saving a recording URL
+  const handleSaveRecording = async (recording: SessionRecording) => {
+    if (!recordingParticipant || !projectId) {
+      toast.error("Unable to save recording");
+      return;
+    }
+
+    try {
+      const updateData: Partial<ParticipantWithRecordings> = {};
+      
+      if (recordingSessionType === 'interview') {
+        updateData.interviewRecording = recording;
+      } else {
+        updateData.usabilityRecording = recording;
+      }
+
+      await api.updateParticipantInProject(projectId, recordingParticipant.id, {
+        ...recordingParticipant,
+        ...updateData,
+        // Map segment back to usageLevel for the API
+        usageLevel: recordingParticipant.segment === 'Active' ? 'active' : 
+                   recordingParticipant.segment === 'Occasional' ? 'occasional' : 'non-user'
+      });
+
+      toast.success("Recording URL added successfully!");
+      onUpdate();
+    } catch (error) {
+      console.error("Error saving recording:", error);
+      toast.error("Failed to save recording URL");
+    }
   };
 
   return (
@@ -538,6 +594,8 @@ export function ParticipantTracking({
                     recording={participant.interviewRecording}
                     onPlay={() => handlePlayRecording(participant, 'interview')}
                     onExternalOpen={handleExternalOpen}
+                    onAddRecording={() => handleOpenAddRecording(participant, 'interview')}
+                    showAddOption={true}
                   />
                 </div>
                 
@@ -562,6 +620,8 @@ export function ParticipantTracking({
                     recording={participant.usabilityRecording}
                     onPlay={() => handlePlayRecording(participant, 'usability')}
                     onExternalOpen={handleExternalOpen}
+                    onAddRecording={() => handleOpenAddRecording(participant, 'usability')}
+                    showAddOption={true}
                   />
                 </div>
                 
@@ -592,6 +652,23 @@ export function ParticipantTracking({
           );
         })}
       </div>
+
+      {/* Add Recording Dialog */}
+      {recordingParticipant && (
+        <AddRecordingDialog
+          open={addRecordingDialogOpen}
+          onOpenChange={setAddRecordingDialogOpen}
+          sessionType={recordingSessionType}
+          participantId={recordingParticipant.id}
+          participantName={recordingParticipant.name}
+          existingRecording={
+            recordingSessionType === 'interview' 
+              ? recordingParticipant.interviewRecording 
+              : recordingParticipant.usabilityRecording
+          }
+          onSave={handleSaveRecording}
+        />
+      )}
     </Card>
   );
 }
