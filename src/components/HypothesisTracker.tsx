@@ -877,7 +877,7 @@ export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpd
                       <span className="sm:hidden">Hypothesis</span>
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>
                         {editingHypothesis ? 'Edit Hypothesis' : 'Add New Hypothesis'}

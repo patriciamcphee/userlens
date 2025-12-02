@@ -7,10 +7,20 @@ import { SessionComplete } from "./components/SessionComplete";
 import { Navbar } from "./components/Navbar";
 import { Login } from "./components/Login";
 import { LandingPage } from "./components/LandingPage";
+import { ComingSoon } from "./components/ComingSoon";
+import { TrendAnalysisPage } from "./components/TrendAnalysisPage";
+import { ReportsPage } from "./components/ReportsPage";
+import { ActivityPage } from "./components/ActivityPage";
+import { TagsPage } from "./components/TagsPage";
+import { CalendarPage } from "./components/CalendarPage";
+import { ImportExportPage } from "./components/ImportExportPage";
+import { IntegrationsPage } from "./components/IntegrationsPage";
+import { TeamsPage } from "./components/TeamsPage";
+import { TeamDetailPage } from "./components/TeamDetailPage";
 import { AzureAuthProvider } from "./components/AzureAuthProvider";
 import { useAzureAuth } from "./hooks/useAzureAuth";
 import { isAzureAuthEnabled } from "./utils/azure/authConfig";
-import { Project, SynthesisData, ProjectSetup } from "./types";
+import { Project, SynthesisData, ProjectSetup, ProjectSettings } from "./types";
 import { toast } from "sonner";
 import { RefreshCw } from "lucide-react";
 
@@ -95,7 +105,14 @@ function AppContent() {
             setup: {} as ProjectSetup,
             beforeMessage: undefined,
             duringMessage: undefined,
-            afterMessage: undefined
+            afterMessage: undefined,
+            teamId: "",
+            organizationId: "",
+            settings: {} as ProjectSettings,
+            createdBy: "",
+            participantCount: 0,
+            taskCount: 0,
+            insightCount: 0
           },
           {
             id: "demo-2",
@@ -114,7 +131,14 @@ function AppContent() {
             setup: {} as ProjectSetup,
             beforeMessage: undefined,
             duringMessage: undefined,
-            afterMessage: undefined
+            afterMessage: undefined,
+            teamId: "",
+            organizationId: "",
+            settings: {} as ProjectSettings,
+            createdBy: "",
+            participantCount: 0,
+            taskCount: 0,
+            insightCount: 0
           },
         ]);
       } else {
@@ -209,7 +233,7 @@ function AppContent() {
         element={
           isAuthenticated ? (
             <div className="min-h-screen">
-              <Navbar onSignOut={handleSignOut} />
+              <Navbar />
               {loading ? (
                 <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
                   <div className="text-center">
@@ -226,6 +250,7 @@ function AppContent() {
                         projects={projects}
                         onCreateProject={handleCreateProject}
                         synthesisData={synthesisData}
+                        onSignOut={handleSignOut}
                       />
                     } 
                   />
@@ -235,7 +260,23 @@ function AppContent() {
                       <ProjectDetail
                         projects={projects}
                         onUpdate={loadProjects}
+                        onSignOut={handleSignOut}
                       />
+                    } 
+                  />
+                  <Route 
+                    path="/trends" 
+                    element={
+                      <TrendAnalysisPage
+                        projects={projects}
+                        onSignOut={handleSignOut}
+                      />
+                    } 
+                  />
+                  <Route 
+                    path="/:feature" 
+                    element={
+                      <ComingSoon onSignOut={handleSignOut} />
                     } 
                   />
                 </Routes>
