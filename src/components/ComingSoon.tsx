@@ -125,15 +125,6 @@ export function ComingSoon({ onSignOut }: ComingSoonProps) {
               <p className="text-slate-600 max-w-md mx-auto mb-8">
                 {info?.description || "We're working hard to bring you this feature. Stay tuned for updates!"}
               </p>
-
-              <div className="flex items-center justify-center gap-4">
-                <Button variant="outline" onClick={() => navigate("/app")}>
-                  Return to Dashboard
-                </Button>
-                <Button onClick={() => window.open("mailto:support@userlens.io?subject=Feature Request: " + (info?.title || feature), "_blank")}>
-                  Request Early Access
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </div>
