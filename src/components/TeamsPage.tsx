@@ -151,11 +151,11 @@ export function TeamsPage({ onSignOut }: TeamsPageProps) {
     { id: "reports", label: "Reports", icon: FileText },
     { id: "activity", label: "Activity", icon: Activity },
     { id: "divider-2", label: "", icon: () => null, isDivider: true },
-    { id: "tags", label: "Tags", icon: Tag },
+//    { id: "tags", label: "Tags", icon: Tag },
     { id: "calendar", label: "Calendar", icon: Calendar },
-    { id: "divider-3", label: "", icon: () => null, isDivider: true },
-    { id: "import-export", label: "Import/Export", icon: Download },
-    { id: "integrations", label: "Integrations", icon: Plug },
+//    { id: "divider-3", label: "", icon: () => null, isDivider: true },
+//    { id: "import-export", label: "Import/Export", icon: Download },
+//    { id: "integrations", label: "Integrations", icon: Plug },
   ];
 
   const handleNavItemClick = (id: string) => {

@@ -95,13 +95,13 @@ export function Dashboard({ projects, onCreateProject, synthesisData, onSignOut 
     { id: "activity", label: "Activity", icon: Activity },
     // Organization
     { id: "divider-2", label: "", icon: () => null, isDivider: true },
-    { id: "teams", label: "Teams", icon: UsersRound },
+//    { id: "teams", label: "Teams", icon: UsersRound },
 //    { id: "tags", label: "Tags", icon: Tag },
     { id: "calendar", label: "Calendar", icon: Calendar },
     // Data Management
-    { id: "divider-3", label: "", icon: () => null, isDivider: true },
+//    { id: "divider-3", label: "", icon: () => null, isDivider: true },
 //    { id: "import-export", label: "Import/Export", icon: Download },
-    { id: "integrations", label: "Integrations", icon: Plug },
+//    { id: "integrations", label: "Integrations", icon: Plug },
   ];
 
   const handleNavItemClick = (id: string) => {
