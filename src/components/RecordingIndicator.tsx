@@ -16,6 +16,7 @@ import {
   Video,
   Link2,
   Plus,
+  Edit2,
 } from 'lucide-react';
 import { SessionRecording } from '../types';
 
@@ -184,17 +185,27 @@ export function RecordingIndicator({
       : `Open recording in ${platformName}`;
 
     return (
-      <Button
-        variant="ghost"
-        size="sm"
-        title={tooltipText}
-        className={`h-6 px-2 text-xs gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 ${className}`}
-        onClick={() => onExternalOpen?.(recording.externalUrl!)}
-      >
-        {platformIcon}
-        {platformName}
-        <ExternalLink className="h-2.5 w-2.5 ml-0.5" />
-      </Button>
+      <div className={`flex items-center gap-1 ${className}`}>
+        <Button
+          variant="ghost"
+          size="sm"
+          title={tooltipText}
+          className="h-6 px-2 text-xs gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950"
+          onClick={() => onExternalOpen?.(recording.externalUrl!)}
+        >
+          {platformIcon}
+          {platformName}
+        </Button>
+        {onAddRecording && (
+          <button
+            onClick={onAddRecording}
+            title="Edit recording"
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          >
+            <Edit2 className="h-3 w-3" />
+          </button>
+        )}
+      </div>
     );
   }
 

@@ -7,6 +7,7 @@ import {
   ChevronUp,
   User, 
   LogOut, 
+  Settings, 
   X, 
   Menu,
   HelpCircle,
@@ -68,10 +69,10 @@ export function Sidebar({
   const setIsCollapsed = onCollapsedChange ?? setInternalCollapsed;
 
   const helpLinks = [
-    { id: "docs", label: "User Guide", icon: FileText, href: "#docs" },
+    { id: "docs", label: "Docs", icon: FileText, href: "#docs" },
     { id: "whats-new", label: "What's New", icon: Sparkles, href: "#whats-new" },
-//    { id: "report-issue", label: "Report Issue", icon: Bug, href: "#report-issue" },
-//    { id: "submit-idea", label: "Submit Idea", icon: Lightbulb, href: "#submit-idea" },
+    { id: "report-issue", label: "Report Issue", icon: Bug, href: "#report-issue" },
+    { id: "submit-idea", label: "Submit Idea", icon: Lightbulb, href: "#submit-idea" },
     { id: "give-feedback", label: "Give Feedback", icon: MessageSquare, href: "#give-feedback" },
   ];
 
@@ -92,7 +93,7 @@ export function Sidebar({
       )}
 
       {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-[72px] left-4 z-30">
+      <div className="lg:hidden fixed top-[84px] left-4 z-30">
         <button
           onClick={() => setIsMobileSidebarOpen(true)}
           className="p-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50"
@@ -105,20 +106,20 @@ export function Sidebar({
       <div className={`
         bg-white border-r border-slate-200 flex flex-col transition-all duration-300
         fixed left-0 z-50 overflow-y-auto overflow-x-hidden
-        top-0 bottom-0 lg:top-[72px]
+        top-[72px] bottom-0
         ${isCollapsed ? 'lg:w-16' : 'lg:w-64'}
         ${isMobileSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Close button for mobile */}
         <button
           onClick={() => setIsMobileSidebarOpen(false)}
-          className="lg:hidden absolute top-4 right-4 z-20 p-2 hover:bg-slate-100 rounded-lg"
+          className="lg:hidden absolute top-2 right-2 z-20 p-2 hover:bg-slate-100 rounded-lg"
         >
           <X className="w-5 h-5 text-slate-600" />
         </button>
 
         {/* Main Navigation */}
-        <div className={`flex-1 pt-16 lg:pt-10 ${isCollapsed ? 'px-2 pb-2' : 'px-4 pb-4'}`}>
+        <div className={`flex-1 pt-10 lg:pt-8 ${isCollapsed ? 'px-2 pb-2' : 'px-4 pb-4'}`}>
           <nav className="space-y-1">
             {navItems.map((item) => {
               // Render divider
@@ -229,6 +230,22 @@ export function Sidebar({
                 </CollapsibleContent>
               </Collapsible>
             )}
+
+            {/* Settings */}
+            <button
+              onClick={() => {
+                navigate("/app/settings");
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`
+                w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-lg text-sm transition-colors
+                text-slate-600 hover:bg-slate-50 hover:text-slate-900
+              `}
+              title={isCollapsed ? "Settings" : undefined}
+            >
+              <Settings className="w-4 h-4 flex-shrink-0 text-slate-400" />
+              {!isCollapsed && <span>Settings</span>}
+            </button>
 
             {/* User Menu */}
             <div className={`pt-2 mt-2 border-t border-slate-100 ${isCollapsed ? 'flex justify-center' : ''}`}>

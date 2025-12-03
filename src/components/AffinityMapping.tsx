@@ -78,10 +78,14 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
   const [selectedPredefinedClusters, setSelectedPredefinedClusters] = useState<Set<string>>(new Set());
   const [showCustomInput, setShowCustomInput] = useState(false);
 
-  // Combine clusters from notes and empty clusters
+  // Debug: log emptyClusters prop
+  console.log('AffinityMapping render - emptyClusters prop:', emptyClusters);
+
+  // Combine clusters from notes and empty clusters, maintaining stable order
   const noteClusters = Array.from(new Set(stickyNotes.map(note => note.cluster)));
-  const allClusters = Array.from(new Set([...noteClusters, ...emptyClusters]));
-  const clusters = allClusters;
+  const allClusters = Array.from(new Set([...emptyClusters, ...noteClusters]));
+  // Sort alphabetically for consistent ordering
+  const clusters = allClusters.sort((a, b) => a.localeCompare(b));
 
   // Filter out predefined clusters that already exist
   const availablePredefinedClusters = predefinedClusters.filter(
@@ -102,7 +106,15 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
     e.preventDefault();
     try {
       // Determine final cluster name
-      const finalCluster = isNewCluster ? newClusterName : formData.cluster;
+      // Use newClusterName if creating new cluster OR if no clusters exist
+      const finalCluster = (isNewCluster || clusters.length === 0) 
+        ? newClusterName.trim() 
+        : formData.cluster;
+      
+      if (!finalCluster) {
+        toast.error("Please enter a cluster name");
+        return;
+      }
       
       if (editingNote) {
         await api.updateStickyNoteInProject(projectId, editingNote.id, { ...editingNote, ...formData, cluster: finalCluster });
@@ -147,11 +159,39 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
   };
 
   const handleDrop = async (targetCluster: string, noteId: string) => {
-    const note = stickyNotes.find(n => n.id === noteId);
-    if (!note || note.cluster === targetCluster) return;
+    console.log('handleDrop called - noteId:', noteId, 'targetCluster:', targetCluster);
+    
+    const note = stickyNotes.find(n => String(n.id) === String(noteId));
+    
+    console.log('Found note:', note);
+    
+    if (!note) {
+      console.log('Note not found!');
+      return;
+    }
+    
+    if (note.cluster === targetCluster) {
+      console.log('Note already in target cluster, skipping');
+      return;
+    }
+    
+    const sourceCluster = note.cluster;
     
     try {
-      await api.updateStickyNoteInProject(projectId, noteId, { ...note, cluster: targetCluster });
+      console.log('Calling API to move note to cluster:', targetCluster);
+      await api.updateStickyNoteInProject(projectId, String(noteId), { ...note, cluster: targetCluster });
+      
+      // Check if source cluster will be empty after this move
+      const remainingNotesInSource = stickyNotes.filter(n => n.cluster === sourceCluster && String(n.id) !== String(noteId));
+      
+      // If source cluster will be empty and not already in emptyClusters, add it
+      if (remainingNotesInSource.length === 0 && !emptyClusters.includes(sourceCluster)) {
+        console.log('Source cluster will be empty, adding to emptyClusters:', sourceCluster);
+        const project = await api.getProject(projectId);
+        const updatedEmptyClusters = [...(project.emptyClusters || []), sourceCluster];
+        await api.updateProject(projectId, { ...project, emptyClusters: updatedEmptyClusters });
+      }
+      
       toast.success("Note moved!");
       onUpdate();
     } catch (error) {
@@ -160,10 +200,18 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
     }
   };
 
-  const handleAddClusters = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddClusters = async () => {
+    console.log('!!! handleAddClusters TRIGGERED !!!');
+    
+    console.log('=== handleAddClusters called ===');
+    console.log('selectedPredefinedClusters:', Array.from(selectedPredefinedClusters));
+    console.log('showCustomInput:', showCustomInput);
+    console.log('newStandaloneClusterName:', newStandaloneClusterName);
+    
     try {
       const project = await api.getProject(projectId);
+      console.log('Fetched project, emptyClusters:', project.emptyClusters);
+      
       const currentEmptyClusters = project.emptyClusters || [];
       
       // Collect all new clusters to add
@@ -171,7 +219,9 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
       
       // Add selected predefined clusters
       selectedPredefinedClusters.forEach(clusterName => {
-        if (!currentEmptyClusters.includes(clusterName) && !clusters.includes(clusterName)) {
+        const alreadyExists = currentEmptyClusters.includes(clusterName) || clusters.includes(clusterName);
+        console.log(`Cluster "${clusterName}": alreadyExists=${alreadyExists}`);
+        if (!alreadyExists) {
           newClusters.push(clusterName);
         }
       });
@@ -179,14 +229,21 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
       // Add custom cluster if provided
       if (showCustomInput && newStandaloneClusterName.trim()) {
         const customName = newStandaloneClusterName.trim();
-        if (!currentEmptyClusters.includes(customName) && !clusters.includes(customName)) {
+        const alreadyExists = currentEmptyClusters.includes(customName) || clusters.includes(customName);
+        console.log(`Custom cluster "${customName}": alreadyExists=${alreadyExists}`);
+        if (!alreadyExists) {
           newClusters.push(customName);
         }
       }
       
+      console.log('New clusters to add:', newClusters);
+      
       if (newClusters.length > 0) {
         const updatedEmptyClusters = [...currentEmptyClusters, ...newClusters];
+        console.log('Saving updatedEmptyClusters:', updatedEmptyClusters);
+        
         await api.updateProject(projectId, { ...project, emptyClusters: updatedEmptyClusters });
+        console.log('API call successful!');
         toast.success(`Added ${newClusters.length} cluster${newClusters.length > 1 ? 's' : ''}!`);
       } else {
         toast.info("No new clusters to add");
@@ -207,6 +264,32 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
     setNewStandaloneClusterName("");
     setSelectedPredefinedClusters(new Set());
     setShowCustomInput(false);
+  };
+
+  const handleDeleteCluster = async (clusterName: string) => {
+    // Check if cluster has notes
+    const notesInCluster = stickyNotes.filter(note => note.cluster === clusterName);
+    if (notesInCluster.length > 0) {
+      toast.error("Cannot delete a cluster that contains notes. Move or delete the notes first.");
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete the "${clusterName}" cluster?`)) {
+      return;
+    }
+
+    try {
+      const project = await api.getProject(projectId);
+      const currentEmptyClusters = project.emptyClusters || [];
+      const updatedEmptyClusters = currentEmptyClusters.filter((c: string) => c !== clusterName);
+      
+      await api.updateProject(projectId, { ...project, emptyClusters: updatedEmptyClusters });
+      toast.success("Cluster deleted!");
+      onUpdate();
+    } catch (error) {
+      console.error("Error deleting cluster:", error);
+      toast.error("Failed to delete cluster");
+    }
   };
 
   return (
@@ -231,7 +314,7 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
                   Select from predefined clusters or create your own.
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleAddClusters} className="flex-1 overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-hidden flex flex-col">
                 {/* Predefined Clusters */}
                 {availablePredefinedClusters.length > 0 && (
                   <div className="mb-4">
@@ -318,7 +401,8 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
                       Cancel
                     </Button>
                     <Button 
-                      type="submit"
+                      type="button"
+                      onClick={handleAddClusters}
                       disabled={selectedPredefinedClusters.size === 0 && (!showCustomInput || !newStandaloneClusterName.trim())}
                       className="gap-2"
                     >
@@ -327,7 +411,7 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
                     </Button>
                   </div>
                 </div>
-              </form>
+              </div>
             </DialogContent>
           </Dialog>
           <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
@@ -349,7 +433,7 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
                 <DialogTitle>{editingNote ? "Edit Note" : "Add New Note"}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
+                <div className="space-y-1.5">
                   <Label htmlFor="text">Note Text</Label>
                   <Textarea
                     id="text"
@@ -358,7 +442,7 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
                     required
                   />
                 </div>
-                <div>
+                <div className="space-y-1.5">
                   <Label htmlFor="type">Type</Label>
                   <select
                     id="type"
@@ -373,42 +457,34 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
                     <option value="quote">Quote</option>
                   </select>
                 </div>
-                <div>
+                <div className="space-y-1.5">
                   <Label htmlFor="cluster">Cluster</Label>
-                  {isNewCluster ? (
+                  {/* If no clusters exist or user is creating new, show input */}
+                  {isNewCluster || clusters.length === 0 ? (
                     <div className="space-y-2">
                       <Input
                         value={newClusterName}
                         onChange={(e) => setNewClusterName(e.target.value)}
                         placeholder="Enter new cluster name..."
-                        autoFocus
+                        autoFocus={clusters.length > 0}
                         required
                       />
-                      <div className="flex gap-2">
-                        <Button
+                      {clusters.length === 0 ? (
+                        <p className="text-xs text-slate-500">
+                          No clusters exist yet. Enter a name to create one with this note.
+                        </p>
+                      ) : (
+                        <button
                           type="button"
-                          size="sm"
-                          onClick={() => {
-                            if (newClusterName.trim()) {
-                              setFormData({ ...formData, cluster: newClusterName.trim() });
-                              setIsNewCluster(false);
-                            }
-                          }}
-                        >
-                          Save Cluster
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
                           onClick={() => {
                             setIsNewCluster(false);
                             setNewClusterName('');
                           }}
+                          className="text-xs text-indigo-600 hover:text-indigo-800"
                         >
-                          Cancel
-                        </Button>
-                      </div>
+                          ← Back to cluster list
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <Select
@@ -452,34 +528,64 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {clusters.map((cluster) => (
+        {clusters.map((cluster) => {
+          const notesInCluster = stickyNotes.filter((note) => note.cluster === cluster);
+          
+          return (
           <div
             key={cluster}
             className="space-y-2"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              if (draggedNote) {
-                handleDrop(cluster, draggedNote);
-              }
-            }}
           >
-            <div className="flex items-center gap-2 sticky top-0 bg-white pb-2 z-10">
+            <div className="flex items-center gap-2 sticky top-0 bg-white pb-2 z-10 group/header">
               <span>{clusterIcons[cluster] || "📌"}</span>
-              <h3 className="text-sm">{cluster}</h3>
+              <h3 className="text-sm flex-1">{cluster}</h3>
+              {/* Show delete button for empty clusters */}
+              {notesInCluster.length === 0 && (
+                <button
+                  onClick={() => handleDeleteCluster(cluster)}
+                  title="Delete empty cluster"
+                  className="opacity-0 group-hover/header:opacity-100 p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 transition-all"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
-            <div className="space-y-2">
-              {stickyNotes
-                .filter((note) => note.cluster === cluster)
-                .map((note) => (
+            <div 
+              className="space-y-2 min-h-[100px] rounded-lg p-2"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.add('border-2', 'border-dashed', 'border-indigo-400', 'bg-indigo-50');
+              }}
+              onDragLeave={(e) => {
+                e.currentTarget.classList.remove('border-2', 'border-dashed', 'border-indigo-400', 'bg-indigo-50');
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('border-2', 'border-dashed', 'border-indigo-400', 'bg-indigo-50');
+                const noteId = e.dataTransfer.getData('text/plain') || draggedNote;
+                console.log('Drop event fired, noteId:', noteId, 'targetCluster:', cluster);
+                if (noteId) {
+                  handleDrop(cluster, noteId);
+                }
+                setDraggedNote(null);
+              }}
+            >
+              {notesInCluster.map((note) => (
                   <div
                     key={note.id}
-                    className={`p-3 rounded border-2 shadow-sm cursor-move transition-transform hover:scale-105 relative group max-w-sm ${ 
+                    draggable="true"
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', String(note.id));
+                      e.dataTransfer.effectAllowed = 'move';
+                      setTimeout(() => setDraggedNote(note.id), 0);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedNote(null);
+                    }}
+                    className={`p-3 rounded border-2 shadow-sm cursor-grab active:cursor-grabbing relative group max-w-sm select-none ${ 
                       typeColors[note.type]
-                    } ${draggedNote === note.id ? "opacity-50" : ""}`}
-                    draggable
-                    onDragStart={() => setDraggedNote(note.id)}
-                    onDragEnd={() => setDraggedNote(null)}
+                    }`}
+                    style={{ opacity: draggedNote === note.id ? 0.5 : 1 }}
                   >
                     <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                       <Button
@@ -508,9 +614,15 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
                     <p className="text-xs leading-relaxed">{note.text}</p>
                   </div>
                 ))}
+              {notesInCluster.length === 0 && (
+                <p className="text-xs text-slate-400 text-center py-2">
+                  Drag notes here
+                </p>
+              )}
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
     </Card>
   );

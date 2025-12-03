@@ -150,18 +150,17 @@ export function ParticipantTracking({
           return max;
         }, 0);
         const newId = `P${String(maxNum + 1).padStart(2, "0")}`;
-        if (!projectId) {
-          toast.error("Cannot add participant without a project");
-          return;
+        if (projectId) {
+          await api.addParticipantToProject(projectId, { 
+            ...formData, 
+            id: newId, 
+            name: newId,
+            usageLevel: formData.segment === 'Active' ? 'active' : 
+                       formData.segment === 'Occasional' ? 'occasional' : 'non-user'
+          });
+        } else {
+          throw new Error("Cannot add participant without a project context");
         }
-        await api.addParticipantToProject(projectId, { 
-          ...formData, 
-          id: newId, 
-          name: newId,
-          // Map segment to usageLevel for the API
-          usageLevel: formData.segment === 'Active' ? 'active' : 
-                     formData.segment === 'Occasional' ? 'occasional' : 'non-user'
-        });
         toast.success("Participant added!");
       }
       setIsAddDialogOpen(false);
@@ -282,6 +281,52 @@ export function ParticipantTracking({
     } catch (error) {
       console.error("Error saving recording:", error);
       toast.error("Failed to save recording URL");
+    }
+  };
+
+  // Handle deleting a recording URL
+  const handleDeleteRecording = async () => {
+    console.log("handleDeleteRecording called");
+    console.log("recordingParticipant:", recordingParticipant);
+    console.log("recordingSessionType:", recordingSessionType);
+
+    if (!recordingParticipant) {
+      console.error("No participant selected");
+      toast.error("No participant selected");
+      return;
+    }
+
+    if (!projectId) {
+      console.error("No projectId provided - cannot delete recording");
+      toast.error("Unable to delete recording - project context missing");
+      return;
+    }
+
+    try {
+      const updateData: Partial<ParticipantWithRecordings> = {};
+      
+      if (recordingSessionType === 'interview') {
+        updateData.interviewRecording = undefined;
+      } else {
+        updateData.usabilityRecording = undefined;
+      }
+
+      console.log("Calling API to remove recording from participant");
+
+      await api.updateParticipantInProject(projectId, recordingParticipant.id, {
+        ...recordingParticipant,
+        ...updateData,
+        // Map segment back to usageLevel for the API
+        usageLevel: recordingParticipant.segment === 'Active' ? 'active' : 
+                   recordingParticipant.segment === 'Occasional' ? 'occasional' : 'non-user'
+      });
+
+      console.log("Recording deleted successfully");
+      toast.success("Recording removed successfully!");
+      onUpdate();
+    } catch (error) {
+      console.error("Error deleting recording:", error);
+      toast.error("Failed to remove recording");
     }
   };
 
@@ -692,6 +737,7 @@ export function ParticipantTracking({
               : recordingParticipant.usabilityRecording
           }
           onSave={handleSaveRecording}
+          onDelete={handleDeleteRecording}
         />
       )}
     </Card>

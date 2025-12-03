@@ -31,6 +31,7 @@ import {
   Upload,
   Youtube,
   Globe,
+  Trash2,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -195,6 +196,7 @@ interface AddRecordingDialogProps {
   participantName?: string;
   existingRecording?: SessionRecording;
   onSave: (recording: SessionRecording) => void;
+  onDelete?: () => void;
 }
 
 export function AddRecordingDialog({
@@ -205,6 +207,7 @@ export function AddRecordingDialog({
   participantName,
   existingRecording,
   onSave,
+  onDelete,
 }: AddRecordingDialogProps) {
   const [url, setUrl] = useState('');
   const [platform, setPlatform] = useState<string>('other');
@@ -426,13 +429,34 @@ export function AddRecordingDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={!url || !!urlError}>
-            {existingRecording ? 'Update Recording' : 'Add Recording'}
-          </Button>
+        <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between gap-2">
+          {/* Delete button - only show when editing */}
+          {existingRecording && onDelete ? (
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                if (window.confirm('Are you sure you want to remove this recording link?')) {
+                  onDelete();
+                  onOpenChange(false);
+                }
+              }}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Remove Recording
+            </Button>
+          ) : (
+            <div /> // Spacer
+          )}
+          
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={!url || !!urlError}>
+              {existingRecording ? 'Update Recording' : 'Add Recording'}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
