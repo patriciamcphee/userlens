@@ -231,22 +231,6 @@ export function Sidebar({
               </Collapsible>
             )}
 
-            {/* Settings */}
-            <button
-              onClick={() => {
-                navigate("/app/settings");
-                setIsMobileSidebarOpen(false);
-              }}
-              className={`
-                w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-lg text-sm transition-colors
-                text-slate-600 hover:bg-slate-50 hover:text-slate-900
-              `}
-              title={isCollapsed ? "Settings" : undefined}
-            >
-              <Settings className="w-4 h-4 flex-shrink-0 text-slate-400" />
-              {!isCollapsed && <span>Settings</span>}
-            </button>
-
             {/* User Menu */}
             <div className={`pt-2 mt-2 border-t border-slate-100 ${isCollapsed ? 'flex justify-center' : ''}`}>
               <DropdownMenu>
