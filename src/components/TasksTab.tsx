@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { api } from "../utils/api";
 import { toast } from "sonner";
 import { TaskEditor } from "./TaskEditor";
+import { TaskImportExport } from "./TaskImportExport";
 import { Project, Task } from "../types";
 
 interface TasksTabProps {
@@ -65,42 +66,69 @@ export function TasksTab({ project, onUpdate }: TasksTabProps) {
     }
   };
 
+  const handleImportTasks = async (importedTasks: Omit<Task, 'id' | 'order'>[]) => {
+    try {
+      let successCount = 0;
+      for (let i = 0; i < importedTasks.length; i++) {
+        const newTask: Task = {
+          ...importedTasks[i],
+          id: `T${Date.now()}-${i}`,
+          order: tasks.length + i + 1,
+        };
+        await api.addTaskToProject(project.id, newTask);
+        successCount++;
+      }
+      toast.success(`Successfully imported ${successCount} task(s)!`);
+      onUpdate();
+    } catch (error) {
+      console.error("Error importing tasks:", error);
+      toast.error("Failed to import tasks");
+      throw error; // Re-throw to let the dialog know it failed
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <CardTitle>Tasks</CardTitle>
             <CardDescription>Define tasks for participants to complete</CardDescription>
           </div>
-          <Dialog open={isTaskEditorOpen} onOpenChange={(open) => {
-            setIsTaskEditorOpen(open);
-            if (!open) setEditingTask(undefined);
-          }}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-2">
-                <Plus className="w-4 h-4" />
-                Add Task
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl">
-              <DialogHeader>
-                <DialogTitle>{editingTask ? 'Edit Task' : 'Create Task'}</DialogTitle>
-                <DialogDescription>
-                  {editingTask ? 'Update task details and questions' : 'Define a new task for participants to complete'}
-                </DialogDescription>
-              </DialogHeader>
-              <TaskEditor
-                task={editingTask}
-                onSave={handleSaveTask}
-                onCancel={() => {
-                  setIsTaskEditorOpen(false);
-                  setEditingTask(undefined);
-                }}
-                existingTaskCount={tasks.length}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <TaskImportExport 
+              onImport={handleImportTasks}
+              existingTaskCount={tasks.length}
+            />
+            <Dialog open={isTaskEditorOpen} onOpenChange={(open) => {
+              setIsTaskEditorOpen(open);
+              if (!open) setEditingTask(undefined);
+            }}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Task
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle>{editingTask ? 'Edit Task' : 'Create Task'}</DialogTitle>
+                  <DialogDescription>
+                    {editingTask ? 'Update task details and questions' : 'Define a new task for participants to complete'}
+                  </DialogDescription>
+                </DialogHeader>
+                <TaskEditor
+                  task={editingTask}
+                  onSave={handleSaveTask}
+                  onCancel={() => {
+                    setIsTaskEditorOpen(false);
+                    setEditingTask(undefined);
+                  }}
+                  existingTaskCount={tasks.length}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -108,9 +136,15 @@ export function TasksTab({ project, onUpdate }: TasksTabProps) {
           <div className="text-center py-8">
             <Clock className="w-12 h-12 mx-auto mb-4 text-slate-400" />
             <p className="text-slate-600 mb-4">No tasks created yet</p>
-            <Button size="sm" onClick={() => setIsTaskEditorOpen(true)}>
-              Create Your First Task
-            </Button>
+            <div className="flex items-center justify-center gap-2">
+              <TaskImportExport 
+                onImport={handleImportTasks}
+                existingTaskCount={0}
+              />
+              <Button size="sm" onClick={() => setIsTaskEditorOpen(true)}>
+                Create Your First Task
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
