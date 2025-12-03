@@ -536,7 +536,7 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
             key={cluster}
             className="space-y-2"
           >
-            <div className="flex items-center gap-2 sticky top-0 bg-white pb-2 z-10 group/header">
+            <div className="flex items-center gap-2 sticky top-0 bg-white pb-2 mb-2 z-10 group/header border-b border-slate-200">
               <span>{clusterIcons[cluster] || "📌"}</span>
               <h3 className="text-sm flex-1">{cluster}</h3>
               {/* Show delete button for empty clusters */}
