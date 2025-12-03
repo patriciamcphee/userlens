@@ -193,45 +193,51 @@ export function SynthesisTab({ projectId }: SynthesisTabProps) {
     <div className="space-y-6 pb-6">
       {/* Actions Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white rounded-lg p-4 shadow">
-        <div className="flex items-center gap-4 flex-wrap flex-1 w-full sm:w-auto">
-          <span className="text-sm text-slate-600">Filter by:</span>
-          <Select value={filterSegment} onValueChange={setFilterSegment}>
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <SelectValue placeholder="All Segments" />
-            </SelectTrigger>
-            <SelectContent>
-              {segments.map((seg) => (
-                <SelectItem key={seg} value={seg}>
-                  {seg === "all" ? "All Segments" : seg}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-full sm:w-[140px]">
-              <SelectValue placeholder="All Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="invited">Invited</SelectItem>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
-              <SelectItem value="in-progress">In Progress</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="no-show">No Show</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="text-sm text-slate-600 sm:ml-4">Sort by:</span>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <SelectValue placeholder="Participant ID" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="participant">Participant ID</SelectItem>
-              <SelectItem value="date">Date</SelectItem>
-              <SelectItem value="sus">SUS Score</SelectItem>
-              <SelectItem value="nps">NPS Score</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 w-full sm:w-auto">
+          {/* Filter by group */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-slate-600">Filter by:</span>
+            <Select value={filterSegment} onValueChange={setFilterSegment}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="All Segments" />
+              </SelectTrigger>
+              <SelectContent>
+                {segments.map((seg) => (
+                  <SelectItem key={seg} value={seg}>
+                    {seg === "all" ? "All Segments" : seg}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="invited">Invited</SelectItem>
+                <SelectItem value="scheduled">Scheduled</SelectItem>
+                <SelectItem value="in-progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="no-show">No Show</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Sort by group */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-600">Sort by:</span>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Participant ID" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="participant">Participant ID</SelectItem>
+                <SelectItem value="date">Date</SelectItem>
+                <SelectItem value="sus">SUS Score</SelectItem>
+                <SelectItem value="nps">NPS Score</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         <div className="flex gap-2 w-full sm:w-auto">
@@ -321,21 +327,6 @@ export function SynthesisTab({ projectId }: SynthesisTabProps) {
               </Tooltip>
             </div>
           </TooltipProvider>
-          <div className="text-sm text-slate-500 w-full lg:w-auto">
-            <span>Research Progress</span>
-            <div className="mt-1 h-2 w-full lg:w-48 bg-slate-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-indigo-600 rounded-full transition-all"
-                style={{
-                  width: `${participants.length > 0 ? (participants.filter((p) => p.status === "completed").length / participants.length) * 100 : 0}%`,
-                }}
-              ></div>
-            </div>
-            <span className="text-xs">
-              {participants.filter((p) => p.status === "completed").length} of{" "}
-              {participants.length} sessions complete
-            </span>
-          </div>
         </div>
       </div>
 

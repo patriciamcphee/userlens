@@ -150,17 +150,7 @@ export function ParticipantTracking({
           return max;
         }, 0);
         const newId = `P${String(maxNum + 1).padStart(2, "0")}`;
-        if (projectId) {
-          await api.addParticipantToProject(projectId, { 
-            ...formData, 
-            id: newId, 
-            name: newId,
-            usageLevel: formData.segment === 'Active' ? 'active' : 
-                       formData.segment === 'Occasional' ? 'occasional' : 'non-user'
-          });
-        } else {
-          throw new Error("Cannot add participant without a project context");
-        }
+        await api.createParticipant({ ...formData, id: newId, name: newId });
         toast.success("Participant added!");
       }
       setIsAddDialogOpen(false);
@@ -330,18 +320,39 @@ export function ParticipantTracking({
     }
   };
 
+  // Calculate completed sessions count
+  const completedCount = participants.filter((p) => p.status === "completed").length;
+  const totalCount = participants.length;
+  const progressPercent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+
   return (
     <Card className="p-6 bg-white shadow-lg">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <h2>Participant Interview Tracking</h2>
-        {!readOnly && (
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-2">
-                <Plus className="w-4 h-4" />
-                Add Participant
-              </Button>
-            </DialogTrigger>
+        <div className="flex items-center gap-4">
+          {/* Research Progress */}
+          <div className="text-sm text-slate-500">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium">Research Progress</span>
+            </div>
+            <div className="mt-1 h-2 w-40 bg-slate-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-indigo-600 rounded-full transition-all"
+                style={{ width: `${progressPercent}%` }}
+              ></div>
+            </div>
+            <span className="text-xs text-slate-400">
+              {completedCount} of {totalCount} sessions complete
+            </span>
+          </div>
+          {!readOnly && (
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Participant
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
@@ -496,6 +507,8 @@ export function ParticipantTracking({
             </DialogContent>
           </Dialog>
         )}
+        </div>
+      </div>
         
         {readOnly && editingParticipant && (
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -573,7 +586,6 @@ export function ParticipantTracking({
             </DialogContent>
           </Dialog>
         )}
-      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {participants.map((participant) => {
           // Auto-determine completion status based on interview and testing completion

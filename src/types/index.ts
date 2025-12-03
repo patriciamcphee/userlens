@@ -461,6 +461,10 @@ export interface ProjectSettings {
   // Recording settings at project level
   recordingMode?: 'external' | 'internal' | 'both';
   defaultRecordingPlatform?: RecordingPlatform;
+    recording?: {
+    camera: 'optional' | 'required' | 'disabled';
+    microphone: 'optional' | 'required' | 'disabled';
+  };
 }
 
 // Project member with explicit access level (for future granular permissions)

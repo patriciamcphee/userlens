@@ -582,7 +582,7 @@ export function AffinityMapping({ stickyNotes, onUpdate, projectId, emptyCluster
                     onDragEnd={() => {
                       setDraggedNote(null);
                     }}
-                    className={`p-3 rounded border-2 shadow-sm cursor-grab active:cursor-grabbing relative group max-w-sm select-none ${ 
+                    className={`p-3 rounded border-1 shadow-sm cursor-grab active:cursor-grabbing relative group max-w-sm select-none ${ 
                       typeColors[note.type]
                     }`}
                     style={{ opacity: draggedNote === note.id ? 0.5 : 1 }}

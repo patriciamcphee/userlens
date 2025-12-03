@@ -147,43 +147,46 @@ export function Dashboard({ projects, onCreateProject, synthesisData, onSignOut 
     };
     
     return (
-      <div className="space-y-2 text-sm text-slate-600">
+      <div className="space-y-3 text-sm text-slate-600">
         {/* Participants, Tasks, Insights row */}
-        <div className="flex items-center gap-4 text-xs text-slate-500 pb-2 border-b border-slate-100">
-          <div className="flex items-center gap-1">
-            <Users className="w-3.5 h-3.5" />
-            <span>{project.participants?.length || 0} participants</span>
+        <div className="flex items-center justify-between gap-2 text-xs text-slate-500 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-slate-400" />
+            <span className="font-medium text-slate-700">{project.participants?.length || 0}</span>
+            <span className="text-slate-400">participants</span>
           </div>
-          <div className="flex items-center gap-1">
-            <CheckSquare className="w-3.5 h-3.5" />
-            <span>{project.tasks?.length || 0} tasks</span>
+          <div className="flex items-center gap-1.5">
+            <CheckSquare className="w-3.5 h-3.5 text-slate-400" />
+            <span className="font-medium text-slate-700">{project.tasks?.length || 0}</span>
+            <span className="text-slate-400">tasks</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Lightbulb className="w-3.5 h-3.5" />
-            <span>{projectSynthesis?.notesCount || 0} insights</span>
+          <div className="flex items-center gap-1.5">
+            <Lightbulb className="w-3.5 h-3.5 text-slate-400" />
+            <span className="font-medium text-slate-700">{projectSynthesis?.notesCount || 0}</span>
+            <span className="text-slate-400">insights</span>
           </div>
         </div>
         
         <div className="flex items-center justify-between">
-          <span>Sessions</span>
-          <span>{project.completedSessions}/{project.totalSessions}</span>
+          <span className="text-slate-500">Sessions</span>
+          <span className="font-medium text-slate-700">{project.completedSessions || 0}/{project.totalSessions || 0}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span>Mode</span>
+          <span className="text-slate-500">Mode</span>
           <Badge variant="outline" className="capitalize">
             {project.mode}
           </Badge>
         </div>
         {dateRange && (
           <div className="flex items-center justify-between">
-            <span>Project date</span>
-            <span>{dateRange}</span>
+            <span className="text-slate-500">Project date</span>
+            <span className="font-medium text-slate-700">{dateRange}</span>
           </div>
         )}
         {!dateRange && (
           <div className="flex items-center justify-between">
-            <span>{getDateLabel()}</span>
-            <span>{formatTimestamp(project.updatedAt || project.createdAt)}</span>
+            <span className="text-slate-500">{getDateLabel()}</span>
+            <span className="font-medium text-slate-700">{formatTimestamp(project.updatedAt || project.createdAt)}</span>
           </div>
         )}
       </div>
@@ -201,10 +204,10 @@ export function Dashboard({ projects, onCreateProject, synthesisData, onSignOut 
       }`}
       onClick={() => navigate(`/app/project/${project.id}/overview`)}
     >
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-slate-900">{project.name}</CardTitle>
-          <div className="flex items-center gap-2">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="text-slate-900 text-base leading-tight">{project.name}</CardTitle>
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="ghost"
               size="sm"
@@ -217,7 +220,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData, onSignOut 
             {getStatusBadge(type)}
           </div>
         </div>
-        <CardDescription className="line-clamp-2">
+        <CardDescription className="line-clamp-2 mt-1">
           {project.description || "No description"}
         </CardDescription>
         {project.tags && project.tags.length > 0 && (
@@ -230,7 +233,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData, onSignOut 
           </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {renderProjectCardContent(project, type)}
       </CardContent>
     </Card>
@@ -467,24 +470,28 @@ export function Dashboard({ projects, onCreateProject, synthesisData, onSignOut 
                   afterMessage: newProject.afterMessage,
                   cameraOption: newProject.cameraOption || 'optional',
                   micOption: newProject.micOption || 'optional',
-                  teamId: '',
-                  organizationId: '',
-                  participantCount: 0,
-                  taskCount: newProject.tasks?.length || 0,
-                  insightCount: 0,
-                  settings: {
-                    cameraOption: newProject.cameraOption || 'optional',
-                    micOption: newProject.micOption || 'optional',
-                    screenShareOption: 'optional',
-                    autoTranscribe: false
-                  },
-                  createdBy: azureAuth.user?.id || '',
                   setup: {
                     tasks: [],
                     beforeMessage: "",
                     duringScenario: "",
                     afterMessage: "",
                     randomizeOrder: false
+                  },
+                  teamId: "",
+                  organizationId: "",
+                  createdBy: "",
+                  participantCount: 0,
+                  taskCount: 0,
+                  insightCount: 0,
+                  settings: {
+                    recording: {
+                      camera: newProject.cameraOption || 'optional',
+                      microphone: newProject.micOption || 'optional'
+                    },
+                    cameraOption: "optional",
+                    micOption: "optional",
+                    screenShareOption: "optional",
+                    autoTranscribe: false
                   }
                 };
                 onCreateProject(project);
@@ -514,7 +521,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData, onSignOut 
           {draftProjects.length > 0 && (
             <div className="mb-8">
               <h2 className="text-slate-900 mb-4">Draft Projects</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 {draftProjects.map((project) => renderProjectCard(project, 'draft'))}
               </div>
             </div>
@@ -524,7 +531,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData, onSignOut 
           {activeProjects.length > 0 && (
             <div className="mb-8">
               <h2 className="text-slate-900 mb-4">Active Projects</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 {activeProjects.map((project) => renderProjectCard(project, 'active'))}
               </div>
             </div>
@@ -551,7 +558,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData, onSignOut 
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                   {completedProjects.map((project) => renderProjectCard(project, 'completed'))}
                 </div>
               </CollapsibleContent>
@@ -579,7 +586,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData, onSignOut 
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                   {archivedProjects.map((project) => renderProjectCard(project, 'archived'))}
                 </div>
               </CollapsibleContent>
