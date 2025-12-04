@@ -1,4 +1,4 @@
-import { ParticipantLensLogo } from "../ParticipantLensLogo";
+import { UserLensLogo } from "../UserLensLogo";
 import { Twitter, Linkedin, Github, Mail } from "lucide-react";
 
 const navigation = {
@@ -59,7 +59,7 @@ export function Footer() {
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-1">
             <div className="mb-4">
-              <ParticipantLensLogo variant="icon" size="sm" />
+              <UserLensLogo variant="icon" size="sm" />
             </div>
             <p className="text-sm text-slate-400 mb-4">
               Making user research synthesis faster and more insightful.
@@ -150,7 +150,7 @@ export function Footer() {
         <div className="pt-8 border-t border-slate-800">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-slate-400">
-              &copy; {new Date().getFullYear()} ParticipantLens. All rights reserved.
+              &copy; {new Date().getFullYear()} UserLens Insights. All rights reserved.
             </p>
             <p className="text-sm text-slate-400">
               Built with ❤️ for user researchers everywhere

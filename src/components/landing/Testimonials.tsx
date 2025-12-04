@@ -7,7 +7,7 @@ const testimonials = [
     name: "Sarah Chen",
     role: "Senior UX Researcher",
     company: "TechCorp",
-    content: "ParticipantLens cut our synthesis time from 3 days to 6 hours. The affinity mapping feature is exactly what we needed for remote collaboration.",
+    content: "UserLens Insights cut our synthesis time from 3 days to 6 hours. The affinity mapping feature is exactly what we needed for remote collaboration.",
     initials: "SC",
     rating: 5,
   },
@@ -23,7 +23,7 @@ const testimonials = [
     name: "Emily Watkins",
     role: "Research Lead",
     company: "Enterprise Inc",
-    content: "We've tried every tool out there. ParticipantLens is the only one that our entire team actually uses. The real-time collaboration is seamless.",
+    content: "We've tried every tool out there. UserLens Insights is the only one that our entire team actually uses. The real-time collaboration is seamless.",
     initials: "EW",
     rating: 5,
   },
@@ -39,7 +39,7 @@ export function Testimonials() {
             Loved by research teams
           </p>
           <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-            See what researchers are saying about ParticipantLens
+            See what researchers are saying about UserLens Insights
           </p>
         </div>
         

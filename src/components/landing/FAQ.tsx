@@ -35,7 +35,7 @@ const faqs = [
     answer: "Your data is never deleted. If you downgrade, you'll retain read-only access to projects beyond your plan limits. You can also export everything as CSV or PDF.",
   },
   {
-    question: "Can I use ParticipantLens for HIPAA-compliant research?",
+    question: "Can I use UserLens Insights for HIPAA-compliant research?",
     answer: "Yes, our Enterprise plan includes HIPAA compliance features. We can sign a Business Associate Agreement (BAA) and provide dedicated infrastructure for healthcare research.",
   },
 ];

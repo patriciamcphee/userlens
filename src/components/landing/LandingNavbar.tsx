@@ -2,7 +2,7 @@
 import { Book, HelpCircle, Mail, Menu, LogIn } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { ParticipantLensLogo } from "../ParticipantLensLogo";
+import { UserLensLogo } from "../UserLensLogo";
 import { useState } from "react";
 import {
   Sheet,
@@ -34,7 +34,7 @@ export function LandingNavbar({ onLogin, onSignUp }: LandingNavbarProps) {
           {/* Left side - Logo and tagline with Beta badge */}
           <div className="flex items-center gap-2 sm:gap-3">
             <a href="/">
-              <ParticipantLensLogo 
+              <UserLensLogo 
                 variant="full"
                 layout="horizontal"
                 size="lg"

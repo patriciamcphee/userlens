@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface ParticipantLensLogoProps {
+interface UserLensLogoProps {
   variant?: 'full' | 'icon' | 'wordmark';
   layout?: 'horizontal' | 'vertical';
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -8,13 +8,13 @@ interface ParticipantLensLogoProps {
   showTagline?: boolean;
 }
 
-export function ParticipantLensLogo({ 
+export function UserLensLogo({ 
   variant = 'full',
   layout = 'horizontal',
   size = 'md',
   className = '',
   showTagline = true
-}: ParticipantLensLogoProps) {
+}: UserLensLogoProps) {
   
   const sizeMap = {
     sm: { height: 32, iconSize: 28, fontSize: 16, taglineSize: 9 },
@@ -82,7 +82,7 @@ export function ParticipantLensLogo({
             className="text-gray-600"
             style={{ fontSize: `${dimensions.taglineSize}px` }}
           >
-            Looking through the user's perspective
+            Research unified. Insights amplified.
           </span>
         )}
       </div>
@@ -106,7 +106,7 @@ export function ParticipantLensLogo({
               className="text-gray-600 leading-tight"
               style={{ fontSize: `${dimensions.taglineSize}px` }}
             >
-              Looking through the user's perspective
+              Research unified. Insights amplified.
             </span>
           )}
         </div>
@@ -128,7 +128,7 @@ export function ParticipantLensLogo({
               className="text-gray-600 text-center leading-tight"
               style={{ fontSize: `${dimensions.taglineSize}px` }}
             >
-              Looking through the user's perspective
+              Research unified. Insights amplified.
             </span>
           )}
         </div>
@@ -138,18 +138,22 @@ export function ParticipantLensLogo({
 }
 
 // Export convenience components
-export const LogoIcon = (props: Omit<ParticipantLensLogoProps, 'variant'>) => (
-  <ParticipantLensLogo {...props} variant="icon" />
+export const LogoIcon = (props: Omit<UserLensLogoProps, 'variant'>) => (
+  <UserLensLogo {...props} variant="icon" />
 );
 
-export const LogoWordmark = (props: Omit<ParticipantLensLogoProps, 'variant'>) => (
-  <ParticipantLensLogo {...props} variant="wordmark" />
+export const LogoWordmark = (props: Omit<UserLensLogoProps, 'variant'>) => (
+  <UserLensLogo {...props} variant="wordmark" />
 );
 
-export const LogoHorizontal = (props: Omit<ParticipantLensLogoProps, 'variant' | 'layout'>) => (
-  <ParticipantLensLogo {...props} variant="full" layout="horizontal" />
+export const LogoHorizontal = (props: Omit<UserLensLogoProps, 'variant' | 'layout'>) => (
+  <UserLensLogo {...props} variant="full" layout="horizontal" />
 );
 
-export const LogoVertical = (props: Omit<ParticipantLensLogoProps, 'variant' | 'layout'>) => (
-  <ParticipantLensLogo {...props} variant="full" layout="vertical" />
+export const LogoVertical = (props: Omit<UserLensLogoProps, 'variant' | 'layout'>) => (
+  <UserLensLogo {...props} variant="full" layout="vertical" />
 );
+
+// Backward compatibility alias (deprecated - use UserLensLogo instead)
+/** @deprecated Use UserLensLogo instead */
+export const ParticipantLensLogo = UserLensLogo;
