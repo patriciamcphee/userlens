@@ -282,6 +282,182 @@ const projects = {
       totalSessions: sessions.length,
       completedSessions: sessions.filter(s => s.completedAt).length
     });
+  },
+
+  // ============================================
+  // TASK OPERATIONS (for hypothesis linking)
+  // ============================================
+
+  /**
+   * Add a task to a project
+   * @param {string} projectId 
+   * @param {object} task 
+   * @returns {Promise<any>}
+   */
+  async addTask(projectId, task) {
+    const project = await this.getById(projectId);
+    if (!project) {
+      throw new Error(`Project not found: ${projectId}`);
+    }
+    
+    const tasks = project.tasks || [];
+    const newTask = {
+      id: task.id || `T${Date.now()}`,
+      order: tasks.length + 1,
+      ...task,
+      hypothesisIds: task.hypothesisIds || [],
+    };
+    
+    tasks.push(newTask);
+    
+    return this.update(projectId, { tasks });
+  },
+
+  /**
+   * Update a task in a project
+   * @param {string} projectId 
+   * @param {string} taskId 
+   * @param {object} updates 
+   * @returns {Promise<any>}
+   */
+  async updateTask(projectId, taskId, updates) {
+    const project = await this.getById(projectId);
+    if (!project) {
+      throw new Error(`Project not found: ${projectId}`);
+    }
+    
+    const tasks = project.tasks || [];
+    const index = tasks.findIndex(t => String(t.id) === String(taskId));
+    
+    if (index === -1) {
+      throw new Error(`Task not found: ${taskId}`);
+    }
+    
+    // Ensure hypothesisIds is preserved/updated correctly
+    const updatedTask = {
+      ...tasks[index],
+      ...updates,
+      id: taskId, // Prevent ID change
+      hypothesisIds: updates.hypothesisIds !== undefined 
+        ? updates.hypothesisIds 
+        : (tasks[index].hypothesisIds || []),
+    };
+    
+    tasks[index] = updatedTask;
+    
+    return this.update(projectId, { tasks });
+  },
+
+  /**
+   * Delete a task from a project
+   * @param {string} projectId 
+   * @param {string} taskId 
+   * @returns {Promise<any>}
+   */
+  async deleteTask(projectId, taskId) {
+    const project = await this.getById(projectId);
+    if (!project) {
+      throw new Error(`Project not found: ${projectId}`);
+    }
+    
+    const tasks = project.tasks || [];
+    const filtered = tasks.filter(t => String(t.id) !== String(taskId));
+    
+    if (filtered.length === tasks.length) {
+      throw new Error(`Task not found: ${taskId}`);
+    }
+    
+    // Reorder remaining tasks
+    const reordered = filtered.map((task, index) => ({
+      ...task,
+      order: index + 1
+    }));
+    
+    return this.update(projectId, { tasks: reordered });
+  },
+
+  /**
+   * Get a specific task from a project
+   * @param {string} projectId 
+   * @param {string} taskId 
+   * @returns {Promise<any|null>}
+   */
+  async getTask(projectId, taskId) {
+    const project = await this.getById(projectId);
+    if (!project) return null;
+    
+    const tasks = project.tasks || [];
+    return tasks.find(t => String(t.id) === String(taskId)) || null;
+  },
+
+  /**
+   * Link a task to hypotheses
+   * @param {string} projectId 
+   * @param {string} taskId 
+   * @param {string[]} hypothesisIds 
+   * @returns {Promise<any>}
+   */
+  async linkTaskToHypotheses(projectId, taskId, hypothesisIds) {
+    return this.updateTask(projectId, taskId, { hypothesisIds });
+  },
+
+  /**
+   * Add a hypothesis link to a task
+   * @param {string} projectId 
+   * @param {string} taskId 
+   * @param {string} hypothesisId 
+   * @returns {Promise<any>}
+   */
+  async addHypothesisToTask(projectId, taskId, hypothesisId) {
+    const task = await this.getTask(projectId, taskId);
+    if (!task) {
+      throw new Error(`Task not found: ${taskId}`);
+    }
+    
+    const currentIds = task.hypothesisIds || [];
+    if (!currentIds.includes(hypothesisId)) {
+      return this.updateTask(projectId, taskId, {
+        hypothesisIds: [...currentIds, hypothesisId]
+      });
+    }
+    
+    // Already linked, return current project state
+    return this.getById(projectId);
+  },
+
+  /**
+   * Remove a hypothesis link from a task
+   * @param {string} projectId 
+   * @param {string} taskId 
+   * @param {string} hypothesisId 
+   * @returns {Promise<any>}
+   */
+  async removeHypothesisFromTask(projectId, taskId, hypothesisId) {
+    const task = await this.getTask(projectId, taskId);
+    if (!task) {
+      throw new Error(`Task not found: ${taskId}`);
+    }
+    
+    const currentIds = task.hypothesisIds || [];
+    return this.updateTask(projectId, taskId, {
+      hypothesisIds: currentIds.filter(id => id !== hypothesisId)
+    });
+  },
+
+  /**
+   * Get all tasks linked to a specific hypothesis
+   * @param {string} projectId 
+   * @param {string} hypothesisId 
+   * @returns {Promise<any[]>}
+   */
+  async getTasksForHypothesis(projectId, hypothesisId) {
+    const project = await this.getById(projectId);
+    if (!project) return [];
+    
+    const tasks = project.tasks || [];
+    return tasks.filter(t => 
+      t.hypothesisIds && t.hypothesisIds.includes(hypothesisId)
+    );
   }
 };
 
@@ -310,7 +486,7 @@ const participants = {
   },
 
   /**
-   * Create a new participant in global pool
+   * Create a new participant
    * @param {object} participant 
    * @returns {Promise<any>}
    */
@@ -319,9 +495,8 @@ const participants = {
     
     const newParticipant = {
       id: participant.id || `P${String(participants.length + 1).padStart(2, '0')}`,
-      ...participant,
-      status: participant.status || 'scheduled',
-      addedAt: new Date().toISOString()
+      status: 'invited',
+      ...participant
     };
     
     participants.push(newParticipant);
@@ -344,13 +519,9 @@ const participants = {
       throw new Error(`Participant not found: ${participantId}`);
     }
     
-    participants[index] = {
-      ...participants[index],
-      ...updates,
-      id: participantId
-    };
-    
+    participants[index] = { ...participants[index], ...updates, id: participantId };
     await setValue('research:participants', participants);
+    
     return participants[index];
   },
 
@@ -414,8 +585,8 @@ const researchQuestions = {
   async reorder(orderedIds) {
     const questions = await this.getAll();
     const reordered = orderedIds.map((id, index) => {
-      const q = questions.find(q => q.id === id);
-      return q ? { ...q, order: index + 1 } : null;
+      const question = questions.find(q => q.id === id);
+      return question ? { ...question, order: index + 1 } : null;
     }).filter(Boolean);
     
     await setValue('research:researchQuestions', reordered);
@@ -424,7 +595,7 @@ const researchQuestions = {
 };
 
 // ============================================
-// HYPOTHESES API
+// HYPOTHESES API (Global)
 // ============================================
 
 const hypotheses = {
@@ -439,8 +610,6 @@ const hypotheses = {
     const newHypothesis = {
       id: hypothesis.id || `H${hypotheses.length + 1}`,
       status: 'testing',
-      priority: 'medium',
-      segments: [],
       ...hypothesis
     };
     
@@ -572,33 +741,33 @@ const synthesis = {
   },
 
   /**
- * Update item in project synthesis
- */
-async updateItem(projectId, type, itemId, updates) {
-  const items = await this.get(projectId, type);
-  // Convert both to strings to ensure comparison works
-  const index = items.findIndex(i => String(i.id) === String(itemId));
-  if (index === -1) throw new Error(`Item not found: ${itemId}`);
-  
-  items[index] = { ...items[index], ...updates, id: itemId };
-  await this.set(projectId, type, items);
-  return items[index];
-},
+   * Update item in project synthesis
+   */
+  async updateItem(projectId, type, itemId, updates) {
+    const items = await this.get(projectId, type);
+    // Convert both to strings to ensure comparison works
+    const index = items.findIndex(i => String(i.id) === String(itemId));
+    if (index === -1) throw new Error(`Item not found: ${itemId}`);
+    
+    items[index] = { ...items[index], ...updates, id: itemId };
+    await this.set(projectId, type, items);
+    return items[index];
+  },
 
   /**
- * Delete item from project synthesis
- */
-async deleteItem(projectId, type, itemId) {
-  const items = await this.get(projectId, type);
-  // Convert both to strings to ensure comparison works
-  const filtered = items.filter(i => String(i.id) !== String(itemId));
-  
-  if (filtered.length === items.length) {
-    throw new Error(`Item not found: ${itemId}`);
-  }
-  
-  await this.set(projectId, type, filtered);
-},
+   * Delete item from project synthesis
+   */
+  async deleteItem(projectId, type, itemId) {
+    const items = await this.get(projectId, type);
+    // Convert both to strings to ensure comparison works
+    const filtered = items.filter(i => String(i.id) !== String(itemId));
+    
+    if (filtered.length === items.length) {
+      throw new Error(`Item not found: ${itemId}`);
+    }
+    
+    await this.set(projectId, type, filtered);
+  },
 
   /**
    * Initialize synthesis data for a new project

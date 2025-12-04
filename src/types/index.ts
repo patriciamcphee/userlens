@@ -46,6 +46,9 @@ export interface Task {
   steps?: TaskStep[];
   questions?: TaskQuestion[];
   order: number;
+  
+  // NEW: Link tasks to hypotheses they help validate
+  hypothesisIds?: string[];
 }
 
 // ============================================
@@ -659,4 +662,71 @@ export type PermissionCheck = {
 // ============================================
 
 export type View = 'dashboard' | 'projectDetail';
-export type ProjectTab = 'overview' | 'analytics' | 'synthesis';
+export type ProjectTab = 'overview' | 'analytics' | 'synthesis' | 'planning';
+
+
+// ============================================
+// PLANNING FEATURE TYPES
+// ============================================
+
+export type SegmentType = 'Non-Users' | 'Abandoned' | 'Occasional' | 'Active' | 'Power Users';
+export type TaskDifficulty = 'easy' | 'medium' | 'hard' | 'all';
+
+// Mapping between task difficulty and target segments
+export const DIFFICULTY_SEGMENT_MAP: Record<TaskDifficulty, SegmentType[]> = {
+  easy: ['Non-Users', 'Abandoned'],
+  medium: ['Occasional'],
+  hard: ['Active', 'Power Users'],
+  all: ['Non-Users', 'Abandoned', 'Occasional', 'Active', 'Power Users'],
+};
+
+// Reverse mapping: which difficulties are appropriate for each segment
+export const SEGMENT_DIFFICULTY_MAP: Record<SegmentType, TaskDifficulty[]> = {
+  'Non-Users': ['easy', 'all'],
+  'Abandoned': ['easy', 'all'],
+  'Occasional': ['medium', 'all'],
+  'Active': ['hard', 'all'],
+  'Power Users': ['hard', 'all'],
+};
+
+// Segment alignment issue details
+export interface SegmentAlignmentIssue {
+  taskId: string;
+  taskTitle: string;
+  taskDifficulty: TaskDifficulty;
+  hypothesisSegments: string[];
+  message: string;
+}
+
+// Coverage status for planning matrix
+export interface HypothesisCoverage {
+  hypothesisId: string;
+  hypothesis: string;
+  priority?: 'high' | 'medium' | 'low';
+  segments: string[];
+  linkedTaskIds: string[];
+  linkedTasks: Task[];
+  coverageStatus: 'none' | 'partial' | 'full';
+  segmentAlignmentIssues: SegmentAlignmentIssue[];
+}
+
+// Overall planning metrics
+export interface PlanningMetrics {
+  totalHypotheses: number;
+  hypothesesWithTasks: number;
+  hypothesesWithoutTasks: number;
+  totalTasks: number;
+  tasksLinkedToHypotheses: number;
+  orphanedTasks: number;
+  alignmentIssues: number;
+  coveragePercentage: number;
+}
+
+// Matrix cell data for planning grid
+export interface MatrixCell {
+  hypothesisId: string;
+  taskId: string;
+  isLinked: boolean;
+  hasAlignmentIssue: boolean;
+  alignmentIssue?: SegmentAlignmentIssue;
+}
