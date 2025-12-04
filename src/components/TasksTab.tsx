@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Plus, Edit, Trash2, Clock } from "lucide-react";
+import { Plus, Edit, Trash2, Clock, Target } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { api } from "../utils/api";
 import { toast } from "sonner";
 import { TaskEditor } from "./TaskEditor";
@@ -125,6 +126,7 @@ export function TasksTab({ project, onUpdate }: TasksTabProps) {
                     setEditingTask(undefined);
                   }}
                   existingTaskCount={tasks.length}
+                  projectId={project.id}
                 />
               </DialogContent>
             </Dialog>
@@ -209,6 +211,27 @@ export function TasksTab({ project, onUpdate }: TasksTabProps) {
                       <Badge variant="secondary" className="text-xs">
                         Rating
                       </Badge>
+                    )}
+                    {/* Hypothesis badges */}
+                    {task.hypothesisIds && task.hypothesisIds.length > 0 && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge 
+                              variant="outline" 
+                              className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200 cursor-help"
+                            >
+                              <Target className="w-2.5 h-2.5 mr-1" />
+                              {task.hypothesisIds.length} H
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs">
+                              Linked to {task.hypothesisIds.length} hypothesis{task.hypothesisIds.length !== 1 ? 'es' : ''}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                   </div>
                 </div>

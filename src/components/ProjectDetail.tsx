@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Project } from "../types";
 import { Button } from "./ui/button";
-import { LayoutDashboard, Users, ListTodo, BarChart3, Lightbulb, FileText, Home } from "lucide-react";
+import { LayoutDashboard, Users, ListTodo, BarChart3, Lightbulb, FileText, Home, Map } from "lucide-react";
 import { OverviewTab } from "./OverviewTab";
 import { AnalyticsTab } from "./AnalyticsTab";
 import { SynthesisTab } from "./SynthesisTab";
 import { ParticipantsTab } from "./ParticipantsTab";
 import { TasksTab } from "./TasksTab";
 import { HypothesesTab } from "./HypothesesTab";
+import { PlanningTab } from "./PlanningTab";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { Sidebar } from "./Sidebar";
 import { BackToTop } from "./BackToTop";
@@ -98,12 +99,16 @@ export function ProjectDetail({
 
   // Calculate insights count from synthesis notes
   const insightsCount = synthesisData?.notes?.length || 0;
+  
+  // Calculate hypotheses count for planning tab badge
+  const hypothesesCount = synthesisData?.hypotheses?.length || 0;
 
   // Navigation items for Project sidebar
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "hypotheses", label: "Hypotheses", icon: Lightbulb },
+    { id: "hypotheses", label: "Hypotheses", icon: Lightbulb, count: hypothesesCount },
+    { id: "planning", label: "Planning", icon: Map },
     { id: "participants", label: "Participants", icon: Users, count: project.participants?.length || 0 },
     { id: "tasks", label: "Tasks", icon: ListTodo, count: project.tasks?.length || 0 },
     { id: "synthesis", label: "Synthesis", icon: FileText, count: insightsCount },
@@ -163,6 +168,10 @@ export function ProjectDetail({
 
             {tab === "hypotheses" && (
               <HypothesesTab projectId={project.id} />
+            )}
+
+            {tab === "planning" && (
+              <PlanningTab project={project} onUpdate={onUpdate} />
             )}
           </div>
         </div>

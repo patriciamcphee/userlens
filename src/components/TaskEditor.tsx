@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Task, TaskStep, TaskQuestion } from "../types";
+import { useState, useEffect } from "react";
+import { Task, TaskStep, TaskQuestion, Hypothesis } from "../types";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -11,12 +11,15 @@ import { Plus, Trash2, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { QuestionBankDialog } from "./QuestionBankDialog";
+import { TaskHypothesisSelector } from "./TaskHypothesisSelector";
+import { api } from "../utils/api";
 
 interface TaskEditorProps {
   task?: Task;
   onSave: (task: Omit<Task, 'id' | 'order'>) => void;
   onCancel: () => void;
   existingTaskCount: number;
+  projectId: string;
 }
 
 const TIME_OPTIONS = [
@@ -35,7 +38,7 @@ const STEPS = [
   { id: 4, name: "Questions", description: "Custom follow-up questions" },
 ];
 
-export function TaskEditor({ task, onSave, onCancel, existingTaskCount }: TaskEditorProps) {
+export function TaskEditor({ task, onSave, onCancel, existingTaskCount, projectId }: TaskEditorProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<Task>>({
     title: task?.title || "",
@@ -52,10 +55,35 @@ export function TaskEditor({ task, onSave, onCancel, existingTaskCount }: TaskEd
       { id: `step-${Date.now()}-3`, description: "", order: 3 },
     ],
     questions: task?.questions || [],
+    hypothesisIds: task?.hypothesisIds || [],
   });
 
   const [isQuestionBankOpen, setIsQuestionBankOpen] = useState(false);
   const [useCustomTime, setUseCustomTime] = useState(!!task?.customTime);
+  
+  // Hypothesis loading state
+  const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
+  const [loadingHypotheses, setLoadingHypotheses] = useState(true);
+
+  // Load hypotheses for the project
+  useEffect(() => {
+    const loadHypotheses = async () => {
+      try {
+        setLoadingHypotheses(true);
+        const synthesisData = await api.getSynthesisData(projectId);
+        setHypotheses(synthesisData.hypotheses || []);
+      } catch (error) {
+        console.error('Error loading hypotheses:', error);
+        setHypotheses([]);
+      } finally {
+        setLoadingHypotheses(false);
+      }
+    };
+    
+    if (projectId) {
+      loadHypotheses();
+    }
+  }, [projectId]);
 
   // Step validation
   const isStepValid = (step: number): boolean => {
@@ -208,6 +236,7 @@ export function TaskEditor({ task, onSave, onCancel, existingTaskCount }: TaskEd
       enableRatingScale: formData.enableRatingScale,
       steps: formData.steps,
       questions: formData.questions,
+      hypothesisIds: formData.hypothesisIds,
     } as Omit<Task, 'id' | 'order'>);
   };
 
@@ -346,6 +375,17 @@ export function TaskEditor({ task, onSave, onCancel, existingTaskCount }: TaskEd
             </label>
           ))}
         </RadioGroup>
+      </div>
+
+      {/* Hypothesis Selection */}
+      <div className="pt-2 border-t">
+        <TaskHypothesisSelector
+          selectedHypothesisIds={formData.hypothesisIds || []}
+          onChange={(ids) => setFormData({ ...formData, hypothesisIds: ids })}
+          hypotheses={hypotheses}
+          taskDifficulty={(formData.difficulty as 'easy' | 'medium' | 'hard' | 'all') || 'medium'}
+          loading={loadingHypotheses}
+        />
       </div>
     </div>
   );
