@@ -9,7 +9,7 @@ import { SynthesisTab } from "./SynthesisTab";
 import { ParticipantsTab } from "./ParticipantsTab";
 import { TasksTab } from "./TasksTab";
 import { HypothesesTab } from "./HypothesesTab";
-import { PlanningTab } from "./PlanningTab";
+import { CoverageTab } from "./CoverageTab";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { Sidebar } from "./Sidebar";
 import { BackToTop } from "./BackToTop";
@@ -100,17 +100,18 @@ export function ProjectDetail({
   // Calculate insights count from synthesis notes
   const insightsCount = synthesisData?.notes?.length || 0;
   
-  // Calculate hypotheses count for planning tab badge
+  // Calculate hypotheses count for coverage tab badge
   const hypothesesCount = synthesisData?.hypotheses?.length || 0;
 
   // Navigation items for Project sidebar
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
+    { id: "divider-1", label: "", icon: () => null, isDivider: true },
     { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "hypotheses", label: "Hypotheses", icon: Lightbulb, count: hypothesesCount },
-    { id: "planning", label: "Planning", icon: Map },
     { id: "participants", label: "Participants", icon: Users, count: project.participants?.length || 0 },
+    { id: "hypotheses", label: "Hypotheses", icon: Lightbulb, count: hypothesesCount },
     { id: "tasks", label: "Tasks", icon: ListTodo, count: project.tasks?.length || 0 },
+    { id: "coverage", label: "Coverage", icon: Map },    
     { id: "synthesis", label: "Synthesis", icon: FileText, count: insightsCount },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];
@@ -170,8 +171,8 @@ export function ProjectDetail({
               <HypothesesTab projectId={project.id} />
             )}
 
-            {tab === "planning" && (
-              <PlanningTab project={project} onUpdate={onUpdate} />
+            {tab === "coverage" && (
+              <CoverageTab project={project} onUpdate={onUpdate} />
             )}
           </div>
         </div>

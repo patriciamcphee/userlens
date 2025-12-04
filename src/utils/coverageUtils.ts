@@ -1,6 +1,6 @@
 // ===========================================
-// planningUtils.ts
-// Utility functions for Hypothesis-Task planning
+// coverageUtils.ts
+// Utility functions for Hypothesis-Task coverage analysis
 // ===========================================
 
 import { Task, Hypothesis } from '../types';

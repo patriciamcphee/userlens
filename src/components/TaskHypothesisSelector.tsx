@@ -32,7 +32,7 @@ import {
   checkSegmentAlignment, 
   DIFFICULTY_SEGMENT_MAP,
   TaskDifficulty 
-} from "../utils/planningUtils";
+} from "../utils/coverageUtils";
 
 interface TaskHypothesisSelectorProps {
   selectedHypothesisIds: string[];
