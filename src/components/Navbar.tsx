@@ -1,6 +1,6 @@
 // src/components/Navbar.tsx
 import { Badge } from "./ui/badge";
-import { ParticipantLensLogo } from "./ParticipantLensLogo";
+import { UserLensLogo } from "./UserLensLogo";
 import { Link } from "react-router-dom";
 
 export function Navbar() {
@@ -11,7 +11,7 @@ export function Navbar() {
           {/* Left side - Logo and tagline with Beta badge */}
           <div className="flex items-center gap-2 sm:gap-3">
             <Link to="/app">
-              <ParticipantLensLogo 
+              <UserLensLogo 
                 variant="full"
                 layout="horizontal"
                 size="lg"

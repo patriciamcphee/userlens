@@ -26,7 +26,7 @@ export function CTA({ onGetStarted }: CTAProps) {
             Ready to transform your research workflow?
           </h2>
           <p className="text-xl text-indigo-100 mb-10 max-w-2xl mx-auto">
-            Join hundreds of researchers who are synthesizing insights faster and more effectively with ParticipantLens.
+            Join hundreds of researchers who are synthesizing insights faster and more effectively with UserLens Insights.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button 
