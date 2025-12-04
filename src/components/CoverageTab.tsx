@@ -34,9 +34,9 @@ import {
   HypothesisCoverage,
   PlanningMetrics,
   SegmentAlignmentIssue,
-} from "../utils/planningUtils";
+} from "../utils/coverageUtils";
 
-interface PlanningTabProps {
+interface CoverageTabProps {
   project: Project;
   onUpdate: () => void;
 }
@@ -88,7 +88,7 @@ const taskLinkConfig = {
   many: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700' },
 };
 
-export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
+export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
   const [researchQuestions, setResearchQuestions] = useState<ResearchQuestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,8 +105,8 @@ export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
         setHypotheses(synthesisResponse.hypotheses || []);
         setResearchQuestions(synthesisResponse.questions || []);
       } catch (error) {
-        console.error('Error loading planning data:', error);
-        toast.error('Failed to load planning data');
+        console.error('Error loading coverage data:', error);
+        toast.error('Failed to load coverage data');
       } finally {
         setLoading(false);
       }
@@ -174,7 +174,7 @@ export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-slate-600">Loading planning data...</div>
+        <div className="text-slate-600">Loading coverage data...</div>
       </div>
     );
   }
@@ -188,7 +188,7 @@ export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
             <h3 className="text-lg font-medium text-slate-900 mb-2">No Research Plan Yet</h3>
             <p className="text-slate-600 mb-6 max-w-md mx-auto">
               Add hypotheses and tasks to start building your research plan. 
-              The planning matrix will help you ensure comprehensive coverage.
+              The coverage matrix helps you ensure every hypothesis has tasks to test it.
             </p>
             <div className="flex items-center justify-center gap-3">
               <Button variant="outline" onClick={() => window.location.href = `/app/project/${project.id}/hypotheses`}>
@@ -323,9 +323,8 @@ export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
                       </th>
                       {/* Hypothesis column headers */}
                       {hypotheses.map((hypothesis, index) => {
-                        const hypothesisCoverage = coverage.find((c: HypothesisCoverage) => c.hypothesisId === hypothesis.id);
-                        const coverageStatus = (hypothesisCoverage?.coverageStatus || 'none') as 'none' | 'partial' | 'full';
-                        const statusConfig = coverageConfig[coverageStatus];
+                        const hypothesisCoverage = coverage.find(c => c.hypothesisId === hypothesis.id);
+                        const statusConfig = coverageConfig[hypothesisCoverage?.coverageStatus || 'none'];
                         
                         return (
                           <th 
@@ -368,7 +367,7 @@ export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
                                     )}
                                   </div>
                                 </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-xs z-50 bg-slate-800 text-white">
+                                <TooltipContent side="top" className="max-w-xs bg-slate-800 text-white z-50">
                                   <p className="font-medium text-white">{hypothesis.hypothesis}</p>
                                   {hypothesis.segments && hypothesis.segments.length > 0 && (
                                     <p className="text-xs text-slate-300 mt-1">
@@ -512,8 +511,8 @@ export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
         {expandedSections.has('coverage') && (
           <CardContent>
             <div className="space-y-4">
-              {coverage.map((item: HypothesisCoverage, index: number) => {
-                const statusConfig = coverageConfig[item.coverageStatus as 'none' | 'partial' | 'full'];
+              {coverage.map((item, index) => {
+                const statusConfig = coverageConfig[item.coverageStatus];
                 const StatusIcon = statusConfig.icon;
 
                 return (
@@ -526,12 +525,12 @@ export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-semibold text-indigo-600">H{index + 1}</span>
                           <StatusIcon className={`w-4 h-4 ${statusConfig.text}`} />
-                          {item.priority && (item.priority === 'high' || item.priority === 'medium' || item.priority === 'low') && (
+                          {item.priority && (
                             <Badge 
                               variant="outline" 
-                              className={`text-[10px] ${priorityConfig[item.priority as 'high' | 'medium' | 'low'].bg} ${priorityConfig[item.priority as 'high' | 'medium' | 'low'].text} border-0`}
+                              className={`text-[10px] ${priorityConfig[item.priority].bg} ${priorityConfig[item.priority].text} border-0`}
                             >
-                              {priorityConfig[item.priority as 'high' | 'medium' | 'low'].label}
+                              {priorityConfig[item.priority].label}
                             </Badge>
                           )}
                         </div>
@@ -540,7 +539,7 @@ export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
                         {item.segments.length > 0 && (
                           <div className="flex items-center gap-1 mt-2 flex-wrap">
                             <span className="text-xs text-slate-500">Segments:</span>
-                            {item.segments.map((seg: string) => (
+                            {item.segments.map(seg => (
                               <Badge key={seg} variant="outline" className="text-[10px] bg-blue-50 border-blue-200 text-blue-700">
                                 {seg}
                               </Badge>
@@ -551,7 +550,7 @@ export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
                         {item.linkedTasks.length > 0 && (
                           <div className="flex items-center gap-1 mt-2 flex-wrap">
                             <span className="text-xs text-slate-500">Linked tasks:</span>
-                            {item.linkedTasks.map((task: Task) => (
+                            {item.linkedTasks.map((task) => (
                               <Badge key={task.id} variant="secondary" className="text-[10px]">
                                 T{tasks.findIndex(t => t.id === task.id) + 1}: {task.title}
                               </Badge>
@@ -568,7 +567,7 @@ export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
                               </span>
                             </div>
                             <ul className="text-xs text-yellow-700 space-y-1">
-                              {item.segmentAlignmentIssues.map((issue: SegmentAlignmentIssue, i: number) => (
+                              {item.segmentAlignmentIssues.map((issue, i) => (
                                 <li key={i}>• {issue.message}</li>
                               ))}
                             </ul>
@@ -607,7 +606,7 @@ export function PlanningTab({ project, onUpdate }: PlanningTabProps) {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {orphanedTasks.map((task: Task) => (
+              {orphanedTasks.map((task) => (
                 <Badge 
                   key={task.id} 
                   variant="outline" 
