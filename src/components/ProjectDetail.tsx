@@ -153,7 +153,10 @@ export function ProjectDetail({
             )}
 
             {tab === "synthesis" && (
-              <SynthesisTab projectId={project.id} />
+              <SynthesisTab 
+                projectId={project.id} 
+                onProjectUpdate={onUpdate}
+              />
             )}
 
             {tab === "participants" && (

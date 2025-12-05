@@ -15,6 +15,7 @@ import type { Participant, SessionRecording } from "../types";
 import { format } from "date-fns";
 import { RecordingIndicator } from "./RecordingIndicator";
 import { AddRecordingDialog } from "./AddRecordingDialog";
+import { ParticipantEditModal, ParticipantSessionNotes } from "./ParticipantEditModal";
 
 const segmentColors: Record<string, string> = {
   "Active": "bg-green-100 text-green-700 border-green-200",
@@ -44,10 +45,12 @@ function getNPSLabel(score: number): { category: string; color: string } {
   return { category: "Detractor", color: "text-red-600" };
 }
 
-// Extended Participant type with recording fields
+// Extended Participant type with recording and notes fields
 interface ParticipantWithRecordings extends Participant {
   interviewRecording?: SessionRecording;
   usabilityRecording?: SessionRecording;
+  interviewNotes?: ParticipantSessionNotes;
+  usabilityNotes?: ParticipantSessionNotes;
 }
 
 interface Props {
@@ -57,6 +60,7 @@ interface Props {
   readOnly?: boolean;
   onPlayRecording?: (participant: ParticipantWithRecordings, sessionType: 'interview' | 'usability') => void;
   onSaveRecording?: (participant: ParticipantWithRecordings, sessionType: 'interview' | 'usability', recording: SessionRecording) => Promise<void>;
+  onSynthesisUpdate?: () => void; // Callback to refresh synthesis/affinity mapping data
 }
 
 export function ParticipantTracking({ 
@@ -65,9 +69,11 @@ export function ParticipantTracking({
   projectId, 
   readOnly = false,
   onPlayRecording,
-  onSaveRecording
+  onSaveRecording,
+  onSynthesisUpdate
 }: Props) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingParticipant, setEditingParticipant] = useState<ParticipantWithRecordings | null>(null);
   const [formData, setFormData] = useState<Partial<ParticipantWithRecordings>>({
     segment: "Active",
@@ -114,47 +120,23 @@ export function ParticipantTracking({
     setFormData({ ...formData, time: formattedTime });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle adding a new participant
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (editingParticipant) {
-        if (readOnly && projectId) {
-          // In synthesis tab, update participant at project level with only SUS/NPS
-          await api.updateParticipantInProject(projectId, editingParticipant.id, {
-            ...editingParticipant,
-            susScore: formData.susScore,
-            npsScore: formData.npsScore,
-          });
-        } else if (projectId) {
-          // In overview tab with projectId, update with all fields and map segment to usageLevel
-          await api.updateParticipantInProject(projectId, editingParticipant.id, { 
-            ...editingParticipant, 
-            ...formData,
-            // Map segment back to usageLevel for the API
-            usageLevel: formData.segment === 'Active' ? 'active' : 
-                       formData.segment === 'Occasional' ? 'occasional' : 'non-user'
-          });
-        } else {
-          // In overview tab without projectId, update with all fields
-          await api.updateParticipant(editingParticipant.id, { ...editingParticipant, ...formData });
+      // Find the highest existing P number and increment
+      const maxNum = participants.reduce((max, p) => {
+        const match = p.id.match(/^P(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          return num > max ? num : max;
         }
-        toast.success("Participant updated!");
-      } else {
-        // Find the highest existing P number and increment
-        const maxNum = participants.reduce((max, p) => {
-          const match = p.id.match(/^P(\d+)$/);
-          if (match) {
-            const num = parseInt(match[1], 10);
-            return num > max ? num : max;
-          }
-          return max;
-        }, 0);
-        const newId = `P${String(maxNum + 1).padStart(2, "0")}`;
-        await api.createParticipant({ ...formData, id: newId, name: newId });
-        toast.success("Participant added!");
-      }
+        return max;
+      }, 0);
+      const newId = `P${String(maxNum + 1).padStart(2, "0")}`;
+      await api.createParticipant({ ...formData, id: newId, name: newId });
+      toast.success("Participant added!");
       setIsAddDialogOpen(false);
-      setEditingParticipant(null);
       setFormData({
         segment: "Active",
         role: "",
@@ -164,15 +146,15 @@ export function ParticipantTracking({
       });
       onUpdate();
     } catch (error) {
-      console.error("Error saving participant:", error);
-      toast.error("Failed to save participant");
+      console.error("Error adding participant:", error);
+      toast.error("Failed to add participant");
     }
   };
 
+  // Handle opening edit modal
   const handleEdit = (participant: ParticipantWithRecordings) => {
     setEditingParticipant(participant);
-    setFormData(participant);
-    setIsAddDialogOpen(true);
+    setIsEditModalOpen(true);
   };
 
   const handleToggleStatus = async (participant: ParticipantWithRecordings) => {
@@ -353,239 +335,135 @@ export function ParticipantTracking({
                   Add Participant
                 </Button>
               </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingParticipant ? "Edit Participant" : "Add New Participant"}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingParticipant ? "Update participant information for your research." : "Add a new participant to your research study."}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="segment">Segment</Label>
-                  <Select
-                    value={formData.segment}
-                    onValueChange={(value) => setFormData({ ...formData, segment: value })}
-                  >
-                    <SelectTrigger id="segment" className="w-full border border-slate-300 rounded px-3 py-2">
-                      <SelectValue>{formData.segment}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Occasional">Occasional</SelectItem>
-                      <SelectItem value="Non-user">Non-user</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Input
-                    id="role"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="date">Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left"
-                      >
-                        <Calendar className="mr-2 h-4 w-4" />
-                        {formData.date || "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <CalendarComponent
-                        mode="single"
-                        selected={formData.date ? new Date(formData.date) : undefined}
-                        onSelect={(date) => setFormData({ ...formData, date: date ? format(date, "MMM dd") : "" })}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div>
-                  <Label htmlFor="time">Time (optional)</Label>
-                  <div className="flex gap-2">
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Participant</DialogTitle>
+                  <DialogDescription>
+                    Add a new participant to your research study.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleAddSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="segment">Segment</Label>
                     <Select
-                      value={selectedHour}
-                      onValueChange={(value) => handleTimeChange(value, selectedMinute, selectedPeriod)}
+                      value={formData.segment}
+                      onValueChange={(value) => setFormData({ ...formData, segment: value })}
                     >
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="Hour" />
+                      <SelectTrigger id="segment" className="w-full border border-slate-300 rounded px-3 py-2">
+                        <SelectValue>{formData.segment}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map((hour) => (
-                          <SelectItem key={hour} value={String(hour)}>
-                            {hour}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span className="flex items-center">:</span>
-                    <Select
-                      value={selectedMinute}
-                      onValueChange={(value) => handleTimeChange(selectedHour, value, selectedPeriod)}
-                    >
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="Min" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["00", "15", "30", "45"].map((minute) => (
-                          <SelectItem key={minute} value={minute}>
-                            {minute}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={selectedPeriod}
-                      onValueChange={(value) => handleTimeChange(selectedHour, selectedMinute, value)}
-                    >
-                      <SelectTrigger className="w-20">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="AM">AM</SelectItem>
-                        <SelectItem value="PM">PM</SelectItem>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Occasional">Occasional</SelectItem>
+                        <SelectItem value="Non-user">Non-user</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="duration">Duration</Label>
-                  <Select
-                    value={formData.duration}
-                    onValueChange={(value) => setFormData({ ...formData, duration: value })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select duration" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="20min">20 minutes</SelectItem>
-                      <SelectItem value="30min">30 minutes</SelectItem>
-                      <SelectItem value="45min">45 minutes</SelectItem>
-                      <SelectItem value="60min">60 minutes</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="susScore">SUS Score (optional, 0-100)</Label>
-                  <Input
-                    id="susScore"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={formData.susScore || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, susScore: e.target.value ? Number(e.target.value) : undefined })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="npsScore">NPS Score (optional, 0-10)</Label>
-                  <Input
-                    id="npsScore"
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={formData.npsScore || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, npsScore: e.target.value ? Number(e.target.value) : undefined })
-                    }
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  {editingParticipant ? "Update Participant" : "Add Participant"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        )}
+                  <div>
+                    <Label htmlFor="role">Role</Label>
+                    <Input
+                      id="role"
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="date">Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left"
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {formData.date || "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={formData.date ? new Date(formData.date) : undefined}
+                          onSelect={(date) => setFormData({ ...formData, date: date ? format(date, "MMM dd") : "" })}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div>
+                    <Label htmlFor="time">Time (optional)</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={selectedHour}
+                        onValueChange={(value) => handleTimeChange(value, selectedMinute, selectedPeriod)}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue placeholder="Hour" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map((hour) => (
+                            <SelectItem key={hour} value={String(hour)}>
+                              {hour}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="flex items-center">:</span>
+                      <Select
+                        value={selectedMinute}
+                        onValueChange={(value) => handleTimeChange(selectedHour, value, selectedPeriod)}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue placeholder="Min" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["00", "15", "30", "45"].map((minute) => (
+                            <SelectItem key={minute} value={minute}>
+                              {minute}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={selectedPeriod}
+                        onValueChange={(value) => handleTimeChange(selectedHour, selectedMinute, value)}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="AM">AM</SelectItem>
+                          <SelectItem value="PM">PM</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="duration">Duration</Label>
+                    <Select
+                      value={formData.duration}
+                      onValueChange={(value) => setFormData({ ...formData, duration: value })}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select duration" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="20min">20 minutes</SelectItem>
+                        <SelectItem value="30min">30 minutes</SelectItem>
+                        <SelectItem value="45min">45 minutes</SelectItem>
+                        <SelectItem value="60min">60 minutes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit" className="w-full">
+                    Add Participant
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
-        
-        {readOnly && editingParticipant && (
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Research Scores - {editingParticipant.id}</DialogTitle>
-                <DialogDescription>
-                  Add SUS and NPS scores for this participant
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="bg-slate-50 p-4 rounded-lg space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Participant:</span>
-                    <span className="text-sm">{editingParticipant.id}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Segment:</span>
-                    <Badge variant="outline" className={segmentColors[editingParticipant.segment]}>
-                      {editingParticipant.segment}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Date:</span>
-                    <span className="text-sm">{editingParticipant.date}</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="susScore">SUS Score (0-100)</Label>
-                    <Input
-                      id="susScore"
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={formData.susScore || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, susScore: e.target.value ? Number(e.target.value) : undefined })
-                      }
-                      placeholder="Enter SUS score"
-                    />
-                    {formData.susScore !== undefined && (
-                      <p className="text-xs text-slate-600 mt-1">
-                        Grade: <span className="text-indigo-600">{getSUSLabel(formData.susScore).grade}</span>
-                        {getSUSLabel(formData.susScore).label && ` - ${getSUSLabel(formData.susScore).label}`}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="npsScore">NPS Score (0-10)</Label>
-                    <Input
-                      id="npsScore"
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="1"
-                      value={formData.npsScore || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, npsScore: e.target.value ? Number(e.target.value) : undefined })
-                      }
-                      placeholder="Enter NPS score"
-                    />
-                    {formData.npsScore !== undefined && (
-                      <p className="text-xs mt-1">
-                        Category: <span className={getNPSLabel(formData.npsScore).color}>{getNPSLabel(formData.npsScore).category}</span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <Button type="submit" className="w-full">
-                  Save Scores
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        )}
+
+      {/* Participant Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {participants.map((participant) => {
           // Auto-determine completion status based on interview and testing completion
@@ -647,6 +525,12 @@ export function ParticipantTracking({
                     {participant.status === 'in-progress' ? 'In Progress' : 
                      participant.status === 'no-show' ? 'No Show' :
                      participant.status.charAt(0).toUpperCase() + participant.status.slice(1)}
+                  </Badge>
+                )}
+                {/* Notes indicator */}
+                {(participant.interviewNotes || participant.usabilityNotes) && (
+                  <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                    Notes
                   </Badge>
                 )}
               </div>
@@ -735,6 +619,20 @@ export function ParticipantTracking({
         })}
       </div>
 
+      {/* Edit Participant Modal */}
+      <ParticipantEditModal
+        open={isEditModalOpen}
+        onOpenChange={(open) => {
+          setIsEditModalOpen(open);
+          if (!open) setEditingParticipant(null);
+        }}
+        participant={editingParticipant}
+        projectId={projectId || ""}
+        onUpdate={onUpdate}
+        onSynthesisUpdate={onSynthesisUpdate}
+        readOnly={readOnly}
+      />
+
       {/* Add Recording Dialog */}
       {recordingParticipant && (
         <AddRecordingDialog
@@ -755,3 +653,5 @@ export function ParticipantTracking({
     </Card>
   );
 }
+
+export default ParticipantTracking;
