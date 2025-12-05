@@ -261,7 +261,7 @@ export function Dashboard({ projects, onCreateProject, synthesisData, onSignOut 
         <div className="max-w-7xl mx-auto px-6 pt-6 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-12 lg:mt-0">
             <div>
-              <h1 className="text-3xl text-slate-900 mb-2">User Research Projects</h1>
+              <h1 className="text-3xl text-slate-900 mb-2">Projects</h1>
               <p className="text-slate-600">Manage your research projects and synthesis</p>
             </div>
             <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2 sm:shrink-0">
