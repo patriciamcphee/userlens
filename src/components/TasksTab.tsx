@@ -149,94 +149,96 @@ export function TasksTab({ project, onUpdate }: TasksTabProps) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {tasks
-              .sort((a, b) => a.order - b.order)
-              .map((task, index) => (
-                <div
-                  key={task.id}
-                  className="flex flex-col p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors border border-slate-200 relative group"
-                >
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                      onClick={() => handleEditTask(task)}
-                    >
-                      <Edit className="w-3 h-3 text-slate-600" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                      onClick={() => handleDeleteTask(String(task.id))}
-                    >
-                      <Trash2 className="w-3 h-3 text-red-600" />
-                    </Button>
-                  </div>
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-purple-700 text-sm">{index + 1}</span>
+          <TooltipProvider delayDuration={200}>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {tasks
+                .sort((a, b) => a.order - b.order)
+                .map((task, index) => (
+                  <div
+                    key={task.id}
+                    className="flex flex-col p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors border border-slate-200 relative group"
+                  >
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => handleEditTask(task)}
+                      >
+                        <Edit className="w-3 h-3 text-slate-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => handleDeleteTask(String(task.id))}
+                      >
+                        <Trash2 className="w-3 h-3 text-red-600" />
+                      </Button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-900 truncate">{task.title}</p>
-                      {task.objective && (
-                        <p className="text-xs text-slate-600 mt-1 line-clamp-2">{task.objective}</p>
-                      )}
-                      {task.steps && task.steps.length > 0 && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="text-xs text-slate-500">{task.steps.length} steps</span>
-                        </div>
-                      )}
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-purple-700 text-sm">{index + 1}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-slate-900 truncate">{task.title}</p>
+                        {task.objective && (
+                          <p className="text-xs text-slate-600 mt-1 line-clamp-2">{task.objective}</p>
+                        )}
+                        {task.steps && task.steps.length > 0 && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <span className="text-xs text-slate-500">{task.steps.length} steps</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {task.estimatedTime && (
-                      <Badge variant="outline" className="text-xs">
-                        {task.estimatedTime}
-                      </Badge>
-                    )}
-                    {task.difficulty && (
-                      <Badge variant="outline" className="capitalize text-xs">
-                        {task.difficulty === 'all' ? 'All Users' : task.difficulty}
-                      </Badge>
-                    )}
-                    {task.questions && task.questions.length > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {task.questions.length} Q
-                      </Badge>
-                    )}
-                    {task.enableRatingScale && (
-                      <Badge variant="secondary" className="text-xs">
-                        Rating
-                      </Badge>
-                    )}
-                    {/* Hypothesis badges */}
-                    {task.hypothesisIds && task.hypothesisIds.length > 0 && (
-                      <TooltipProvider>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {task.estimatedTime && (
+                        <Badge variant="outline" className="text-xs">
+                          {task.estimatedTime}
+                        </Badge>
+                      )}
+                      {task.difficulty && (
+                        <Badge variant="outline" className="capitalize text-xs">
+                          {task.difficulty === 'all' ? 'All Users' : task.difficulty}
+                        </Badge>
+                      )}
+                      {task.questions && task.questions.length > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {task.questions.length} Q
+                        </Badge>
+                      )}
+                      {task.enableRatingScale && (
+                        <Badge variant="secondary" className="text-xs">
+                          Rating
+                        </Badge>
+                      )}
+                      {/* Hypothesis badges */}
+                      {task.hypothesisIds && task.hypothesisIds.length > 0 && (
                         <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Badge 
-                              variant="outline" 
-                              className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200 cursor-help"
-                            >
-                              <Target className="w-2.5 h-2.5 mr-1" />
-                              {task.hypothesisIds.length} H
-                            </Badge>
+                          <TooltipTrigger>
+                            <span className="inline-flex">
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200 cursor-pointer"
+                              >
+                                <Target className="w-2.5 h-2.5 mr-1" />
+                                {task.hypothesisIds.length} H
+                              </Badge>
+                            </span>
                           </TooltipTrigger>
-                          <TooltipContent>
+                          <TooltipContent side="top" className="z-[9999]">
                             <p className="text-xs">
                               Linked to {task.hypothesisIds.length} hypothesis{task.hypothesisIds.length !== 1 ? 'es' : ''}
                             </p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-          </div>
+                ))}
+            </div>
+          </TooltipProvider>
         )}
       </CardContent>
     </Card>
