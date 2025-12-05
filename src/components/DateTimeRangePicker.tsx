@@ -54,7 +54,7 @@ export function DateTimeRangePicker({
   };
 
   return (
-    <div className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg bg-white">
+    <div className="flex items-center gap-1.5 p-2 border border-slate-200 rounded-lg bg-white">
       {/* Clock icon */}
       <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
       
@@ -64,7 +64,7 @@ export function DateTimeRangePicker({
         value={date}
         onChange={handleDateChange}
         disabled={disabled}
-        className="h-8 px-2 text-sm text-slate-700 bg-transparent border-0 outline-none focus:ring-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="h-8 px-1 text-sm text-slate-700 bg-transparent border-0 outline-none focus:ring-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         style={{ colorScheme: 'light' }}
       />
       
@@ -77,7 +77,7 @@ export function DateTimeRangePicker({
         onValueChange={onStartTimeChange}
         disabled={disabled}
       >
-        <SelectTrigger className="w-[110px] h-8 border-0 shadow-none focus:ring-0 px-2">
+        <SelectTrigger className="w-[95px] h-8 border-0 shadow-none focus:ring-0 px-1">
           <SelectValue placeholder="Start time">
             {startTime ? formatTimeDisplay(startTime) : (
               <span className="text-slate-400">Start</span>
@@ -102,7 +102,7 @@ export function DateTimeRangePicker({
         onValueChange={onEndTimeChange}
         disabled={disabled}
       >
-        <SelectTrigger className="w-[110px] h-8 border-0 shadow-none focus:ring-0 px-2">
+        <SelectTrigger className="w-[95px] h-8 border-0 shadow-none focus:ring-0 px-1">
           <SelectValue placeholder="End time">
             {endTime ? formatTimeDisplay(endTime) : (
               <span className="text-slate-400">End</span>
