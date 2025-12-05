@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { api } from '../utils/api';
 import { toast } from 'sonner';
+import { ResearchHelpPanel } from './ResearchHelpPanel';
 // Define types locally since they're not exported from App
 export interface Hypothesis {
   id: string;
@@ -123,7 +124,6 @@ export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpd
   const [editingQuestion, setEditingQuestion] = useState<ResearchQuestion | null>(null);
   const [isCreatingNewQuestion, setIsCreatingNewQuestion] = useState(false);
   const [newQuestionText, setNewQuestionText] = useState('');
-  const [isLearnMoreOpen, setIsLearnMoreOpen] = useState(false);
   
   const [hypothesisFormData, setHypothesisFormData] = useState<Partial<Hypothesis>>({
     status: 'testing',
@@ -733,6 +733,7 @@ export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpd
       <Card className="p-6 bg-white shadow-lg">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <h2 className="flex-shrink-0">Hypothesis Validation Tracker</h2>
+          <ResearchHelpPanel defaultTab="questions" />
         </div>
         
         {/* Enhanced Header */}
@@ -1227,59 +1228,6 @@ export function AlchemyResearchHypotheses({ hypotheses, researchQuestions, onUpd
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             📊 Success Criteria for Hypothesis Validation
           </h2>
-          <Dialog open={isLearnMoreOpen} onOpenChange={setIsLearnMoreOpen}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-1 text-slate-600 hover:text-slate-900">
-                <HelpCircle className="w-4 h-4" />
-                Learn more
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  🔄 Hypothesis Refinement During Research
-                </DialogTitle>
-                <DialogDescription>
-                  Best practices for evolving your hypotheses as data emerges.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <p className="text-slate-700">
-                  These hypotheses will evolve as data emerges. Be prepared to:
-                </p>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <span className="text-lg">💡</span>
-                    <div>
-                      <strong className="text-slate-900">Add new hypotheses</strong>
-                      <p className="text-sm text-slate-600">Based on unexpected insights that emerge during research</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-lg">✏️</span>
-                    <div>
-                      <strong className="text-slate-900">Modify existing ones</strong>
-                      <p className="text-sm text-slate-600">As evidence suggests nuances or new directions</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-lg">🔍</span>
-                    <div>
-                      <strong className="text-slate-900">Pursue surprising findings</strong>
-                      <p className="text-sm text-slate-600">Even if not in original framework—these often yield the best insights</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-lg">👥</span>
-                    <div>
-                      <strong className="text-slate-900">Validate with broader team</strong>
-                      <p className="text-sm text-slate-600">Through mini-synthesis sessions to ensure alignment</p>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
         
         <div className="grid md:grid-cols-2 gap-6">

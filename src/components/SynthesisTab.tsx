@@ -15,9 +15,10 @@ import { toast } from "sonner";
 
 interface SynthesisTabProps {
   projectId: string;
+  onProjectUpdate?: () => void; // Optional callback to refresh project data at parent level (for ParticipantsTab sync)
 }
 
-export function SynthesisTab({ projectId }: SynthesisTabProps) {
+export function SynthesisTab({ projectId, onProjectUpdate }: SynthesisTabProps) {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([]);
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
@@ -55,7 +56,9 @@ export function SynthesisTab({ projectId }: SynthesisTabProps) {
           if (p.interviewDate.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(p.interviewDate)) {
             // It's an ISO date or YYYY-MM-DD date, format it
             try {
-              const date = new Date(p.interviewDate);
+              // Append T00:00:00 to treat as local time, not UTC (prevents off-by-one-day issues)
+              const dateStr = p.interviewDate.includes('T') ? p.interviewDate : p.interviewDate + 'T00:00:00';
+              const date = new Date(dateStr);
               // Check if date is valid
               if (!isNaN(date.getTime())) {
                 formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -78,7 +81,9 @@ export function SynthesisTab({ projectId }: SynthesisTabProps) {
           if (p.usabilityDate.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(p.usabilityDate)) {
             // It's an ISO date or YYYY-MM-DD date, format it
             try {
-              const date = new Date(p.usabilityDate);
+              // Append T00:00:00 to treat as local time, not UTC (prevents off-by-one-day issues)
+              const dateStr = p.usabilityDate.includes('T') ? p.usabilityDate : p.usabilityDate + 'T00:00:00';
+              const date = new Date(dateStr);
               // Check if date is valid
               if (!isNaN(date.getTime())) {
                 formattedUsabilityDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -108,8 +113,10 @@ export function SynthesisTab({ projectId }: SynthesisTabProps) {
           npsScore: p.npsScore,
           interviewCompleted: p.interviewCompleted || false,
           usabilityCompleted: p.usabilityCompleted || false,
-          interviewRecording: p.interviewRecording,   // ← ADD THIS
-          usabilityRecording: p.usabilityRecording,   // ← ADD THIS
+          interviewRecording: p.interviewRecording,
+          usabilityRecording: p.usabilityRecording,
+          interviewNotes: (p as any).interviewNotes ?? '',
+          usabilityNotes: (p as any).usabilityNotes ?? '',
         };
       });
       
@@ -143,6 +150,26 @@ export function SynthesisTab({ projectId }: SynthesisTabProps) {
       toast.error("Failed to load synthesis data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Refresh only synthesis data (notes) without full reload
+  const refreshSynthesis = async () => {
+    try {
+      const data = await api.getSynthesisData(projectId);
+      if (data.notes) {
+        setStickyNotes(data.notes);
+      }
+    } catch (error) {
+      console.error("Error refreshing synthesis data:", error);
+    }
+  };
+
+  // Combined handler that refreshes both SynthesisTab AND notifies parent to update ParticipantsTab
+  const handleParticipantUpdate = async () => {
+    await loadData(); // Refresh SynthesisTab data
+    if (onProjectUpdate) {
+      onProjectUpdate(); // Notify parent to refresh project data (for ParticipantsTab)
     }
   };
 
@@ -261,7 +288,8 @@ export function SynthesisTab({ projectId }: SynthesisTabProps) {
         {/* Participant Tracking */}
         <ParticipantTracking
           participants={filteredParticipants}
-          onUpdate={loadData}
+          onUpdate={handleParticipantUpdate}
+          onSynthesisUpdate={refreshSynthesis}
           projectId={projectId}
           readOnly={true}
         />
@@ -337,7 +365,7 @@ export function SynthesisTab({ projectId }: SynthesisTabProps) {
       <NPSTable 
         participants={participants}
         projectId={projectId}
-        onUpdate={loadData}
+        onUpdate={handleParticipantUpdate}
       />
 
       {/* SUS Chart */}

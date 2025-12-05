@@ -35,6 +35,7 @@ import {
   PlanningMetrics,
   SegmentAlignmentIssue,
 } from "../utils/coverageUtils";
+import { ResearchHelpPanel } from "./ResearchHelpPanel";
 
 interface CoverageTabProps {
   project: Project;
@@ -173,7 +174,7 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-16">
         <div className="text-slate-600">Loading coverage data...</div>
       </div>
     );
@@ -182,15 +183,15 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
   if (hypotheses.length === 0 && tasks.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12">
+        <CardContent className="py-16">
           <div className="text-center">
             <Target className="w-12 h-12 mx-auto mb-4 text-slate-400" />
             <h3 className="text-lg font-medium text-slate-900 mb-2">No Research Plan Yet</h3>
-            <p className="text-slate-600 mb-6 max-w-md mx-auto">
+            <p className="text-slate-600 mb-8 max-w-md mx-auto">
               Add hypotheses and tasks to start building your research plan. 
               The coverage matrix helps you ensure every hypothesis has tasks to test it.
             </p>
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-4">
               <Button variant="outline" onClick={() => window.location.href = `/app/project/${project.id}/hypotheses`}>
                 Add Hypotheses
               </Button>
@@ -205,89 +206,100 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Header with Help */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900">Coverage Planning</h2>
+          <p className="text-sm text-slate-600 mt-1">
+            Ensure your tasks adequately test your hypotheses across all user segments
+          </p>
+        </div>
+        <ResearchHelpPanel defaultTab="coverage" />
+      </div>
+
       {/* Metrics Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <Target className="w-5 h-5 text-indigo-600" />
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-indigo-100 rounded-lg">
+                <Target className="w-6 h-6 text-indigo-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900">{metrics.coveragePercentage}%</p>
-                <p className="text-sm text-slate-600">Hypothesis Coverage</p>
+                <p className="text-3xl font-bold text-slate-900">{metrics.coveragePercentage}%</p>
+                <p className="text-sm text-slate-600 mt-1">Hypothesis Coverage</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-green-100 rounded-lg">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-3xl font-bold text-slate-900">
                   {metrics.hypothesesWithTasks}/{metrics.totalHypotheses}
                 </p>
-                <p className="text-sm text-slate-600">Hypotheses with Tasks</p>
+                <p className="text-sm text-slate-600 mt-1">Hypotheses with Tasks</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <ListTodo className="w-5 h-5 text-purple-600" />
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <ListTodo className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-3xl font-bold text-slate-900">
                   {metrics.tasksLinkedToHypotheses}/{metrics.totalTasks}
                 </p>
-                <p className="text-sm text-slate-600">Tasks Linked</p>
+                <p className="text-sm text-slate-600 mt-1">Tasks Linked</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${metrics.alignmentIssues > 0 ? 'bg-yellow-100' : 'bg-slate-100'}`}>
-                <AlertTriangle className={`w-5 h-5 ${metrics.alignmentIssues > 0 ? 'text-yellow-600' : 'text-slate-400'}`} />
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-lg ${metrics.alignmentIssues > 0 ? 'bg-yellow-100' : 'bg-slate-100'}`}>
+                <AlertTriangle className={`w-6 h-6 ${metrics.alignmentIssues > 0 ? 'text-yellow-600' : 'text-slate-400'}`} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900">{metrics.alignmentIssues}</p>
-                <p className="text-sm text-slate-600">Alignment Issues</p>
+                <p className="text-3xl font-bold text-slate-900">{metrics.alignmentIssues}</p>
+                <p className="text-sm text-slate-600 mt-1">Alignment Issues</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Task-Hypothesis Matrix (FLIPPED: Tasks as rows, Hypotheses as columns) */}
+      {/* Task-Hypothesis Matrix */}
       <Card>
         <CardHeader 
-          className="cursor-pointer hover:bg-slate-50 transition-colors"
+          className="cursor-pointer hover:bg-slate-50 transition-colors py-5"
           onClick={() => toggleSection('matrix')}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {expandedSections.has('matrix') ? (
                 <ChevronDown className="w-5 h-5 text-slate-500" />
               ) : (
                 <ChevronRight className="w-5 h-5 text-slate-500" />
               )}
-              <CardTitle>Task-Hypothesis Matrix</CardTitle>
+              <CardTitle className="text-lg">Task-Hypothesis Matrix</CardTitle>
             </div>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <HelpCircle className="w-4 h-4 text-slate-400" />
+                  <HelpCircle className="w-5 h-5 text-slate-400" />
                 </TooltipTrigger>
                 <TooltipContent side="left" className="max-w-xs z-50">
                   <p>Check boxes to link tasks to the hypotheses they validate. Yellow warnings indicate segment misalignment between task difficulty and hypothesis targets.</p>
@@ -295,22 +307,22 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
               </Tooltip>
             </TooltipProvider>
           </div>
-          <CardDescription>
+          <CardDescription className="mt-2 ml-8">
             Map each task to the hypotheses it helps validate
           </CardDescription>
         </CardHeader>
         
         {expandedSections.has('matrix') && (
-          <CardContent>
+          <CardContent className="pt-2 pb-6">
             {tasks.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">
-                <ListTodo className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                <p>No tasks created yet. Add tasks to build your matrix.</p>
+              <div className="text-center py-12 text-slate-500">
+                <ListTodo className="w-10 h-10 mx-auto mb-3 text-slate-400" />
+                <p className="text-base">No tasks created yet. Add tasks to build your matrix.</p>
               </div>
             ) : hypotheses.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">
-                <Target className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                <p>No hypotheses created yet. Add hypotheses to build your matrix.</p>
+              <div className="text-center py-12 text-slate-500">
+                <Target className="w-10 h-10 mx-auto mb-3 text-slate-400" />
+                <p className="text-base">No hypotheses created yet. Add hypotheses to build your matrix.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -318,7 +330,7 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                   <thead>
                     <tr>
                       {/* Task column header (sticky left) */}
-                      <th className="text-left p-3 bg-slate-50 border-b font-medium text-slate-700 min-w-[220px] sticky left-0 z-10">
+                      <th className="text-left p-4 bg-slate-50 border-b font-medium text-slate-700 min-w-[240px] sticky left-0 z-10">
                         Task
                       </th>
                       {/* Hypothesis column headers */}
@@ -329,37 +341,37 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                         return (
                           <th 
                             key={hypothesis.id} 
-                            className="p-3 bg-slate-50 border-b text-center min-w-[110px]"
+                            className="p-4 bg-slate-50 border-b text-center min-w-[120px]"
                           >
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex flex-col items-center gap-1 cursor-help">
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-xs font-semibold text-indigo-600">H{index + 1}</span>
+                                  <div className="flex flex-col items-center gap-2 cursor-help">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-semibold text-indigo-600">H{index + 1}</span>
                                       {hypothesis.priority && (
-                                        <span className={`w-2 h-2 rounded-full ${
+                                        <span className={`w-2.5 h-2.5 rounded-full ${
                                           hypothesis.priority === 'high' ? 'bg-red-500' :
                                           hypothesis.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
                                         }`} />
                                       )}
                                     </div>
-                                    <span className="text-[10px] text-slate-600 truncate max-w-[90px] leading-tight">
+                                    <span className="text-xs text-slate-600 truncate max-w-[100px] leading-tight">
                                       {hypothesis.hypothesis.slice(0, 30)}...
                                     </span>
                                     {hypothesis.segments && hypothesis.segments.length > 0 && (
-                                      <div className="flex flex-wrap justify-center gap-0.5">
+                                      <div className="flex flex-wrap justify-center gap-1 mt-1">
                                         {hypothesis.segments.slice(0, 2).map(seg => (
                                           <Badge 
                                             key={seg} 
                                             variant="outline" 
-                                            className="text-[9px] px-1 py-0 h-4 bg-blue-50 border-blue-200 text-blue-700"
+                                            className="text-[10px] px-1.5 py-0.5 bg-blue-50 border-blue-200 text-blue-700"
                                           >
                                             {seg.length > 8 ? seg.slice(0, 8) + '…' : seg}
                                           </Badge>
                                         ))}
                                         {hypothesis.segments.length > 2 && (
-                                          <span className="text-[9px] text-slate-400">
+                                          <span className="text-[10px] text-slate-400">
                                             +{hypothesis.segments.length - 2}
                                           </span>
                                         )}
@@ -370,11 +382,11 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                                 <TooltipContent side="top" className="max-w-xs bg-slate-800 text-white z-50">
                                   <p className="font-medium text-white">{hypothesis.hypothesis}</p>
                                   {hypothesis.segments && hypothesis.segments.length > 0 && (
-                                    <p className="text-xs text-slate-300 mt-1">
+                                    <p className="text-xs text-slate-300 mt-2">
                                       Targets: {hypothesis.segments.join(', ')}
                                     </p>
                                   )}
-                                  <p className={`text-xs mt-1 font-medium ${
+                                  <p className={`text-xs mt-2 font-medium ${
                                     hypothesisCoverage?.coverageStatus === 'full' ? 'text-green-400' :
                                     hypothesisCoverage?.coverageStatus === 'partial' ? 'text-yellow-400' : 'text-red-400'
                                   }`}>
@@ -387,8 +399,8 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                         );
                       })}
                       {/* Linked count column */}
-                      <th className="p-3 bg-slate-50 border-b text-center min-w-[70px]">
-                        <span className="text-xs font-medium text-slate-700">Links</span>
+                      <th className="p-4 bg-slate-50 border-b text-center min-w-[80px]">
+                        <span className="text-sm font-medium text-slate-700">Links</span>
                       </th>
                     </tr>
                   </thead>
@@ -401,24 +413,24 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                       return (
                         <tr key={task.id} className="hover:bg-slate-50 transition-colors">
                           {/* Task info cell (sticky left) */}
-                          <td className="p-3 border-b sticky left-0 bg-white z-10">
-                            <div className="flex items-start gap-2">
-                              <span className="text-xs font-semibold text-purple-600 mt-0.5">T{tIndex + 1}</span>
+                          <td className="p-4 border-b sticky left-0 bg-white z-10">
+                            <div className="flex items-start gap-3">
+                              <span className="text-sm font-semibold text-purple-600 mt-0.5">T{tIndex + 1}</span>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-slate-900 line-clamp-1">
                                   {task.title}
                                 </p>
-                                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                <div className="flex items-center gap-3 mt-2 flex-wrap">
                                   {task.difficulty && (
                                     <Badge 
                                       variant="outline" 
-                                      className={`text-[10px] px-1.5 py-0 ${diffConfig.bg} ${diffConfig.text} border-0`}
+                                      className={`text-xs px-2 py-0.5 ${diffConfig.bg} ${diffConfig.text} border-0`}
                                     >
                                       {diffConfig.label}
                                     </Badge>
                                   )}
                                   {task.estimatedTime && (
-                                    <span className="text-[10px] text-slate-500">
+                                    <span className="text-xs text-slate-500">
                                       {task.estimatedTime}
                                     </span>
                                   )}
@@ -435,7 +447,7 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                               : null;
 
                             return (
-                              <td key={hypothesis.id} className="p-3 border-b text-center">
+                              <td key={hypothesis.id} className="p-4 border-b text-center">
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
@@ -446,10 +458,10 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                                             onCheckedChange={() => 
                                               handleToggleLink(String(task.id), hypothesis.id, isLinked)
                                             }
-                                            className={alignmentIssue ? 'border-yellow-500' : ''}
+                                            className={`h-5 w-5 ${alignmentIssue ? 'border-yellow-500' : ''}`}
                                           />
                                           {alignmentIssue && (
-                                            <AlertTriangle className="w-3 h-3 text-yellow-500 absolute -top-1 -right-1" />
+                                            <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 absolute -top-1.5 -right-1.5" />
                                           )}
                                         </div>
                                       </div>
@@ -458,7 +470,7 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                                       <TooltipContent side="top" className="max-w-xs z-50">
                                         <div className="flex items-start gap-2">
                                           <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-                                          <p className="text-xs">{alignmentIssue.message}</p>
+                                          <p className="text-sm">{alignmentIssue.message}</p>
                                         </div>
                                       </TooltipContent>
                                     )}
@@ -469,9 +481,9 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                           })}
                           
                           {/* Linked count cell */}
-                          <td className="p-3 border-b text-center">
-                            <div className={`inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full ${linkStatus.bg} ${linkStatus.border} border`}>
-                              <span className={`text-xs font-medium ${linkStatus.text}`}>
+                          <td className="p-4 border-b text-center">
+                            <div className={`inline-flex items-center justify-center min-w-[32px] px-2.5 py-1 rounded-full ${linkStatus.bg} ${linkStatus.border} border`}>
+                              <span className={`text-sm font-medium ${linkStatus.text}`}>
                                 {linkedHypothesesCount}
                               </span>
                             </div>
@@ -490,27 +502,27 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
       {/* Coverage Details (Hypothesis-focused) */}
       <Card>
         <CardHeader 
-          className="cursor-pointer hover:bg-slate-50 transition-colors"
+          className="cursor-pointer hover:bg-slate-50 transition-colors py-5"
           onClick={() => toggleSection('coverage')}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {expandedSections.has('coverage') ? (
                 <ChevronDown className="w-5 h-5 text-slate-500" />
               ) : (
                 <ChevronRight className="w-5 h-5 text-slate-500" />
               )}
-              <CardTitle>Hypothesis Coverage Analysis</CardTitle>
+              <CardTitle className="text-lg">Hypothesis Coverage Analysis</CardTitle>
             </div>
           </div>
-          <CardDescription>
+          <CardDescription className="mt-2 ml-8">
             Detailed view of each hypothesis's task coverage and alignment issues
           </CardDescription>
         </CardHeader>
         
         {expandedSections.has('coverage') && (
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="pt-2 pb-6">
+            <div className="space-y-5">
               {coverage.map((item, index) => {
                 const statusConfig = coverageConfig[item.coverageStatus];
                 const StatusIcon = statusConfig.icon;
@@ -518,29 +530,29 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                 return (
                   <div 
                     key={item.hypothesisId}
-                    className={`p-4 rounded-lg border ${statusConfig.border} ${statusConfig.bg}`}
+                    className={`p-5 rounded-lg border ${statusConfig.border} ${statusConfig.bg}`}
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-6">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-semibold text-indigo-600">H{index + 1}</span>
-                          <StatusIcon className={`w-4 h-4 ${statusConfig.text}`} />
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-sm font-semibold text-indigo-600">H{index + 1}</span>
+                          <StatusIcon className={`w-5 h-5 ${statusConfig.text}`} />
                           {item.priority && (
                             <Badge 
                               variant="outline" 
-                              className={`text-[10px] ${priorityConfig[item.priority].bg} ${priorityConfig[item.priority].text} border-0`}
+                              className={`text-xs px-2 py-0.5 ${priorityConfig[item.priority].bg} ${priorityConfig[item.priority].text} border-0`}
                             >
                               {priorityConfig[item.priority].label}
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm font-medium text-slate-900">{item.hypothesis}</p>
+                        <p className="text-base font-medium text-slate-900">{item.hypothesis}</p>
                         
                         {item.segments.length > 0 && (
-                          <div className="flex items-center gap-1 mt-2 flex-wrap">
-                            <span className="text-xs text-slate-500">Segments:</span>
+                          <div className="flex items-center gap-2 mt-3 flex-wrap">
+                            <span className="text-sm text-slate-500">Segments:</span>
                             {item.segments.map(seg => (
-                              <Badge key={seg} variant="outline" className="text-[10px] bg-blue-50 border-blue-200 text-blue-700">
+                              <Badge key={seg} variant="outline" className="text-xs px-2 py-0.5 bg-blue-50 border-blue-200 text-blue-700">
                                 {seg}
                               </Badge>
                             ))}
@@ -548,10 +560,10 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                         )}
                         
                         {item.linkedTasks.length > 0 && (
-                          <div className="flex items-center gap-1 mt-2 flex-wrap">
-                            <span className="text-xs text-slate-500">Linked tasks:</span>
+                          <div className="flex items-center gap-2 mt-3 flex-wrap">
+                            <span className="text-sm text-slate-500">Linked tasks:</span>
                             {item.linkedTasks.map((task) => (
-                              <Badge key={task.id} variant="secondary" className="text-[10px]">
+                              <Badge key={task.id} variant="secondary" className="text-xs px-2 py-0.5">
                                 T{tasks.findIndex(t => t.id === task.id) + 1}: {task.title}
                               </Badge>
                             ))}
@@ -559,14 +571,14 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                         )}
                         
                         {item.segmentAlignmentIssues.length > 0 && (
-                          <div className="mt-3 p-2 bg-yellow-100 rounded border border-yellow-200">
-                            <div className="flex items-center gap-1 mb-1">
-                              <AlertTriangle className="w-3 h-3 text-yellow-600" />
-                              <span className="text-xs font-medium text-yellow-800">
+                          <div className="mt-4 p-3 bg-yellow-100 rounded-lg border border-yellow-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                              <span className="text-sm font-medium text-yellow-800">
                                 Alignment Issues ({item.segmentAlignmentIssues.length})
                               </span>
                             </div>
-                            <ul className="text-xs text-yellow-700 space-y-1">
+                            <ul className="text-sm text-yellow-700 space-y-1.5">
                               {item.segmentAlignmentIssues.map((issue, i) => (
                                 <li key={i}>• {issue.message}</li>
                               ))}
@@ -575,11 +587,11 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
                         )}
                       </div>
                       
-                      <div className="text-right">
-                        <p className={`text-sm font-medium ${statusConfig.text}`}>
+                      <div className="text-right flex-shrink-0">
+                        <p className={`text-base font-medium ${statusConfig.text}`}>
                           {statusConfig.label}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-sm text-slate-500 mt-1">
                           {item.linkedTasks.length} task{item.linkedTasks.length !== 1 ? 's' : ''}
                         </p>
                       </div>
@@ -595,22 +607,22 @@ export function CoverageTab({ project, onUpdate }: CoverageTabProps) {
       {/* Orphaned Tasks */}
       {orphanedTasks.length > 0 && (
         <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-orange-600" />
-              <CardTitle className="text-orange-900">Unlinked Tasks</CardTitle>
+          <CardHeader className="py-5">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-6 h-6 text-orange-600" />
+              <CardTitle className="text-lg text-orange-900">Unlinked Tasks</CardTitle>
             </div>
-            <CardDescription className="text-orange-700">
+            <CardDescription className="text-orange-700 mt-2 ml-9">
               These tasks aren't linked to any hypothesis. Consider linking them or removing if not needed.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
+          <CardContent className="pt-0 pb-6">
+            <div className="flex flex-wrap gap-3 ml-9">
               {orphanedTasks.map((task) => (
                 <Badge 
                   key={task.id} 
                   variant="outline" 
-                  className="bg-white border-orange-300 text-orange-800"
+                  className="bg-white border-orange-300 text-orange-800 px-3 py-1.5 text-sm"
                 >
                   T{tasks.findIndex(t => t.id === task.id) + 1}: {task.title}
                 </Badge>

@@ -261,9 +261,11 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
     }
 
     try {
-      // Automatically set status to "in-progress" if interview date and time are entered
+      // Use the status from editingParticipant (which may have been auto-updated by checkboxes)
       let status = editingParticipant.status;
-      if (newParticipant.interviewDate && newParticipant.interviewTime && !editingParticipant.status) {
+      
+      // If no status yet and interview is scheduled, set to in-progress
+      if (newParticipant.interviewDate && newParticipant.interviewTime && !status) {
         status = "in-progress";
       }
 
@@ -296,6 +298,51 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
       console.error("Error updating participant:", error);
       toast.error("Failed to update participant");
     }
+  };
+
+  // Helper functions for auto-status update on completion checkbox changes
+  const handleInterviewCompletedChange = (checked: boolean) => {
+    if (!editingParticipant) return;
+    
+    const isChecked = checked as boolean;
+    let newStatus = editingParticipant.status;
+    
+    // If both sessions are now completed, set status to "completed"
+    if (isChecked && editingParticipant.usabilityCompleted) {
+      newStatus = "completed";
+    }
+    // If unchecking and was completed, revert to in-progress
+    if (!isChecked && editingParticipant.status === "completed") {
+      newStatus = "in-progress";
+    }
+    
+    setEditingParticipant({ 
+      ...editingParticipant, 
+      interviewCompleted: isChecked,
+      status: newStatus
+    });
+  };
+
+  const handleUsabilityCompletedChange = (checked: boolean) => {
+    if (!editingParticipant) return;
+    
+    const isChecked = checked as boolean;
+    let newStatus = editingParticipant.status;
+    
+    // If both sessions are now completed, set status to "completed"
+    if (isChecked && editingParticipant.interviewCompleted) {
+      newStatus = "completed";
+    }
+    // If unchecking and was completed, revert to in-progress
+    if (!isChecked && editingParticipant.status === "completed") {
+      newStatus = "in-progress";
+    }
+    
+    setEditingParticipant({ 
+      ...editingParticipant, 
+      usabilityCompleted: isChecked,
+      status: newStatus
+    });
   };
 
   const handleStartSession = (participant: ProjectParticipant) => {
@@ -817,11 +864,7 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
                 <Checkbox
                   id="edit-interview-completed"
                   checked={editingParticipant?.interviewCompleted || false}
-                  onCheckedChange={(checked) => {
-                    if (editingParticipant) {
-                      setEditingParticipant({ ...editingParticipant, interviewCompleted: checked as boolean });
-                    }
-                  }}
+                  onCheckedChange={handleInterviewCompletedChange}
                 />
                 <Label
                   htmlFor="edit-interview-completed"
@@ -850,11 +893,7 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
                 <Checkbox
                   id="edit-usability-completed"
                   checked={editingParticipant?.usabilityCompleted || false}
-                  onCheckedChange={(checked) => {
-                    if (editingParticipant) {
-                      setEditingParticipant({ ...editingParticipant, usabilityCompleted: checked as boolean });
-                    }
-                  }}
+                  onCheckedChange={handleUsabilityCompletedChange}
                 />
                 <Label
                   htmlFor="edit-usability-completed"
