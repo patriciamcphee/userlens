@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Checkbox } from "./ui/checkbox";
 import { SessionLinkModal } from "./SessionLinkModal";
 import { generateSessionLink } from "../utils/sessionLinks";
-import { DateTimePicker } from "./DateTimePicker";
+import { DateTimeRangePicker } from "./DateTimeRangePicker";
 import { Project, ProjectParticipant } from "../types";
 
 // Usage level colors consistent with Synthesis tab
@@ -46,9 +46,10 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
     tenure: string;
     interviewDate: string;
     interviewTime: string;
-    interviewDuration: string;
+    interviewEndTime: string;
     usabilityDate: string;
     usabilityTime: string;
+    usabilityEndTime: string;
   }
 
   const [newParticipant, setNewParticipant] = useState<NewParticipant>({
@@ -59,9 +60,10 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
     tenure: "",
     interviewDate: "",
     interviewTime: "",
-    interviewDuration: "",
+    interviewEndTime: "",
     usabilityDate: "",
     usabilityTime: "",
+    usabilityEndTime: "",
   });
 
   const participants = project.participants || [];
@@ -194,7 +196,7 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
     
     console.log("6. API call successful");
     
-    setNewParticipant({ name: "", email: "", usageLevel: "active", role: "", tenure: "", interviewDate: "", interviewTime: "", interviewDuration: "", usabilityDate: "", usabilityTime: "" });
+    setNewParticipant({ name: "", email: "", usageLevel: "active", role: "", tenure: "", interviewDate: "", interviewTime: "", interviewEndTime: "", usabilityDate: "", usabilityTime: "", usabilityEndTime: "" });
     setIsAddParticipantOpen(false);
     onUpdate();
     toast.success("Participant added successfully");
@@ -242,9 +244,10 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
       tenure: participant.tenure || "",
       interviewDate: normalizeDate(participant.interviewDate),
       interviewTime: participant.interviewTime || "",
-      interviewDuration: participant.interviewDuration || "",
+      interviewEndTime: participant.interviewEndTime || "",
       usabilityDate: normalizeDate(participant.usabilityDate),
       usabilityTime: participant.usabilityTime || "",
+      usabilityEndTime: participant.usabilityEndTime || "",
     });
     setIsEditParticipantOpen(true);
   };
@@ -278,9 +281,10 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
         tenure: newParticipant.tenure,
         interviewDate: newParticipant.interviewDate,
         interviewTime: newParticipant.interviewTime,
-        interviewDuration: newParticipant.interviewDuration,
+        interviewEndTime: newParticipant.interviewEndTime,
         usabilityDate: newParticipant.usabilityDate,
         usabilityTime: newParticipant.usabilityTime,
+        usabilityEndTime: newParticipant.usabilityEndTime,
         status,
         interviewCompleted: editingParticipant.interviewCompleted,
         usabilityCompleted: editingParticipant.usabilityCompleted,
@@ -289,7 +293,7 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
       console.log('Updating participant:', updatedParticipant);
       await api.updateParticipantInProject(project.id, editingParticipant.id, updatedParticipant);
       
-      setNewParticipant({ name: "", email: "", usageLevel: "active", role: "", tenure: "", interviewDate: "", interviewTime: "", interviewDuration: "", usabilityDate: "", usabilityTime: "" });
+      setNewParticipant({ name: "", email: "", usageLevel: "active", role: "", tenure: "", interviewDate: "", interviewTime: "", interviewEndTime: "", usabilityDate: "", usabilityTime: "", usabilityEndTime: "" });
       setIsEditParticipantOpen(false);
       setEditingParticipant(null);
       onUpdate();
@@ -517,39 +521,24 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Interview Schedule</Label>
-                  <DateTimePicker
+                  <DateTimeRangePicker
                     date={newParticipant.interviewDate}
-                    time={newParticipant.interviewTime}
+                    startTime={newParticipant.interviewTime}
+                    endTime={newParticipant.interviewEndTime}
                     onDateChange={(date) => setNewParticipant({ ...newParticipant, interviewDate: date })}
-                    onTimeChange={(time) => setNewParticipant({ ...newParticipant, interviewTime: time })}
-                    dateLabel="Date"
-                    timeLabel="Time"
-                    datePlaceholder="Pick a date"
-                    timePlaceholder="Pick a time"
+                    onStartTimeChange={(time) => setNewParticipant({ ...newParticipant, interviewTime: time })}
+                    onEndTimeChange={(time) => setNewParticipant({ ...newParticipant, interviewEndTime: time })}
                   />
-                  <div className="mt-2">
-                    <Label htmlFor="participant-interview-duration" className="text-sm text-gray-600">Duration (optional)</Label>
-                    <Input
-                      id="participant-interview-duration"
-                      type="text"
-                      placeholder="e.g., 30 minutes, 1 hour"
-                      value={newParticipant.interviewDuration}
-                      onChange={(e) => setNewParticipant({ ...newParticipant, interviewDuration: e.target.value })}
-                      className="mt-1"
-                    />
-                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Usability Testing Schedule</Label>
-                  <DateTimePicker
+                  <DateTimeRangePicker
                     date={newParticipant.usabilityDate}
-                    time={newParticipant.usabilityTime}
+                    startTime={newParticipant.usabilityTime}
+                    endTime={newParticipant.usabilityEndTime}
                     onDateChange={(date) => setNewParticipant({ ...newParticipant, usabilityDate: date })}
-                    onTimeChange={(time) => setNewParticipant({ ...newParticipant, usabilityTime: time })}
-                    dateLabel="Date"
-                    timeLabel="Time"
-                    datePlaceholder="Pick a date"
-                    timePlaceholder="Pick a time"
+                    onStartTimeChange={(time) => setNewParticipant({ ...newParticipant, usabilityTime: time })}
+                    onEndTimeChange={(time) => setNewParticipant({ ...newParticipant, usabilityEndTime: time })}
                   />
                 </div>
               </div>
@@ -763,7 +752,7 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
       setIsEditParticipantOpen(open);
       if (!open) {
         setEditingParticipant(null);
-        setNewParticipant({ name: "", email: "", usageLevel: "active", role: "", tenure: "", interviewDate: "", interviewTime: "", interviewDuration: "", usabilityDate: "", usabilityTime: "" });
+        setNewParticipant({ name: "", email: "", usageLevel: "active", role: "", tenure: "", interviewDate: "", interviewTime: "", interviewEndTime: "", usabilityDate: "", usabilityTime: "", usabilityEndTime: "" });
       }
     }}>
       <DialogContent>
@@ -838,27 +827,14 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
           </div>
           <div className="space-y-2">
             <Label className="text-base">Interview Schedule</Label>
-            <DateTimePicker
+            <DateTimeRangePicker
               date={newParticipant.interviewDate}
-              time={newParticipant.interviewTime}
+              startTime={newParticipant.interviewTime}
+              endTime={newParticipant.interviewEndTime}
               onDateChange={(date) => setNewParticipant({ ...newParticipant, interviewDate: date })}
-              onTimeChange={(time) => setNewParticipant({ ...newParticipant, interviewTime: time })}
-              dateLabel="Date"
-              timeLabel="Time"
-              datePlaceholder="Pick a date"
-              timePlaceholder="Pick a time"
+              onStartTimeChange={(time) => setNewParticipant({ ...newParticipant, interviewTime: time })}
+              onEndTimeChange={(time) => setNewParticipant({ ...newParticipant, interviewEndTime: time })}
             />
-            <div className="mt-2">
-              <Label htmlFor="edit-participant-interview-duration" className="text-sm text-gray-600">Duration (optional)</Label>
-              <Input
-                id="edit-participant-interview-duration"
-                type="text"
-                placeholder="e.g., 30 minutes, 1 hour"
-                value={newParticipant.interviewDuration}
-                onChange={(e) => setNewParticipant({ ...newParticipant, interviewDuration: e.target.value })}
-                className="mt-1"
-              />
-            </div>
             {newParticipant.interviewDate && (
               <div className="flex items-center space-x-2 mt-2 p-2 bg-slate-50 rounded-md">
                 <Checkbox
@@ -878,15 +854,13 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
           </div>
           <div className="space-y-2">
             <Label className="text-base">Usability Testing Schedule</Label>
-            <DateTimePicker
+            <DateTimeRangePicker
               date={newParticipant.usabilityDate}
-              time={newParticipant.usabilityTime}
+              startTime={newParticipant.usabilityTime}
+              endTime={newParticipant.usabilityEndTime}
               onDateChange={(date) => setNewParticipant({ ...newParticipant, usabilityDate: date })}
-              onTimeChange={(time) => setNewParticipant({ ...newParticipant, usabilityTime: time })}
-              dateLabel="Date"
-              timeLabel="Time"
-              datePlaceholder="Pick a date"
-              timePlaceholder="Pick a time"
+              onStartTimeChange={(time) => setNewParticipant({ ...newParticipant, usabilityTime: time })}
+              onEndTimeChange={(time) => setNewParticipant({ ...newParticipant, usabilityEndTime: time })}
             />
             {newParticipant.usabilityDate && (
               <div className="flex items-center space-x-2 mt-2 p-2 bg-slate-50 rounded-md">
