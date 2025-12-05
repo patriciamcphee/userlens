@@ -449,7 +449,7 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
                   Add Participant
                 </Button>
               </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>Add Participant</DialogTitle>
                 <DialogDescription>Add a new participant to this project</DialogDescription>
@@ -755,7 +755,7 @@ export function ParticipantsTab({ project, onUpdate }: ParticipantsTabProps) {
         setNewParticipant({ name: "", email: "", usageLevel: "active", role: "", tenure: "", interviewDate: "", interviewTime: "", interviewEndTime: "", usabilityDate: "", usabilityTime: "", usabilityEndTime: "" });
       }
     }}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit Participant</DialogTitle>
           <DialogDescription>Update participant details</DialogDescription>
