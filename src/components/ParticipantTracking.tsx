@@ -45,6 +45,25 @@ function getNPSLabel(score: number): { category: string; color: string } {
   return { category: "Detractor", color: "text-red-600" };
 }
 
+// Helper function to format ISO date (yyyy-MM-dd) for display
+function formatDateForDisplay(dateStr: string | undefined): string {
+  if (!dateStr) return '';
+  try {
+    // Handle ISO format (yyyy-MM-dd)
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      const [year, month, day] = dateStr.substring(0, 10).split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+    }
+    // Return as-is if already formatted or unrecognized
+    return dateStr;
+  } catch {
+    return dateStr;
+  }
+}
+
 // Extended Participant type with recording and notes fields
 interface ParticipantWithRecordings extends Participant {
   interviewRecording?: SessionRecording;
@@ -550,9 +569,9 @@ export function ParticipantTracking({
                     <span className="text-slate-500 flex-shrink-0">Interview:</span>
                     <span className="truncate">
                       {participant.date && participant.time 
-                        ? `${participant.date} at ${participant.time}` 
+                        ? `${formatDateForDisplay(participant.date)} at ${participant.time}` 
                         : participant.date 
-                        ? participant.date 
+                        ? formatDateForDisplay(participant.date) 
                         : 'TBD'}
                     </span>
                   </div>
@@ -576,9 +595,9 @@ export function ParticipantTracking({
                     <span className="text-slate-500 flex-shrink-0">Testing:</span>
                     <span className="truncate">
                       {participant.usabilityDate && participant.usabilityTime 
-                        ? `${participant.usabilityDate} at ${participant.usabilityTime}` 
+                        ? `${formatDateForDisplay(participant.usabilityDate)} at ${participant.usabilityTime}` 
                         : participant.usabilityDate 
-                        ? participant.usabilityDate 
+                        ? formatDateForDisplay(participant.usabilityDate) 
                         : 'TBD'}
                     </span>
                   </div>

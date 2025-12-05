@@ -69,7 +69,7 @@ export function Sidebar({
   const setIsCollapsed = onCollapsedChange ?? setInternalCollapsed;
 
   const helpLinks = [
-    { id: "docs", label: "Docs", icon: FileText, href: "#docs" },
+    { id: "docs", label: "User Guide", icon: FileText, href: "#docs" },
     { id: "whats-new", label: "What's New", icon: Sparkles, href: "#whats-new" },
     { id: "report-issue", label: "Report Issue", icon: Bug, href: "#report-issue" },
     { id: "submit-idea", label: "Submit Idea", icon: Lightbulb, href: "#submit-idea" },

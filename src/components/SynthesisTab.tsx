@@ -49,53 +49,41 @@ export function SynthesisTab({ projectId, onProjectUpdate }: SynthesisTabProps) 
         // Generate anonymous participant ID (P01, P02, etc.)
         const anonymousId = `P${String(index + 1).padStart(2, '0')}`;
         
-        // Format interview date if it exists, otherwise leave empty
-        let formattedDate = '';
+        // Normalize interview date to ISO format (yyyy-MM-dd) for the date input
+        let normalizedInterviewDate = '';
         if (p.interviewDate && p.interviewDate.trim()) {
-          // Check if it's already in short format (e.g., "Nov 24") or needs formatting
-          if (p.interviewDate.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(p.interviewDate)) {
-            // It's an ISO date or YYYY-MM-DD date, format it
+          if (/^\d{4}-\d{2}-\d{2}/.test(p.interviewDate)) {
+            // Already in ISO format, extract just the date part
+            normalizedInterviewDate = p.interviewDate.substring(0, 10);
+          } else {
+            // Try to parse and convert to ISO
             try {
-              // Append T00:00:00 to treat as local time, not UTC (prevents off-by-one-day issues)
-              const dateStr = p.interviewDate.includes('T') ? p.interviewDate : p.interviewDate + 'T00:00:00';
-              const date = new Date(dateStr);
-              // Check if date is valid
+              const date = new Date(p.interviewDate);
               if (!isNaN(date.getTime())) {
-                formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-              } else {
-                formattedDate = '';
+                normalizedInterviewDate = date.toISOString().substring(0, 10);
               }
             } catch {
-              formattedDate = '';
+              normalizedInterviewDate = '';
             }
-          } else {
-            // Already in short format like "Nov 24"
-            formattedDate = p.interviewDate;
           }
         }
         
-        // Format usability date if it exists, otherwise leave empty
-        let formattedUsabilityDate = '';
+        // Normalize usability date to ISO format (yyyy-MM-dd) for the date input
+        let normalizedUsabilityDate = '';
         if (p.usabilityDate && p.usabilityDate.trim()) {
-          // Check if it's already in short format (e.g., "Nov 24") or needs formatting
-          if (p.usabilityDate.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(p.usabilityDate)) {
-            // It's an ISO date or YYYY-MM-DD date, format it
+          if (/^\d{4}-\d{2}-\d{2}/.test(p.usabilityDate)) {
+            // Already in ISO format, extract just the date part
+            normalizedUsabilityDate = p.usabilityDate.substring(0, 10);
+          } else {
+            // Try to parse and convert to ISO
             try {
-              // Append T00:00:00 to treat as local time, not UTC (prevents off-by-one-day issues)
-              const dateStr = p.usabilityDate.includes('T') ? p.usabilityDate : p.usabilityDate + 'T00:00:00';
-              const date = new Date(dateStr);
-              // Check if date is valid
+              const date = new Date(p.usabilityDate);
               if (!isNaN(date.getTime())) {
-                formattedUsabilityDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-              } else {
-                formattedUsabilityDate = '';
+                normalizedUsabilityDate = date.toISOString().substring(0, 10);
               }
             } catch {
-              formattedUsabilityDate = '';
+              normalizedUsabilityDate = '';
             }
-          } else {
-            // Already in short format like "Nov 24"
-            formattedUsabilityDate = p.usabilityDate;
           }
         }
         
@@ -104,10 +92,12 @@ export function SynthesisTab({ projectId, onProjectUpdate }: SynthesisTabProps) 
           name: p.name,
           segment,
           role: p.role || '',
-          date: formattedDate,
+          date: normalizedInterviewDate,
           time: p.interviewTime,
-          usabilityDate: formattedUsabilityDate,
+          endTime: p.interviewEndTime,
+          usabilityDate: normalizedUsabilityDate,
           usabilityTime: p.usabilityTime,
+          usabilityEndTime: p.usabilityEndTime,
           status: p.status || 'scheduled', // Use the actual status from the participant
           susScore: p.susScore,
           npsScore: p.npsScore,
@@ -115,8 +105,8 @@ export function SynthesisTab({ projectId, onProjectUpdate }: SynthesisTabProps) 
           usabilityCompleted: p.usabilityCompleted || false,
           interviewRecording: p.interviewRecording,
           usabilityRecording: p.usabilityRecording,
-          interviewNotes: (p as any).interviewNotes ?? '',
-          usabilityNotes: (p as any).usabilityNotes ?? '',
+          interviewNotes: (p as any).interviewNotes || '',
+          usabilityNotes: (p as any).usabilityNotes || '',
         };
       });
       

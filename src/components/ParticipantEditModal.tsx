@@ -8,6 +8,7 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { DateTimeRangePicker } from "./DateTimeRangePicker";
 import { 
   Download, 
   User, 
@@ -156,9 +157,10 @@ export function ParticipantEditModal({
     role: "",
     date: "",
     time: "",
+    endTime: "",
     usabilityDate: "",
     usabilityTime: "",
-    duration: "45m",
+    usabilityEndTime: "",
     susScore: undefined as number | undefined,
     npsScore: undefined as number | undefined,
     interviewCompleted: false,
@@ -176,9 +178,10 @@ export function ParticipantEditModal({
         role: participant.role || "",
         date: participant.date || "",
         time: participant.time || "",
+        endTime: participant.endTime || "",
         usabilityDate: participant.usabilityDate || "",
         usabilityTime: participant.usabilityTime || "",
-        duration: participant.duration || "45m",
+        usabilityEndTime: participant.usabilityEndTime || "",
         susScore: participant.susScore,
         npsScore: participant.npsScore,
         interviewCompleted: participant.interviewCompleted || false,
@@ -494,9 +497,10 @@ interface DetailsTabProps {
     role: string;
     date: string;
     time: string;
+    endTime: string;
     usabilityDate: string;
     usabilityTime: string;
-    duration: string;
+    usabilityEndTime: string;
     susScore: number | undefined;
     npsScore: number | undefined;
     interviewCompleted: boolean;
@@ -563,22 +567,15 @@ function DetailsTab({ data, onChange, readOnly }: DetailsTabProps) {
             <span className="text-slate-600">Completed</span>
           </label>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div><Label className="text-xs mb-1 block">Date</Label><Input value={data.date} onChange={(e) => onChange({ ...data, date: e.target.value })} placeholder="Dec 5" disabled={readOnly} /></div>
-          <div><Label className="text-xs mb-1 block">Time</Label><Input value={data.time} onChange={(e) => onChange({ ...data, time: e.target.value })} placeholder="2:00 PM" disabled={readOnly} /></div>
-          <div>
-            <Label className="text-xs mb-1 block">Duration</Label>
-            <Select value={data.duration} onValueChange={(value) => onChange({ ...data, duration: value })} disabled={readOnly}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="20min">20 min</SelectItem>
-                <SelectItem value="30min">30 min</SelectItem>
-                <SelectItem value="45min">45 min</SelectItem>
-                <SelectItem value="60min">60 min</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <DateTimeRangePicker
+          date={data.date}
+          startTime={data.time}
+          endTime={data.endTime}
+          onDateChange={(date) => onChange({ ...data, date })}
+          onStartTimeChange={(time) => onChange({ ...data, time })}
+          onEndTimeChange={(endTime) => onChange({ ...data, endTime })}
+          disabled={readOnly}
+        />
       </div>
 
       <div className="p-4 bg-slate-50 rounded-lg space-y-3">
@@ -589,10 +586,15 @@ function DetailsTab({ data, onChange, readOnly }: DetailsTabProps) {
             <span className="text-slate-600">Completed</span>
           </label>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label className="text-xs mb-1 block">Date</Label><Input value={data.usabilityDate} onChange={(e) => onChange({ ...data, usabilityDate: e.target.value })} placeholder="Dec 6" disabled={readOnly} /></div>
-          <div><Label className="text-xs mb-1 block">Time</Label><Input value={data.usabilityTime} onChange={(e) => onChange({ ...data, usabilityTime: e.target.value })} placeholder="10:00 AM" disabled={readOnly} /></div>
-        </div>
+        <DateTimeRangePicker
+          date={data.usabilityDate}
+          startTime={data.usabilityTime}
+          endTime={data.usabilityEndTime}
+          onDateChange={(usabilityDate) => onChange({ ...data, usabilityDate })}
+          onStartTimeChange={(usabilityTime) => onChange({ ...data, usabilityTime })}
+          onEndTimeChange={(usabilityEndTime) => onChange({ ...data, usabilityEndTime })}
+          disabled={readOnly}
+        />
       </div>
 
       <div className="p-4 bg-indigo-50 rounded-lg space-y-3">

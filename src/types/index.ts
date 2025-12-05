@@ -33,7 +33,6 @@ export interface Task {
     easy: 'non-user';
     medium: 'occasional';
     hard: 'active';
-    all: 'everyone';
   };
   ratingEnabled?: boolean; // Enable rating scale for this task
   ratingLabel?: string; // Custom label for rating
@@ -102,25 +101,31 @@ export interface ProjectParticipant {
   usageLevel: 'active' | 'occasional' | 'non-user';
   role?: string;
   tenure?: string;
+  
+  // Interview scheduling - start and end time (like a calendar meeting)
   interviewDate?: string;
-  interviewTime?: string;
-  interviewDuration?: string;
-  interviewCompleted?: boolean; // Track if interview is completed
-  interviewRecording?: SessionRecording; // Recording for interview session
+  interviewTime?: string;        // Start time
+  interviewEndTime?: string;     // End time
+  interviewCompleted?: boolean;
+  interviewRecording?: SessionRecording;
+  
+  // Usability testing scheduling - start and end time
   usabilityDate?: string;
-  usabilityTime?: string;
-  usabilityCompleted?: boolean; // Track if usability test is completed
-  usabilityRecording?: SessionRecording; // Recording for usability session
+  usabilityTime?: string;        // Start time
+  usabilityEndTime?: string;     // End time
+  usabilityCompleted?: boolean;
+  usabilityRecording?: SessionRecording;
+  
   addedAt: string;
-  status?: 'invited' | 'completed' | 'in-progress' | 'scheduled' | 'no-show'; // Optional - automatically set to "invited" when interview date/time is entered
+  status?: 'invited' | 'completed' | 'in-progress' | 'scheduled' | 'no-show';
   sessionId?: string;
-  sessionLink?: string; // Unique link for participant to access their session
-  sessionLinkExpiry?: string; // ISO string for when the link expires
-  sessionLinkToken?: string; // Unique token for the session link
-  recordingUrl?: string; // Signed URL to the recorded session video (latest session)
-  recordingStoragePath?: string; // Storage path for the recording (latest session)
-  lastSessionDate?: string; // ISO string for the most recent session
-  sessionHistory?: SessionHistoryEntry[]; // Array of all session data
+  sessionLink?: string;
+  sessionLinkExpiry?: string;
+  sessionLinkToken?: string;
+  recordingUrl?: string;
+  recordingStoragePath?: string;
+  lastSessionDate?: string;
+  sessionHistory?: SessionHistoryEntry[];
   susScore?: number;
   npsScore?: number;
 }
@@ -136,16 +141,18 @@ export interface Participant {
   name: string;
   segment: string;
   role: string;
-  date: string; // Interview date
-  time?: string; // Interview time
-  usabilityDate?: string; // Testing date
-  usabilityTime?: string; // Testing time
-  duration?: string;
+  date: string;                  // Interview date (display format)
+  time?: string;                 // Interview start time
+  endTime?: string;              // Interview end time
+  usabilityDate?: string;        // Testing date
+  usabilityTime?: string;        // Testing start time
+  usabilityEndTime?: string;     // Testing end time
+  duration?: string;             // Deprecated - kept for backwards compatibility
   status: "completed" | "scheduled" | "in-progress" | "invited" | "no-show";
   susScore?: number;
   npsScore?: number;
-  interviewRecording?: SessionRecording; // Recording for interview session
-  usabilityRecording?: SessionRecording; // Recording for usability session
+  interviewRecording?: SessionRecording;
+  usabilityRecording?: SessionRecording;
 }
 
 export interface StickyNote {
@@ -234,12 +241,11 @@ export interface Project {
   tags?: string[];
   emptyClusters?: string[];
 
-  teamId: string;               // Team that owns this project
-  team?: Team;                  // Populated team object
+  teamId: string;
+  team?: Team;
   organizationId: string;
   settings: ProjectSettings;
   createdBy: string;
-  // Counts (for display)
   participantCount: number;
   taskCount: number;
   insightCount: number;
@@ -305,9 +311,6 @@ export interface SessionLink {
 // =============================================================================
 // UserLens Insights - Teams Data Model
 // =============================================================================
-// This file defines the TypeScript interfaces for the multi-tenant team
-// structure, including organizations, teams, memberships, and permissions.
-// =============================================================================
 
 // -----------------------------------------------------------------------------
 // Organization (Maps to Azure AD Tenant)
@@ -317,10 +320,10 @@ export type OrganizationRole = 'owner' | 'admin' | 'member';
 
 export interface Organization {
   id: string;
-  tenantId: string;              // Azure AD Tenant ID
+  tenantId: string;
   name: string;
-  slug: string;                  // URL-friendly identifier
-  logo?: string;                 // Organization logo URL
+  slug: string;
+  logo?: string;
   plan: 'free' | 'pro' | 'enterprise';
   settings: OrganizationSettings;
   createdAt: string;
@@ -335,16 +338,15 @@ export interface OrganizationSettings {
   requireApprovalForJoin: boolean;
   sessionRecordingEnabled: boolean;
   dataRetentionDays: number;
-  // Recording storage settings
   recordingStorage: RecordingStorageSettings;
 }
 
 export interface RecordingStorageSettings {
-  mode: 'external' | 'internal' | 'both';  // Where recordings are stored
-  externalPlatforms: RecordingPlatform[];  // Which external platforms are enabled
-  autoImport: boolean;                      // Auto-import from connected platforms
-  retentionDays: number;                    // How long to keep recordings
-  maxStorageGB?: number;                    // Storage limit for internal recordings
+  mode: 'external' | 'internal' | 'both';
+  externalPlatforms: RecordingPlatform[];
+  autoImport: boolean;
+  retentionDays: number;
+  maxStorageGB?: number;
 }
 
 export interface OrganizationMember {
@@ -364,7 +366,7 @@ export interface OrganizationMember {
 
 export interface User {
   id: string;
-  azureAdId: string;            // Azure AD Object ID
+  azureAdId: string;
   email: string;
   name: string;
   firstName?: string;
@@ -374,12 +376,11 @@ export interface User {
   department?: string;
   organizationId: string;
   organizationRole: OrganizationRole;
-  defaultTeamId?: string;       // User's preferred/default team
+  defaultTeamId?: string;
   settings: UserSettings;
   lastActiveAt: string;
   createdAt: string;
   updatedAt: string;
-  // Connected platform accounts for recording import
   connectedPlatforms?: ConnectedPlatform[];
 }
 
@@ -410,10 +411,10 @@ export interface Team {
   id: string;
   organizationId: string;
   name: string;
-  slug: string;                 // URL-friendly identifier
+  slug: string;
   description?: string;
-  icon?: string;                // Emoji or icon identifier
-  color?: string;               // Team color for visual distinction
+  icon?: string;
+  color?: string;
   memberCount: number;
   projectCount: number;
   settings: TeamSettings;
@@ -425,7 +426,7 @@ export interface Team {
 export interface TeamSettings {
   defaultProjectAccess: ProjectAccess;
   allowMemberProjectCreation: boolean;
-  isPrivate: boolean;           // If true, only visible to members and admins
+  isPrivate: boolean;
 }
 
 export interface TeamMember {
@@ -438,7 +439,6 @@ export interface TeamMember {
   addedBy?: string;
 }
 
-// Represents a user's membership across multiple teams
 export interface UserTeamMembership {
   team: Team;
   role: TeamRole;
@@ -451,8 +451,6 @@ export interface UserTeamMembership {
 
 export type ProjectAccess = 'editor' | 'viewer';
 
-
-
 export interface ProjectSettings {
   cameraOption: 'optional' | 'required' | 'disabled';
   micOption: 'optional' | 'required' | 'disabled';
@@ -461,16 +459,14 @@ export interface ProjectSettings {
   beforeMessage?: string;
   duringMessage?: string;
   afterMessage?: string;
-  // Recording settings at project level
   recordingMode?: 'external' | 'internal' | 'both';
   defaultRecordingPlatform?: RecordingPlatform;
-    recording?: {
+  recording?: {
     camera: 'optional' | 'required' | 'disabled';
     microphone: 'optional' | 'required' | 'disabled';
   };
 }
 
-// Project member with explicit access level (for future granular permissions)
 export interface ProjectMember {
   id: string;
   projectId: string;
@@ -491,7 +487,7 @@ export interface Invitation {
   id: string;
   type: InvitationType;
   organizationId: string;
-  teamId?: string;              // Only for team invitations
+  teamId?: string;
   email: string;
   role: OrganizationRole | TeamRole;
   invitedBy: string;
@@ -544,14 +540,11 @@ export interface Activity {
 // -----------------------------------------------------------------------------
 
 export interface UserPermissions {
-  // Organization level
   canManageOrganization: boolean;
   canManageAllTeams: boolean;
   canViewAllProjects: boolean;
   canManageBilling: boolean;
   canInviteToOrganization: boolean;
-  
-  // Derived from highest role
   isOrgOwner: boolean;
   isOrgAdmin: boolean;
 }
@@ -633,7 +626,6 @@ export interface TransferProjectRequest {
 // Utility Types
 // -----------------------------------------------------------------------------
 
-// For team selector dropdown
 export interface TeamOption {
   id: string;
   name: string;
@@ -643,14 +635,12 @@ export interface TeamOption {
   projectCount: number;
 }
 
-// For member management
 export interface MemberWithDetails extends TeamMember {
-  teamCount: number;           // How many teams this user is on
-  projectsInTeam: number;      // Projects they've contributed to in this team
-  lastActiveInTeam?: string;   // Last activity in this team
+  teamCount: number;
+  projectsInTeam: number;
+  lastActiveInTeam?: string;
 }
 
-// For permission checks
 export type PermissionCheck = {
   allowed: boolean;
   reason?: string;
@@ -672,7 +662,6 @@ export type ProjectTab = 'overview' | 'analytics' | 'synthesis' | 'planning';
 export type SegmentType = 'Non-Users' | 'Abandoned' | 'Occasional' | 'Active' | 'Power Users';
 export type TaskDifficulty = 'easy' | 'medium' | 'hard' | 'all';
 
-// Mapping between task difficulty and target segments
 export const DIFFICULTY_SEGMENT_MAP: Record<TaskDifficulty, SegmentType[]> = {
   easy: ['Non-Users', 'Abandoned'],
   medium: ['Occasional'],
@@ -680,7 +669,6 @@ export const DIFFICULTY_SEGMENT_MAP: Record<TaskDifficulty, SegmentType[]> = {
   all: ['Non-Users', 'Abandoned', 'Occasional', 'Active', 'Power Users'],
 };
 
-// Reverse mapping: which difficulties are appropriate for each segment
 export const SEGMENT_DIFFICULTY_MAP: Record<SegmentType, TaskDifficulty[]> = {
   'Non-Users': ['easy', 'all'],
   'Abandoned': ['easy', 'all'],
@@ -689,7 +677,6 @@ export const SEGMENT_DIFFICULTY_MAP: Record<SegmentType, TaskDifficulty[]> = {
   'Power Users': ['hard', 'all'],
 };
 
-// Segment alignment issue details
 export interface SegmentAlignmentIssue {
   taskId: string;
   taskTitle: string;
@@ -698,7 +685,6 @@ export interface SegmentAlignmentIssue {
   message: string;
 }
 
-// Coverage status for planning matrix
 export interface HypothesisCoverage {
   hypothesisId: string;
   hypothesis: string;
@@ -710,7 +696,6 @@ export interface HypothesisCoverage {
   segmentAlignmentIssues: SegmentAlignmentIssue[];
 }
 
-// Overall planning metrics
 export interface PlanningMetrics {
   totalHypotheses: number;
   hypothesesWithTasks: number;
@@ -722,7 +707,6 @@ export interface PlanningMetrics {
   coveragePercentage: number;
 }
 
-// Matrix cell data for planning grid
 export interface MatrixCell {
   hypothesisId: string;
   taskId: string;
